@@ -2525,28 +2525,51 @@ elif regression_type == "📈 Einfache Regression":
         t_corr = abs(corr_xy) * np.sqrt((n - 2) / max(1 - corr_xy**2, 0.001))
         p_corr = 2 * (1 - stats.t.cdf(t_corr, df=n-2))
     
-        fig_t_corr, ax_t_corr = plt.subplots(figsize=(10, 5))
-    
+        # Create t-distribution plot with plotly
         x_t = np.linspace(-5, max(5, t_corr + 1), 300)
         y_t = stats.t.pdf(x_t, df=n-2)
-    
-        ax_t_corr.plot(x_t, y_t, 'k-', linewidth=2, label=f't-Verteilung (df={n-2})')
-        ax_t_corr.fill_between(x_t, y_t, where=(abs(x_t) > t_corr), color='red', alpha=0.4, 
-                              label=f'p-Wert = {p_corr:.4f}')
-    
+        
+        fig_t_corr = go.Figure()
+        
+        # Main distribution curve
+        fig_t_corr.add_trace(go.Scatter(
+            x=x_t, y=y_t,
+            mode='lines',
+            line=dict(color='black', width=2),
+            name=f't-Verteilung (df={n-2})'
+        ))
+        
+        # Shaded p-value regions
+        mask = abs(x_t) > t_corr
+        fig_t_corr.add_trace(go.Scatter(
+            x=x_t[mask], y=y_t[mask],
+            fill='tozeroy',
+            fillcolor='rgba(255, 0, 0, 0.3)',
+            line=dict(width=0),
+            name=f'p-Wert = {p_corr:.4f}',
+            showlegend=True
+        ))
+        
+        # Critical values
         t_crit = stats.t.ppf(0.975, df=n-2)
-        ax_t_corr.axvline(t_crit, color='orange', linestyle='--', alpha=0.7)
-        ax_t_corr.axvline(-t_crit, color='orange', linestyle='--', alpha=0.7, label=f'Kritisch: ±{t_crit:.2f}')
-        ax_t_corr.axvline(t_corr, color='blue', linewidth=3, label=f't = {t_corr:.2f}')
-        ax_t_corr.axvline(-t_corr, color='blue', linewidth=2, alpha=0.5)
+        fig_t_corr.add_vline(x=t_crit, line_dash='dash', line_color='orange', opacity=0.7)
+        fig_t_corr.add_vline(x=-t_crit, line_dash='dash', line_color='orange', opacity=0.7,
+                            annotation_text=f'Kritisch: ±{t_crit:.2f}')
+        
+        # Observed t-values
+        fig_t_corr.add_vline(x=t_corr, line_color='blue', line_width=3,
+                            annotation_text=f't = {t_corr:.2f}')
+        fig_t_corr.add_vline(x=-t_corr, line_color='blue', line_width=2, opacity=0.5)
+        
+        fig_t_corr.update_layout(
+            title=f'H₀: ρ = 0 (kein Zusammenhang) vs. H₁: ρ ≠ 0',
+            xaxis_title='t-Wert',
+            yaxis_title='Dichte',
+            template='plotly_white',
+            hovermode='x'
+        )
     
-        ax_t_corr.set_xlabel('t-Wert', fontsize=12)
-        ax_t_corr.set_ylabel('Dichte', fontsize=12)
-        ax_t_corr.set_title(f'H₀: ρ = 0 (kein Zusammenhang) vs. H₁: ρ ≠ 0', fontsize=13, fontweight='bold')
-        ax_t_corr.legend()
-        ax_t_corr.grid(True, alpha=0.3)
-    
-                st.plotly_chart(fig_t_corr, use_container_width=True)
+        st.plotly_chart(fig_t_corr, use_container_width=True)
         
     with col_ttest_corr2:
         if show_formulas:
@@ -2572,25 +2595,41 @@ elif regression_type == "📈 Einfache Regression":
             from scipy.stats import spearmanr
             rho_spearman, p_spearman = spearmanr(x, y)
         
-            # Visualisierung: Original vs. Ränge
-            fig_spear, (ax_orig, ax_rank) = plt.subplots(1, 2, figsize=(12, 5))
-        
-            ax_orig.scatter(x, y, s=80, c='blue', alpha=0.7)
-            ax_orig.set_title(f'Original-Daten\nPearson r = {corr_xy:.3f}', fontweight='bold')
-            ax_orig.set_xlabel('X')
-            ax_orig.set_ylabel('Y')
-            ax_orig.grid(True, alpha=0.3)
-        
-            # Ränge
+            # Create 2-panel plot with plotly subplots
+            from plotly.subplots import make_subplots
+            
+            fig_spear = make_subplots(
+                rows=1, cols=2,
+                subplot_titles=(f'Original-Daten<br>Pearson r = {corr_xy:.3f}',
+                               f'Rang-Daten<br>Spearman ρ = {rho_spearman:.3f}')
+            )
+            
+            # Original data
+            fig_spear.add_trace(
+                go.Scatter(x=x, y=y, mode='markers',
+                          marker=dict(size=8, color='blue', opacity=0.7),
+                          showlegend=False),
+                row=1, col=1
+            )
+            
+            # Rank data
             rank_x = stats.rankdata(x)
             rank_y = stats.rankdata(y)
-            ax_rank.scatter(rank_x, rank_y, s=80, c='green', alpha=0.7)
-            ax_rank.set_title(f'Rang-Daten\nSpearman ρ = {rho_spearman:.3f}', fontweight='bold', color='green')
-            ax_rank.set_xlabel('Rang(X)')
-            ax_rank.set_ylabel('Rang(Y)')
-            ax_rank.grid(True, alpha=0.3)
+            fig_spear.add_trace(
+                go.Scatter(x=rank_x, y=rank_y, mode='markers',
+                          marker=dict(size=8, color='green', opacity=0.7),
+                          showlegend=False),
+                row=1, col=2
+            )
+            
+            fig_spear.update_xaxes(title_text="X", row=1, col=1)
+            fig_spear.update_yaxes(title_text="Y", row=1, col=1)
+            fig_spear.update_xaxes(title_text="Rang(X)", row=1, col=2)
+            fig_spear.update_yaxes(title_text="Rang(Y)", row=1, col=2)
+            
+            fig_spear.update_layout(height=400, template='plotly_white')
         
-                        st.plotly_chart(fig_spear, use_container_width=True)
+            st.plotly_chart(fig_spear, use_container_width=True)
                 
         with col_sp2:
             st.latex(r"r_s = 1 - \frac{6 \sum d_i^2}{n(n^2-1)}")
@@ -2633,34 +2672,69 @@ elif regression_type == "📈 Einfache Regression":
     col_ols1, col_ols2 = st.columns([2, 1])
 
     with col_ols1:
-        fig_ols, ax_ols = plt.subplots(figsize=(12, 7))
-    
-        ax_ols.scatter(x, y, s=100, c='#1f77b4', alpha=0.7, edgecolor='white', linewidth=2, label='Datenpunkte')
-        ax_ols.plot(x, y_pred, 'r-', linewidth=3, label=f'OLS-Gerade: ŷ = {b0:.3f} + {b1:.3f}x')
-    
+        # Create OLS plot with plotly
+        fig_ols = go.Figure()
+        
+        # Data points
+        fig_ols.add_trace(go.Scatter(
+            x=x, y=y,
+            mode='markers',
+            marker=dict(size=10, color='#1f77b4', opacity=0.7,
+                       line=dict(width=2, color='white')),
+            name='Datenpunkte'
+        ))
+        
+        # OLS regression line
+        fig_ols.add_trace(go.Scatter(
+            x=x, y=y_pred,
+            mode='lines',
+            line=dict(color='red', width=3),
+            name=f'OLS-Gerade: ŷ = {b0:.3f} + {b1:.3f}x'
+        ))
+        
+        # True line if shown
         if show_true_line:
-            ax_ols.plot(x, true_intercept + true_beta * x, 'g--', linewidth=2, alpha=0.7, 
-                       label=f'Wahre Gerade: y = {true_intercept:.2f} + {true_beta:.2f}x')
-    
-        # Residuen als Quadrate visualisieren
+            fig_ols.add_trace(go.Scatter(
+                x=x, y=true_intercept + true_beta * x,
+                mode='lines',
+                line=dict(color='green', width=2, dash='dash'),
+                opacity=0.7,
+                name=f'Wahre Gerade: y = {true_intercept:.2f} + {true_beta:.2f}x'
+            ))
+        
+        # Residual lines (for first 10 points)
         for i in range(min(len(x), 10)):
             resid = y[i] - y_pred[i]
-            # Vertikale Linie
-            ax_ols.plot([x[i], x[i]], [y[i], y_pred[i]], 'r-', alpha=0.5, linewidth=1.5)
-            # Quadrat
+            fig_ols.add_trace(go.Scatter(
+                x=[x[i], x[i]],
+                y=[y[i], y_pred[i]],
+                mode='lines',
+                line=dict(color='red', width=1.5),
+                opacity=0.5,
+                showlegend=False
+            ))
+            
+            # Add rectangles for squared residuals (as shapes)
             if abs(resid) > 0.05:
                 size = min(abs(resid), 1.5)
-                rect = plt.Rectangle((x[i], min(y[i], y_pred[i])), size, abs(resid),
-                                     alpha=0.2, color='red', edgecolor='red', linewidth=1)
-                ax_ols.add_patch(rect)
+                fig_ols.add_shape(
+                    type='rect',
+                    x0=x[i], x1=x[i] + size,
+                    y0=min(y[i], y_pred[i]), y1=min(y[i], y_pred[i]) + abs(resid),
+                    fillcolor='red',
+                    opacity=0.2,
+                    line=dict(color='red', width=1)
+                )
+        
+        fig_ols.update_layout(
+            title='OLS minimiert die Fläche aller roten Quadrate (= SSE)',
+            xaxis_title=x_label,
+            yaxis_title=y_label,
+            template='plotly_white',
+            hovermode='closest'
+        )
     
-        ax_ols.set_xlabel(x_label, fontsize=12)
-        ax_ols.set_ylabel(y_label, fontsize=12)
-        ax_ols.set_title('OLS minimiert die Fläche aller roten Quadrate (= SSE)', fontsize=14, fontweight='bold')
-        ax_ols.legend(loc='upper left')
-        ax_ols.grid(True, alpha=0.3)
-    
-                st.plotly_chart(fig_ols, use_container_width=True)
+        st.plotly_chart(fig_ols, use_container_width=True)
         
     with col_ols2:
         if show_formulas:
@@ -2930,23 +3004,57 @@ elif regression_type == "📈 Einfache Regression":
     col_se1, col_se2 = st.columns([2, 1])
 
     with col_se1:
-        fig_se, ax_se = plt.subplots(figsize=(12, 6))
+        # Create standard error plot with plotly
+        fig_se = go.Figure()
+        
+        # Data points
+        fig_se.add_trace(go.Scatter(
+            x=x, y=y,
+            mode='markers',
+            marker=dict(size=8, color='#1f77b4', opacity=0.6,
+                       line=dict(width=1, color='white')),
+            name='Data'
+        ))
+        
+        # Regression line
+        fig_se.add_trace(go.Scatter(
+            x=x, y=y_pred,
+            mode='lines',
+            line=dict(color='red', width=3),
+            name='Regressionsgerade'
+        ))
+        
+        # ±2 se band
+        fig_se.add_trace(go.Scatter(
+            x=np.concatenate([x, x[::-1]]),
+            y=np.concatenate([y_pred + 2*se_regression, (y_pred - 2*se_regression)[::-1]]),
+            fill='toself',
+            fillcolor='rgba(255, 0, 0, 0.1)',
+            line=dict(width=0),
+            name=f'±2·sₑ',
+            showlegend=True
+        ))
+        
+        # ±1 se band
+        fig_se.add_trace(go.Scatter(
+            x=np.concatenate([x, x[::-1]]),
+            y=np.concatenate([y_pred + se_regression, (y_pred - se_regression)[::-1]]),
+            fill='toself',
+            fillcolor='rgba(255, 0, 0, 0.2)',
+            line=dict(width=0),
+            name=f'±1·sₑ = ±{se_regression:.3f}',
+            showlegend=True
+        ))
+        
+        fig_se.update_layout(
+            title=f'Der Standardfehler sₑ = {se_regression:.4f} zeigt die typische Streuung um die Linie',
+            xaxis_title=x_label,
+            yaxis_title=y_label,
+            template='plotly_white',
+            hovermode='closest'
+        )
     
-        ax_se.scatter(x, y, s=80, c='#1f77b4', alpha=0.6, edgecolor='white')
-        ax_se.plot(x, y_pred, 'r-', linewidth=2.5, label='Regressionsgerade')
-        ax_se.fill_between(x, y_pred - se_regression, y_pred + se_regression, 
-                          color='red', alpha=0.2, label=f'±1·sₑ = ±{se_regression:.3f}')
-        ax_se.fill_between(x, y_pred - 2*se_regression, y_pred + 2*se_regression, 
-                          color='red', alpha=0.1, label=f'±2·sₑ')
-    
-        ax_se.set_xlabel(x_label, fontsize=12)
-        ax_se.set_ylabel(y_label, fontsize=12)
-        ax_se.set_title(f'Der Standardfehler sₑ = {se_regression:.4f} zeigt die typische Streuung um die Linie', 
-                       fontsize=13, fontweight='bold')
-        ax_se.legend(loc='upper left')
-        ax_se.grid(True, alpha=0.3)
-    
-                st.plotly_chart(fig_se, use_container_width=True)
+        st.plotly_chart(fig_se, use_container_width=True)
         
     with col_se2:
         if show_formulas:
