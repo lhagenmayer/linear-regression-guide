@@ -422,7 +422,7 @@ with st.sidebar.expander("📍 Inhaltsverzeichnis", expanded=True):
 
 # Gemeinsamer Datensatz-Block
 st.sidebar.markdown("---")
-with st.sidebar.expander("📊 Datensatz", expanded=True if regression_type == "📈 Einfache Regression" else False):
+with st.sidebar.expander("📊 Datensatz", expanded=True):
     if regression_type == "📈 Einfache Regression":
         dataset_choice = st.selectbox(
             "Datensatz wählen:",
@@ -439,19 +439,55 @@ with st.sidebar.expander("📊 Datensatz", expanded=True if regression_type == "
             key="mult_dataset"
         )
 
+# Einheitlicher Daten-Parameter-Block mit Sliders
+if regression_type == "📊 Multiple Regression":
+    st.sidebar.markdown("---")
+    with st.sidebar.expander("🎛️ Daten-Parameter", expanded=True):
+        if dataset_choice_mult == "🏙️ Städte-Umsatzstudie (75 Städte)":
+            st.markdown("**Stichproben-Eigenschaften:**")
+            n_mult = st.slider("Anzahl Städte (n)", min_value=20, max_value=150, value=75, step=5,
+                             help="Grösse der Stichprobe", key="n_mult_staedte")
+            
+            st.markdown("**Zufallskomponente:**")
+            noise_mult_level = st.slider("Rauschen (σ)", min_value=1.0, max_value=8.0, value=3.5, step=0.5,
+                                       help="Standardabweichung der Störgrösse", key="noise_mult_staedte")
+            seed_mult = st.number_input("Random Seed", min_value=1, max_value=999, value=42,
+                                      help="Zufallsseed für Reproduzierbarkeit", key="seed_mult_staedte")
+        
+        elif dataset_choice_mult == "🏠 Häuserpreise mit Pool (1000 Häuser)":
+            st.markdown("**Stichproben-Eigenschaften:**")
+            n_mult = st.slider("Anzahl Häuser (n)", min_value=100, max_value=2000, value=1000, step=100,
+                             help="Grösse der Stichprobe", key="n_mult_haeuser")
+            
+            st.markdown("**Zufallskomponente:**")
+            noise_mult_level = st.slider("Rauschen (σ)", min_value=5.0, max_value=40.0, value=20.0, step=5.0,
+                                       help="Standardabweichung der Störgrösse", key="noise_mult_haeuser")
+            seed_mult = st.number_input("Random Seed", min_value=1, max_value=999, value=42,
+                                      help="Zufallsseed für Reproduzierbarkeit", key="seed_mult_haeuser")
+        
+        else:  # Elektronikmarkt
+            st.markdown("**Stichproben-Eigenschaften:**")
+            n_mult = st.slider("Anzahl Beobachtungen (n)", min_value=20, max_value=100, value=50, step=5,
+                             help="Grösse der Stichprobe", key="n_mult_elektro")
+            
+            st.markdown("**Zufallskomponente:**")
+            noise_mult_level = st.slider("Rauschen (σ)", min_value=0.1, max_value=1.0, value=0.35, step=0.05,
+                                       help="Standardabweichung der Störgrösse", key="noise_mult_elektro")
+            seed_mult = st.number_input("Random Seed", min_value=1, max_value=999, value=42,
+                                      help="Zufallsseed für Reproduzierbarkeit", key="seed_mult_elektro")
+
 # === MULTIPLE REGRESSION DATA PREPARATION (gemeinsam strukturierte Sidebar) ===
 if regression_type == "📊 Multiple Regression":
     with st.spinner("Lade Datensatz..."):
-        np.random.seed(42)
+        np.random.seed(int(seed_mult))
 
         if dataset_choice_mult == "🏙️ Städte-Umsatzstudie (75 Städte)":
-            n_mult = 75
             x2_preis = np.random.normal(5.69, 0.52, n_mult)
             x2_preis = np.clip(x2_preis, 4.83, 6.49)
             x3_werbung = np.random.normal(1.84, 0.83, n_mult)
             x3_werbung = np.clip(x3_werbung, 0.50, 3.10)
             y_base_mult = 100 - 5 * x2_preis + 8 * x3_werbung
-            noise_mult = np.random.normal(0, 3.5, n_mult)
+            noise_mult = np.random.normal(0, noise_mult_level, n_mult)
             y_mult = y_base_mult + noise_mult
             y_mult = np.clip(y_mult, 62.4, 91.2)
             y_mult = (y_mult - np.mean(y_mult)) / np.std(y_mult) * 6.49 + 77.37
@@ -463,14 +499,13 @@ if regression_type == "📊 Multiple Regression":
             x1_name, x2_name, y_name = "Preis (CHF)", "Werbung (CHF1000)", "Umsatz (1000 CHF)"
 
         elif dataset_choice_mult == "🏠 Häuserpreise mit Pool (1000 Häuser)":
-            n_mult = 1000
             x2_wohnflaeche = np.random.normal(25.21, 2.92, n_mult)
             x2_wohnflaeche = np.clip(x2_wohnflaeche, 20.03, 30.00)
 
             x3_pool = np.random.binomial(1, 0.204, n_mult).astype(float)
 
             y_base_mult = 50 + 7.5 * x2_wohnflaeche + 35 * x3_pool
-            noise_mult = np.random.normal(0, 20, n_mult)
+            noise_mult = np.random.normal(0, noise_mult_level, n_mult)
             y_mult = y_base_mult + noise_mult
             y_mult = np.clip(y_mult, 134.32, 345.20)
             y_mult = (y_mult - np.mean(y_mult)) / np.std(y_mult) * 42.19 + 247.66
@@ -485,12 +520,11 @@ if regression_type == "📊 Multiple Regression":
             x1_name, x2_name, y_name = "Wohnfläche (sqft/10)", "Pool (0/1)", "Preis (USD)"
 
         else:  # Elektronikmarkt (erweitert)
-            n_mult = 50
             x2_flaeche = np.random.uniform(2, 12, n_mult)
             x3_marketing = np.random.uniform(0.5, 5.0, n_mult)
 
             y_base_mult = 0.6 + 0.48 * x2_flaeche + 0.15 * x3_marketing
-            noise_mult = np.random.normal(0, 0.35, n_mult)
+            noise_mult = np.random.normal(0, noise_mult_level, n_mult)
             y_mult = y_base_mult + noise_mult
 
             x2_preis = x2_flaeche
@@ -510,6 +544,7 @@ if regression_type == "📊 Multiple Regression":
 
 # === GEMEINSAME PARAMETER-SEKTION === (nur bei einfacher Regression)
 if regression_type == "📈 Einfache Regression":
+    has_true_line = False
     st.sidebar.markdown("---")
     with st.sidebar.expander("🎛️ Daten-Parameter", expanded=True):
         if dataset_choice == "🏪 Elektronikmarkt (simuliert)":
@@ -561,8 +596,8 @@ if regression_type == "📈 Einfache Regression":
             2. Welchen Umsatz erwarten wir für eine 1200 qm Filiale?
             """
             has_true_line = True
-            
-        else:  # Städte-Umsatzstudie
+        
+        elif dataset_choice == "🏙️ Städte-Umsatzstudie (75 Städte)":
             # X-Variable als Dropdown (zwei Optionen verfügbar)
             x_variable_options = ["Werbung (CHF1000)", "Preis (CHF)"]
             x_variable = st.selectbox(
@@ -571,6 +606,18 @@ if regression_type == "📈 Einfache Regression":
                 index=0,
                 help="Einfache Regression: Nur EIN Prädiktor → grösserer Fehlerterm (didaktisch wertvoll!)"
             )
+        
+        elif dataset_choice == "🏠 Häuserpreise mit Pool (1000 Häuser)":
+            # X-Variable als Dropdown (zwei Optionen verfügbar)
+            x_variable_options = ["Wohnfläche (sqft/10)", "Pool (0/1)"]
+            x_variable = st.selectbox(
+                "X-Variable (Prädiktor):",
+                x_variable_options,
+                index=0,
+                help="Einfache Regression: Nur EIN Prädiktor. Pool ist eine Dummy-Variable (0 = kein Pool, 1 = Pool)."
+            )
+        else:
+            x_variable = None
     
     st.sidebar.markdown("**Stichproben-Info:**")
     
@@ -602,15 +649,6 @@ if regression_type == "📈 Einfache Regression":
         
         # Skaliere auf gewünschte Statistiken
         y = (y - np.mean(y)) / np.std(y) * 42.19 + 247.66
-        
-        # Für einfache Regression: Wähle nur eine Variable
-        x_variable_options = ["Wohnfläche (sqft/10)", "Pool (0/1)"]
-        x_variable = st.sidebar.selectbox(
-            "X-Variable (Prädiktor):",
-            x_variable_options,
-            index=0,
-            help="Einfache Regression: Nur EIN Prädiktor. Pool ist eine Dummy-Variable (0 = kein Pool, 1 = Pool)."
-        )
         
         if x_variable == "Wohnfläche (sqft/10)":
             x = x_wohnflaeche
