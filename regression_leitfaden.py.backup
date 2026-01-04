@@ -185,193 +185,6 @@ def get_signif_color(p):
     return '#DC143C'
 
 # ---------------------------------------------------------
-# PLOTLY HELPER FUNCTIONS FOR COMMON PLOT TYPES
-# ---------------------------------------------------------
-def create_plotly_scatter(x, y, x_label='X', y_label='Y', title='', 
-                         marker_color='blue', marker_size=8, show_legend=True):
-    """Create a basic plotly scatter plot"""
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=x, y=y, mode='markers',
-        marker=dict(size=marker_size, color=marker_color, opacity=0.7,
-                   line=dict(width=1, color='white')),
-        name='Data Points' if show_legend else None,
-        showlegend=show_legend
-    ))
-    fig.update_layout(
-        title=title,
-        xaxis_title=x_label,
-        yaxis_title=y_label,
-        template='plotly_white',
-        hovermode='closest'
-    )
-    return fig
-
-def create_plotly_scatter_with_line(x, y, y_pred, x_label='X', y_label='Y', title=''):
-    """Create scatter plot with regression line"""
-    fig = go.Figure()
-    
-    # Data points
-    fig.add_trace(go.Scatter(
-        x=x, y=y, mode='markers',
-        marker=dict(size=10, color='#1f77b4', opacity=0.7,
-                   line=dict(width=2, color='white')),
-        name='Datenpunkte'
-    ))
-    
-    # Regression line
-    fig.add_trace(go.Scatter(
-        x=x, y=y_pred, mode='lines',
-        line=dict(color='#e74c3c', width=3),
-        name='Regressionslinie'
-    ))
-    
-    fig.update_layout(
-        title=title,
-        xaxis_title=x_label,
-        yaxis_title=y_label,
-        template='plotly_white',
-        hovermode='closest',
-        showlegend=True
-    )
-    return fig
-
-def create_plotly_3d_scatter(x1, x2, y, x1_label='X1', x2_label='X2', y_label='Y', 
-                            title='', marker_color='red'):
-    """Create 3D scatter plot"""
-    fig = go.Figure(data=[go.Scatter3d(
-        x=x1, y=x2, z=y,
-        mode='markers',
-        marker=dict(
-            size=5,
-            color=marker_color if isinstance(marker_color, str) else y,
-            colorscale='Viridis' if not isinstance(marker_color, str) else None,
-            opacity=0.7,
-            colorbar=dict(title=y_label) if not isinstance(marker_color, str) else None
-        ),
-        name='Data Points'
-    )])
-    
-    fig.update_layout(
-        title=title,
-        scene=dict(
-            xaxis_title=x1_label,
-            yaxis_title=x2_label,
-            zaxis_title=y_label
-        ),
-        template='plotly_white'
-    )
-    return fig
-
-def create_plotly_3d_surface(X1_mesh, X2_mesh, Y_mesh, x1, x2, y,
-                             x1_label='X1', x2_label='X2', y_label='Y', title=''):
-    """Create 3D surface plot with data points"""
-    fig = go.Figure()
-    
-    # Surface
-    fig.add_trace(go.Surface(
-        x=X1_mesh, y=X2_mesh, z=Y_mesh,
-        colorscale='Viridis',
-        opacity=0.7,
-        name='Regression Plane',
-        showscale=False
-    ))
-    
-    # Data points
-    fig.add_trace(go.Scatter3d(
-        x=x1, y=x2, z=y,
-        mode='markers',
-        marker=dict(size=4, color='red', opacity=0.8),
-        name='Data Points'
-    ))
-    
-    fig.update_layout(
-        title=title,
-        scene=dict(
-            xaxis_title=x1_label,
-            yaxis_title=x2_label,
-            zaxis_title=y_label,
-            camera=dict(eye=dict(x=1.5, y=-1.5, z=1.2))
-        ),
-        template='plotly_white'
-    )
-    return fig
-
-def create_plotly_residual_plot(y_pred, residuals, title='Residual Plot'):
-    """Create residual plot"""
-    fig = go.Figure()
-    
-    fig.add_trace(go.Scatter(
-        x=y_pred, y=residuals,
-        mode='markers',
-        marker=dict(size=8, color='blue', opacity=0.6),
-        name='Residuals'
-    ))
-    
-    fig.add_hline(y=0, line_dash='dash', line_color='red', line_width=2)
-    
-    fig.update_layout(
-        title=title,
-        xaxis_title='Fitted Values',
-        yaxis_title='Residuals',
-        template='plotly_white',
-        hovermode='closest'
-    )
-    return fig
-
-def create_plotly_bar(categories, values, title='', x_label='', y_label='',
-                     colors=None):
-    """Create bar chart"""
-    fig = go.Figure()
-    
-    fig.add_trace(go.Bar(
-        x=categories,
-        y=values,
-        marker_color=colors if colors else 'blue',
-        opacity=0.7,
-        text=[f'{v:.2f}' for v in values],
-        textposition='outside'
-    ))
-    
-    fig.update_layout(
-        title=title,
-        xaxis_title=x_label,
-        yaxis_title=y_label,
-        template='plotly_white'
-    )
-    return fig
-
-def create_plotly_distribution(x_vals, y_vals, title='', x_label='', fill_area=None):
-    """Create distribution plot"""
-    fig = go.Figure()
-    
-    fig.add_trace(go.Scatter(
-        x=x_vals, y=y_vals,
-        mode='lines',
-        line=dict(color='black', width=2),
-        name='Distribution'
-    ))
-    
-    if fill_area is not None:
-        mask = fill_area(x_vals)
-        fig.add_trace(go.Scatter(
-            x=x_vals[mask], y=y_vals[mask],
-            fill='tozeroy',
-            fillcolor='rgba(255, 0, 0, 0.3)',
-            line=dict(width=0),
-            showlegend=False
-        ))
-    
-    fig.update_layout(
-        title=title,
-        xaxis_title=x_label,
-        yaxis_title='Density',
-        template='plotly_white',
-        hovermode='x'
-    )
-    return fig
-
-# ---------------------------------------------------------
 # R-OUTPUT DISPLAY (Simplified text-based display)
 # ---------------------------------------------------------
 def create_r_output_display(model, feature_name="X"):
@@ -909,8 +722,10 @@ if regression_type == "📊 Multiple Regression":
         ax_3d_plane.set_title('Multiple Regression:\nEbene statt Gerade', fontsize=12, fontweight='bold')
         ax_3d_plane.view_init(elev=20, azim=-60)
         
-                st.plotly_chart(fig_3d_plane, use_container_width=True)
-        
+        plt.tight_layout()
+        st.pyplot(fig_3d_plane)
+        plt.close()
+
     # =========================================================
     # M2: DAS GRUNDMODELL
     # =========================================================
@@ -1041,8 +856,10 @@ if regression_type == "📊 Multiple Regression":
         ax_resid.set_ylabel('Residuen (e)', fontsize=12)
         ax_resid.set_title('Residuenplot: Prüfung der Annahmen', fontsize=13, fontweight='bold')
         ax_resid.grid(True, alpha=0.3)
-                st.plotly_chart(fig_resid, use_container_width=True)
-            
+        plt.tight_layout()
+        st.pyplot(fig_resid)
+        plt.close()
+    
     with col_m3_2:
         st.markdown("### 📊 Unsere Schätzungen")
         params_df = pd.DataFrame({
@@ -1093,8 +910,10 @@ if regression_type == "📊 Multiple Regression":
         ax_3d_resid.set_title('OLS: Minimierung der Residuen-Quadratsumme\n(Vertikale Abstände zur Ebene)', fontsize=12, fontweight='bold')
         ax_3d_resid.view_init(elev=20, azim=-60)
         
-                st.plotly_chart(fig_3d_resid, use_container_width=True)
-                
+        plt.tight_layout()
+        st.pyplot(fig_3d_resid)
+        plt.close()
+        
         st.info("""
         **💡 3D-Interpretation:**
         
@@ -1145,8 +964,10 @@ if regression_type == "📊 Multiple Regression":
         ax_var_mult.bar_label(bars, fmt='%.1f', padding=3)
         ax_var_mult.set_ylabel('Quadratsumme', fontsize=12)
         ax_var_mult.set_title(f'Varianzzerlegung: R² = {model_mult.rsquared:.4f}', fontsize=13, fontweight='bold')
-                st.plotly_chart(fig_var_mult, use_container_width=True)
-            
+        plt.tight_layout()
+        st.pyplot(fig_var_mult)
+        plt.close()
+    
     with col_m4_2:
         if show_formulas:
             st.markdown("### 📐 Adjustiertes R²")
@@ -1211,8 +1032,10 @@ if regression_type == "📊 Multiple Regression":
         ax2.view_init(elev=20, azim=-60)
         plt.colorbar(scatter2, ax=ax2, shrink=0.5, pad=0.1)
         
-                st.plotly_chart(fig_3d_var, use_container_width=True)
-                
+        plt.tight_layout()
+        st.pyplot(fig_3d_var)
+        plt.close()
+        
         st.info(f"""
         **💡 3D-Interpretation:**
         
@@ -1304,8 +1127,10 @@ if regression_type == "📊 Multiple Regression":
         ax_sens1.grid(True, alpha=0.3)
         ax_sens1.legend()
         
-                st.plotly_chart(fig_sens, use_container_width=True)
-        
+        plt.tight_layout()
+        st.pyplot(fig_sens)
+        plt.close()
+
     # =========================================================
     # M6: DUMMY-VARIABLEN
     # =========================================================
@@ -1436,8 +1261,10 @@ if regression_type == "📊 Multiple Regression":
             ax_3d_m7.view_init(elev=25, azim=-60)
             
             plt.colorbar(scatter, ax=ax_3d_m7, pad=0.1, label=y_name)
-                        st.plotly_chart(fig_3d_m7, use_container_width=True)
-                        
+            plt.tight_layout()
+            st.pyplot(fig_3d_m7)
+            plt.close()
+            
             st.info("""
             **💡 3D-Interpretation:**
             
@@ -1469,8 +1296,10 @@ if regression_type == "📊 Multiple Regression":
             
             plt.colorbar(im, ax=ax_corr)
             ax_corr.set_title('Korrelationsmatrix der Prädiktoren', fontsize=13, fontweight='bold')
-                        st.plotly_chart(fig_corr, use_container_width=True)
-                        
+            plt.tight_layout()
+            st.pyplot(fig_corr)
+            plt.close()
+            
             st.info(f"""
             **Korrelation(Preis, Werbung) = {corr_matrix[0,1]:.3f}**
             
@@ -1573,8 +1402,10 @@ if regression_type == "📊 Multiple Regression":
     axes[1, 1].set_title('Residuals vs Leverage\n(Einflussreiche Punkte)', fontsize=11, fontweight='bold')
     axes[1, 1].grid(True, alpha=0.3)
     
-        st.plotly_chart(fig_diag, use_container_width=True)
-        
+    plt.tight_layout()
+    st.pyplot(fig_diag)
+    plt.close()
+    
     col_m8_1, col_m8_2 = st.columns([1, 1])
     
     with col_m8_1:
@@ -1648,8 +1479,10 @@ if regression_type == "📊 Multiple Regression":
         ax_3d_resid_m8.view_init(elev=20, azim=-60)
         
         plt.colorbar(scatter_m8, ax=ax_3d_resid_m8, pad=0.1, label='Residuengrösse')
-                st.plotly_chart(fig_3d_resid_m8, use_container_width=True)
-                
+        plt.tight_layout()
+        st.pyplot(fig_3d_resid_m8)
+        plt.close()
+        
         st.info("""
         **💡 3D-Interpretation:**
         
@@ -1880,8 +1713,10 @@ elif regression_type == "📈 Einfache Regression":
             ax3.set_title(f'Bedingte Verteilung\nE(Y|X=1) = {cond_mean:.2f}', fontsize=12, fontweight='bold')
             ax3.view_init(elev=20, azim=-60)
         
-                        st.plotly_chart(fig_joint_3d, use_container_width=True)
-                    
+            plt.tight_layout()
+            st.pyplot(fig_joint_3d)
+            plt.close()
+        
         else:
             # === 2D VERSION (Original) ===
             fig_joint, axes = plt.subplots(1, 3, figsize=(16, 5))
@@ -1927,8 +1762,10 @@ elif regression_type == "📈 Einfache Regression":
             axes[2].legend()
             axes[2].grid(True, alpha=0.3)
         
-                        st.plotly_chart(fig_joint, use_container_width=True)
-            
+            plt.tight_layout()
+            st.pyplot(fig_joint)
+            plt.close()
+
     with col_joint2:
         if show_formulas:
             st.markdown("### Gemeinsame Verteilung")
@@ -1993,8 +1830,10 @@ elif regression_type == "📈 Einfache Regression":
         ax2.set_ylabel('Y')
         ax2.grid(True, alpha=0.3)
     
-                st.plotly_chart(fig_indep, use_container_width=True)
-        
+        plt.tight_layout()
+        st.pyplot(fig_indep)
+        plt.close()
+
     st.success("""
     **Merke:** Die Regression nutzt genau diese Struktur! Wenn X und Y abhängig sind, 
     können wir $E(Y|X=x)$ als Funktion von x modellieren – das ist die Regressionsgerade!
@@ -2059,8 +1898,10 @@ elif regression_type == "📈 Einfache Regression":
         ax1.scatter([x_mean], [y_mean_val], s=200, c='red', marker='X', zorder=5, label='Schwerpunkt (x̄, ȳ)')
         ax1.legend(loc='upper left')
     
-                st.plotly_chart(fig_scatter1, use_container_width=True)
-        
+        plt.tight_layout()
+        st.pyplot(fig_scatter1)
+        plt.close()
+
     st.success(f"""
     **Beobachtung:** Die Punkte scheinen einem aufsteigenden Trend zu folgen! 
     Der Schwerpunkt liegt bei ({x_mean:.2f}, {y_mean_val:.2f}).
@@ -2121,8 +1962,10 @@ elif regression_type == "📈 Einfache Regression":
             ax_cov.set_title('3D Kovarianz-Visualisierung: Säulenhöhe = Produkt der Abweichungen', 
                             fontsize=12, fontweight='bold')
         
-                        st.plotly_chart(fig_cov, use_container_width=True)
-                    else:
+            plt.tight_layout()
+            st.pyplot(fig_cov)
+            plt.close()
+        else:
             # 2D Original: Quadranten mit Rechtecken
             st.markdown("""
             Die Kovarianz misst, ob X und Y **gemeinsam** von ihren Mittelwerten abweichen:
@@ -2174,8 +2017,10 @@ elif regression_type == "📈 Einfache Regression":
             ax_cov.set_xlim(min(x) - 0.5, max(x) + 0.5)
             ax_cov.set_ylim(min(y) - 0.5, max(y) + 0.5)
         
-                        st.plotly_chart(fig_cov, use_container_width=True)
-            
+            plt.tight_layout()
+            st.pyplot(fig_cov)
+            plt.close()
+
     with col_cov2:
         if show_formulas:
             st.markdown("### Kovarianz (Population)")
@@ -2257,8 +2102,10 @@ elif regression_type == "📈 Einfache Regression":
     
         plt.suptitle('Der Korrelationskoeffizient r: Von -1 (perfekt negativ) bis +1 (perfekt positiv)', 
                     fontsize=14, fontweight='bold')
-                st.plotly_chart(fig_corr_examples, use_container_width=True)
-        
+        plt.tight_layout()
+        st.pyplot(fig_corr_examples)
+        plt.close()
+
     with col_corr2:
         if show_formulas:
             st.markdown("### Korrelation (Pearson)")
@@ -2325,8 +2172,10 @@ elif regression_type == "📈 Einfache Regression":
         ax_t_corr.legend()
         ax_t_corr.grid(True, alpha=0.3)
     
-                st.plotly_chart(fig_t_corr, use_container_width=True)
-        
+        plt.tight_layout()
+        st.pyplot(fig_t_corr)
+        plt.close()
+
     with col_ttest_corr2:
         if show_formulas:
             st.markdown("### Teststatistik")
@@ -2369,8 +2218,10 @@ elif regression_type == "📈 Einfache Regression":
             ax_rank.set_ylabel('Rang(Y)')
             ax_rank.grid(True, alpha=0.3)
         
-                        st.plotly_chart(fig_spear, use_container_width=True)
-                
+            plt.tight_layout()
+            st.pyplot(fig_spear)
+            plt.close()
+    
         with col_sp2:
             st.latex(r"r_s = 1 - \frac{6 \sum d_i^2}{n(n^2-1)}")
             st.markdown("wobei $d_i$ = Differenz der Ränge")
@@ -2439,8 +2290,10 @@ elif regression_type == "📈 Einfache Regression":
         ax_ols.legend(loc='upper left')
         ax_ols.grid(True, alpha=0.3)
     
-                st.plotly_chart(fig_ols, use_container_width=True)
-        
+        plt.tight_layout()
+        st.pyplot(fig_ols)
+        plt.close()
+
     with col_ols2:
         if show_formulas:
             st.markdown("### OLS-Schätzer:")
@@ -2516,8 +2369,10 @@ elif regression_type == "📈 Einfache Regression":
                            fontsize=12, fontweight='bold')
         ax_detail.legend(loc='upper left', fontsize=9)
     
-                st.plotly_chart(fig_detail, use_container_width=True)
-            else:
+        plt.tight_layout()
+        st.pyplot(fig_detail)
+        plt.close()
+    else:
         # 2D Original: Alle Annotationen
         fig_detail, ax_detail = plt.subplots(figsize=(14, 8))
 
@@ -2579,8 +2434,10 @@ elif regression_type == "📈 Einfache Regression":
         ax_detail.legend(loc='upper left', fontsize=10)
         ax_detail.grid(True, alpha=0.3)
     
-                st.plotly_chart(fig_detail, use_container_width=True)
-        
+        plt.tight_layout()
+        st.pyplot(fig_detail)
+        plt.close()
+
     # Erklärungstext
     col_exp1, col_exp2, col_exp3 = st.columns(3)
 
@@ -2725,8 +2582,10 @@ elif regression_type == "📈 Einfache Regression":
         ax_se.legend(loc='upper left')
         ax_se.grid(True, alpha=0.3)
     
-                st.plotly_chart(fig_se, use_container_width=True)
-        
+        plt.tight_layout()
+        st.pyplot(fig_se)
+        plt.close()
+
     with col_se2:
         if show_formulas:
             st.latex(r"s_e = \sqrt{\frac{SSE}{n-2}} = \sqrt{\frac{\sum(y_i - \hat{y}_i)^2}{n-2}}")
@@ -2801,8 +2660,10 @@ elif regression_type == "📈 Einfache Regression":
         ax_sb2.set_xlabel(x_label)
         ax_sb2.grid(True, alpha=0.3)
     
-                st.plotly_chart(fig_sb, use_container_width=True)
-        
+        plt.tight_layout()
+        st.pyplot(fig_sb)
+        plt.close()
+
     with col_sb2:
         if show_formulas:
             st.markdown("### s_b₁ (Std. Error Steigung)")
@@ -2910,8 +2771,10 @@ elif regression_type == "📈 Einfache Regression":
             ax3.set_zlabel('Varianz')
         
             plt.suptitle(f'3D Varianzzerlegung: SST = SSR + SSE → R² = {model.rsquared:.1%}', fontsize=14, fontweight='bold')
-                        st.plotly_chart(fig_var, use_container_width=True)
-                    else:
+            plt.tight_layout()
+            st.pyplot(fig_var)
+            plt.close()
+        else:
             # 2D Original: 3 Subplots nebeneinander
             fig_var, axes = plt.subplots(1, 3, figsize=(15, 5))
         
@@ -2946,8 +2809,10 @@ elif regression_type == "📈 Einfache Regression":
             axes[2].grid(True, alpha=0.3)
         
             plt.suptitle('Die Zerlegung der Varianz: SST = SSR + SSE', fontsize=14, fontweight='bold')
-                        st.plotly_chart(fig_var, use_container_width=True)
-            
+            plt.tight_layout()
+            st.pyplot(fig_var)
+            plt.close()
+
     with col_r2_2:
         if show_formulas:
             st.latex(r"R^2 = \frac{SSR}{SST} = 1 - \frac{SSE}{SST}")
@@ -2960,8 +2825,10 @@ elif regression_type == "📈 Einfache Regression":
         ax_r2.bar_label(bars, fmt='%.1f', padding=3)
         ax_r2.set_ylabel('Quadratsumme')
         ax_r2.set_title(f'R² = {model.rsquared:.1%}', fontweight='bold')
-                st.plotly_chart(fig_r2bar, use_container_width=True)
-            
+        plt.tight_layout()
+        st.pyplot(fig_r2bar)
+        plt.close()
+    
         st.success(f"""
         **{model.rsquared:.1%}** der Varianz in Y 
         wird durch X erklärt!
@@ -3074,8 +2941,10 @@ elif regression_type == "📈 Einfache Regression":
     axes[3, 1].legend(fontsize=8)
 
     plt.suptitle('Die 4 Gauss-Markov Annahmen: Korrekt (links) vs. Verletzt (rechts)', fontsize=16, fontweight='bold', y=1.01)
-        st.plotly_chart(fig_assumptions, use_container_width=True)
-    
+    plt.tight_layout()
+    st.pyplot(fig_assumptions)
+    plt.close()
+
     # Erklärungstext zu den Konsequenzen
     col_gm1, col_gm2 = st.columns(2)
 
@@ -3117,8 +2986,10 @@ elif regression_type == "📈 Einfache Regression":
             ax_diag1.set_ylabel('Residuen (e)')
             ax_diag1.set_title('Residuenplot: Prüfung (1) & (2)', fontweight='bold')
             ax_diag1.grid(True, alpha=0.3)
-                        st.plotly_chart(fig_diag1, use_container_width=True)
-                    
+            plt.tight_layout()
+            st.pyplot(fig_diag1)
+            plt.close()
+        
             st.markdown("""
             **Interpretation:**
             - Punkte sollten **zufällig** um 0 streuen
@@ -3133,8 +3004,10 @@ elif regression_type == "📈 Einfache Regression":
             probplot(model.resid, dist="norm", plot=ax_diag2)
             ax_diag2.set_title('Q-Q Plot: Prüfung (4) Normalität', fontweight='bold')
             ax_diag2.grid(True, alpha=0.3)
-                        st.plotly_chart(fig_diag2, use_container_width=True)
-                    
+            plt.tight_layout()
+            st.pyplot(fig_diag2)
+            plt.close()
+        
             st.markdown("""
             **Interpretation:**
             - Punkte sollten auf der **Diagonale** liegen
@@ -3169,8 +3042,10 @@ elif regression_type == "📈 Einfache Regression":
         ax_t.legend(loc='upper right')
         ax_t.grid(True, alpha=0.3)
     
-                st.plotly_chart(fig_t, use_container_width=True)
-        
+        plt.tight_layout()
+        st.pyplot(fig_t)
+        plt.close()
+
     with col_t2:
         if show_formulas:
             st.latex(r"t = \frac{b_1 - 0}{s_{b_1}}")
@@ -3217,8 +3092,10 @@ elif regression_type == "📈 Einfache Regression":
         ax_f.set_xlim(0, max(15, f_val + 5))
         ax_f.grid(True, alpha=0.3)
     
-                st.plotly_chart(fig_f, use_container_width=True)
-        
+        plt.tight_layout()
+        st.pyplot(fig_f)
+        plt.close()
+
     with col_f2:
         if show_formulas:
             st.latex(r"F = \frac{MSR}{MSE} = \frac{SSR/df_1}{SSE/df_2}")
@@ -3261,8 +3138,9 @@ elif regression_type == "📈 Einfache Regression":
 
     # Die annotierte R-Output Figur
     fig_r_output = create_r_output_figure(model, feature_name=x_label, figsize=(18, 13))
-    st.plotly_chart(fig_r_output, use_container_width=True)
-    
+    st.pyplot(fig_r_output)
+    plt.close(fig_r_output)
+
     # Zusätzlich noch den textuellen Output
     with st.expander("📜 Reiner Text-Output (zum Kopieren)"):
         st.code(model.summary().as_text(), language=None)
@@ -3399,8 +3277,10 @@ elif regression_type == "📈 Einfache Regression":
             ax_var.annotate(f'{pct_sse:.1f}%', xy=(sstr_anova + sse_anova/2, 0), fontsize=12, 
                            ha='center', va='center', color='white', fontweight='bold')
         
-                        st.plotly_chart(fig_anova_viz, use_container_width=True)
-                    else:
+            plt.tight_layout()
+            st.pyplot(fig_anova_viz)
+            plt.close()
+        else:
             # 2D Original: Boxplot + Varianzzerlegung
             fig_anova_viz, axes = plt.subplots(1, 2, figsize=(14, 6))
         
@@ -3456,8 +3336,10 @@ elif regression_type == "📈 Einfache Regression":
             axes[1].annotate(f'{pct_sse:.1f}%', xy=(sstr_anova + sse_anova/2, 0), fontsize=12, 
                             ha='center', va='center', color='white', fontweight='bold')
         
-                        st.plotly_chart(fig_anova_viz, use_container_width=True)
-            
+            plt.tight_layout()
+            st.pyplot(fig_anova_viz)
+            plt.close()
+
     with col_anova2:
         if show_formulas:
             st.markdown("### ANOVA-Formeln")
@@ -3582,8 +3464,10 @@ elif regression_type == "📈 Einfache Regression":
                           arrowprops=dict(facecolor='red', shrink=0.05), fontsize=10, color='red')
     
         plt.suptitle("🔍 Diagnose: Der Blick auf die Residuen", fontsize=16, fontweight='bold')
-                st.plotly_chart(fig_trichter, use_container_width=True)
-        
+        plt.tight_layout()
+        st.pyplot(fig_trichter)
+        plt.close()
+
     with col_hetero2:
         st.error("""
         ### ⚠️ Warum ist das schlimm?
@@ -3725,8 +3609,10 @@ elif regression_type == "📈 Einfache Regression":
         ax_3d.legend(fontsize=FONT_SIZES["legend"])
         ax_3d.view_init(elev=25, azim=-60)
     
-                st.plotly_chart(fig_3d, use_container_width=True)
-        
+        plt.tight_layout()
+        st.pyplot(fig_3d)
+        plt.close()
+
     with col_3d2:
         st.latex(r"Y_i | X_i = x \sim N(\beta_0 + \beta_1 x, \sigma^2)")
     
