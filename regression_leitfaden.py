@@ -382,27 +382,49 @@ regression_type = st.sidebar.radio(
     help="Wählen Sie zwischen einfacher (1 Prädiktor) und multipler (mehrere Prädiktoren) Regression"
 )
 
-# Zeige nur die relevante Navigation
-if regression_type == "📊 Multiple Regression":
-    # Bei multipler Regression: Zeige nur Multiple-Regression-Kapitel
-    st.sidebar.markdown("---")
-    with st.sidebar.expander("📍 Navigation", expanded=True):
-        nav_options_mult = [
-            "M1. Von der Linie zur Ebene",
-            "M2. Das Grundmodell",
-            "M3. OLS & Gauss-Markov",
-            "M4. Modellvalidierung",
-            "M5. Anwendungsbeispiel",
-            "M6. Dummy-Variablen",
-            "M7. Multikollinearität",
-            "M8. Residuen-Diagnostik",
-            "M9. Zusammenfassung"
-        ]
+# Gemeinsame Navigation (harmonisiert)
+nav_options_simple = [
+    "1.0 Einleitung",
+    "1.5 Mehrdimensionale Verteilungen",
+    "2.0 Das Fundament",
+    "2.5 Kovarianz & Korrelation",
+    "3.0 OLS-Methode",
+    "4.0 Güteprüfung",
+    "5.0 Signifikanz & Tests",
+    "5.5 ANOVA Gruppenvergleich",
+    "5.6 Heteroskedastizität",
+    "6.0 Fazit"
+]
+nav_options_mult = [
+    "M1. Von der Linie zur Ebene",
+    "M2. Das Grundmodell",
+    "M3. OLS & Gauss-Markov",
+    "M4. Modellvalidierung",
+    "M5. Anwendungsbeispiel",
+    "M6. Dummy-Variablen",
+    "M7. Multikollinearität",
+    "M8. Residuen-Diagnostik",
+    "M9. Zusammenfassung"
+]
+
+st.sidebar.markdown("---")
+with st.sidebar.expander("📍 Navigation", expanded=True):
+    if regression_type == "📈 Einfache Regression":
+        selected_chapter = st.radio("Kapitel auswählen:", nav_options_simple, index=0, label_visibility="collapsed", key="simple_nav")
+    else:
         selected_chapter = st.radio("Kapitel auswählen:", nav_options_mult, index=0, label_visibility="collapsed", key="mult_nav")
 
-    # === MULTIPLE REGRESSION DATA PREPARATION ===
-    st.sidebar.markdown("---")
-    with st.sidebar.expander("📊 Datensatz", expanded=False):
+# Gemeinsamer Datensatz-Block
+st.sidebar.markdown("---")
+with st.sidebar.expander("📊 Datensatz", expanded=True if regression_type == "📈 Einfache Regression" else False):
+    if regression_type == "📈 Einfache Regression":
+        dataset_choice = st.selectbox(
+            "Datensatz wählen:",
+            ["🏪 Elektronikmarkt (simuliert)", "🏙️ Städte-Umsatzstudie (75 Städte)", "🏠 Häuserpreise mit Pool (1000 Häuser)"],
+            index=0,
+            help="Wählen Sie zwischen einem simulierten Datensatz, Städtedaten oder Häuserpreisen mit Dummy-Variable (Pool)."
+        )
+    else:
         dataset_choice_mult = st.selectbox(
             "Datensatz wählen:",
             ["🏙️ Städte-Umsatzstudie (75 Städte)", "🏠 Häuserpreise mit Pool (1000 Häuser)", "🏪 Elektronikmarkt (erweitert)"],
@@ -410,11 +432,12 @@ if regression_type == "📊 Multiple Regression":
             help="Wählen Sie einen Datensatz für multiple Regression (2+ Prädiktoren).",
             key="mult_dataset"
         )
-    
-    # Generiere vollständigen Datensatz basierend auf Auswahl
+
+# === MULTIPLE REGRESSION DATA PREPARATION (gemeinsam strukturierte Sidebar) ===
+if regression_type == "📊 Multiple Regression":
     with st.spinner("Lade Datensatz..."):
         np.random.seed(42)
-        
+
         if dataset_choice_mult == "🏙️ Städte-Umsatzstudie (75 Städte)":
             n_mult = 75
             x2_preis = np.random.normal(5.69, 0.52, n_mult)
@@ -426,98 +449,58 @@ if regression_type == "📊 Multiple Regression":
             y_mult = y_base_mult + noise_mult
             y_mult = np.clip(y_mult, 62.4, 91.2)
             y_mult = (y_mult - np.mean(y_mult)) / np.std(y_mult) * 6.49 + 77.37
-            
-            # Multiple Regression Model
+
             X_mult = sm.add_constant(np.column_stack([x2_preis, x3_werbung]))
             model_mult = sm.OLS(y_mult, X_mult).fit()
             y_pred_mult = model_mult.predict(X_mult)
-            
-            # Variable names for display
+
             x1_name, x2_name, y_name = "Preis (CHF)", "Werbung (CHF1000)", "Umsatz (1000 CHF)"
-            
+
         elif dataset_choice_mult == "🏠 Häuserpreise mit Pool (1000 Häuser)":
             n_mult = 1000
-            # Wohnfläche in sqft/10
             x2_wohnflaeche = np.random.normal(25.21, 2.92, n_mult)
             x2_wohnflaeche = np.clip(x2_wohnflaeche, 20.03, 30.00)
-            
-            # Pool Dummy-Variable (20.4% haben Pool)
+
             x3_pool = np.random.binomial(1, 0.204, n_mult).astype(float)
-            
-            # Preis als Funktion von Wohnfläche und Pool
+
             y_base_mult = 50 + 7.5 * x2_wohnflaeche + 35 * x3_pool
             noise_mult = np.random.normal(0, 20, n_mult)
             y_mult = y_base_mult + noise_mult
             y_mult = np.clip(y_mult, 134.32, 345.20)
             y_mult = (y_mult - np.mean(y_mult)) / np.std(y_mult) * 42.19 + 247.66
-            
-            # Rename for consistency  
-            x2_preis = x2_wohnflaeche  # Use x2_preis as primary predictor variable
-            x3_werbung = x3_pool  # Use x3_werbung as secondary predictor variable
-            
-            # Multiple Regression Model
+
+            x2_preis = x2_wohnflaeche
+            x3_werbung = x3_pool
+
             X_mult = sm.add_constant(np.column_stack([x2_preis, x3_werbung]))
             model_mult = sm.OLS(y_mult, X_mult).fit()
             y_pred_mult = model_mult.predict(X_mult)
-            
-            # Variable names for display
+
             x1_name, x2_name, y_name = "Wohnfläche (sqft/10)", "Pool (0/1)", "Preis (USD)"
-            
+
         else:  # Elektronikmarkt (erweitert)
             n_mult = 50
-            # Verkaufsfläche in 100qm
             x2_flaeche = np.random.uniform(2, 12, n_mult)
-            
-            # Marketing-Budget in 10k€
             x3_marketing = np.random.uniform(0.5, 5.0, n_mult)
-            
-            # Umsatz als Funktion von Fläche und Marketing
+
             y_base_mult = 0.6 + 0.48 * x2_flaeche + 0.15 * x3_marketing
             noise_mult = np.random.normal(0, 0.35, n_mult)
             y_mult = y_base_mult + noise_mult
-            
-            # Rename for consistency
+
             x2_preis = x2_flaeche
             x3_werbung = x3_marketing
-            
-            # Multiple Regression Model
+
             X_mult = sm.add_constant(np.column_stack([x2_preis, x3_werbung]))
             model_mult = sm.OLS(y_mult, X_mult).fit()
             y_pred_mult = model_mult.predict(X_mult)
-            
-            # Variable names for display
+
             x1_name, x2_name, y_name = "Verkaufsfläche (100qm)", "Marketing (10k€)", "Umsatz (Mio. €)"
 
-# Bei einfacher Regression: Normale Sidebar weiterverwenden
-if regression_type == "📈 Einfache Regression":
-    # === NAVIGATION ===
     st.sidebar.markdown("---")
-    with st.sidebar.expander("📍 Navigation", expanded=True):
-        nav_options = [
-            "1.0 Einleitung",
-            "1.5 Mehrdimensionale Verteilungen",
-            "2.0 Das Fundament",
-            "2.5 Kovarianz & Korrelation",
-            "3.0 OLS-Methode",
-            "4.0 Güteprüfung",
-            "5.0 Signifikanz & Tests",
-            "5.5 ANOVA Gruppenvergleich",
-            "5.6 Heteroskedastizität",
-            "6.0 Fazit"
-        ]
-        selected_chapter = st.radio("Kapitel auswählen:", nav_options, index=0, label_visibility="collapsed", key="simple_nav")
-
-st.sidebar.markdown("---")
-
-# === DATENSATZ-AUSWAHL === (nur bei einfacher Regression)
-if regression_type == "📈 Einfache Regression":
-    with st.sidebar.expander("📊 Datensatz", expanded=True):
-        dataset_choice = st.selectbox(
-            "Datensatz wählen:",
-            ["🏪 Elektronikmarkt (simuliert)", "🏙️ Städte-Umsatzstudie (75 Städte)", "🏠 Häuserpreise mit Pool (1000 Häuser)"],
-            index=0,
-            help="Wählen Sie zwischen einem simulierten Datensatz, Städtedaten oder Häuserpreisen mit Dummy-Variable (Pool)."
-        )
+    with st.sidebar.expander("🔧 Anzeigeoptionen", expanded=False):
+        show_formulas = st.checkbox("Formeln anzeigen", value=True,
+                                    help="Zeige mathematische Formeln in der Anleitung")
+        show_true_line = False
 
 # === GEMEINSAME PARAMETER-SEKTION === (nur bei einfacher Regression)
 if regression_type == "📈 Einfache Regression":
