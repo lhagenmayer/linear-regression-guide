@@ -3346,13 +3346,36 @@ elif regression_type == "📈 Einfache Regression":
             """)
     
         with col_diag2:
-            # Q-Q Plot (Normalität)
+            # Q-Q Plot (Normalität) with plotly
             from scipy.stats import probplot
-            fig_diag2, ax_diag2 = plt.subplots(figsize=(8, 5))
-            probplot(model.resid, dist="norm", plot=ax_diag2)
-            ax_diag2.set_title('Q-Q Plot: Prüfung (4) Normalität', fontweight='bold')
-            ax_diag2.grid(True, alpha=0.3)
-                        st.plotly_chart(fig_diag2, use_container_width=True)
+            qq = probplot(model.resid, dist="norm")
+            
+            fig_diag2 = go.Figure()
+            
+            fig_diag2.add_trace(go.Scatter(
+                x=qq[0][0], y=qq[0][1],
+                mode='markers',
+                marker=dict(size=6, color='blue', opacity=0.6),
+                name='Data'
+            ))
+            
+            # Add reference line
+            fig_diag2.add_trace(go.Scatter(
+                x=qq[0][0], y=qq[1][1] + qq[1][0]*qq[0][0],
+                mode='lines',
+                line=dict(color='red', dash='dash', width=2),
+                name='Reference Line'
+            ))
+            
+            fig_diag2.update_layout(
+                title='Q-Q Plot: Prüfung (4) Normalität',
+                xaxis_title='Theoretical Quantiles',
+                yaxis_title='Sample Quantiles',
+                template='plotly_white',
+                showlegend=False
+            )
+            
+            st.plotly_chart(fig_diag2, use_container_width=True)
                     
             st.markdown("""
             **Interpretation:**
@@ -3367,28 +3390,52 @@ elif regression_type == "📈 Einfache Regression":
     col_t1, col_t2 = st.columns([2, 1])
 
     with col_t1:
-        fig_t, ax_t = plt.subplots(figsize=(12, 6))
-    
+        # Create t-distribution plot with plotly
         x_t = np.linspace(-5, max(5, abs(t_val) + 2), 300)
         y_t = stats.t.pdf(x_t, df=df_resid)
-    
-        ax_t.plot(x_t, y_t, 'k-', linewidth=2.5, label=f't-Verteilung (df={df_resid})')
-        ax_t.fill_between(x_t, y_t, where=(abs(x_t) > abs(t_val)), 
-                         color='red', alpha=0.4, label=f'p-Wert = {model.pvalues[1]:.4g}')
-    
+        
+        fig_t = go.Figure()
+        
+        # Main distribution curve
+        fig_t.add_trace(go.Scatter(
+            x=x_t, y=y_t,
+            mode='lines',
+            line=dict(color='black', width=3),
+            name=f't-Verteilung (df={df_resid})'
+        ))
+        
+        # Shaded p-value regions
+        mask = abs(x_t) > abs(t_val)
+        fig_t.add_trace(go.Scatter(
+            x=x_t[mask], y=y_t[mask],
+            fill='tozeroy',
+            fillcolor='rgba(255, 0, 0, 0.3)',
+            line=dict(width=0),
+            name=f'p-Wert = {model.pvalues[1]:.4g}',
+            showlegend=True
+        ))
+        
+        # Critical values
         t_crit = stats.t.ppf(0.975, df=df_resid)
-        ax_t.axvline(t_crit, color='orange', linestyle='--', linewidth=2, alpha=0.7)
-        ax_t.axvline(-t_crit, color='orange', linestyle='--', linewidth=2, alpha=0.7, label=f'Kritische Werte (α=0.05): ±{t_crit:.2f}')
-        ax_t.axvline(t_val, color='blue', linewidth=4, label=f'Unser t-Wert = {t_val:.2f}')
+        fig_t.add_vline(x=t_crit, line_dash='dash', line_color='orange',
+                       line_width=2, opacity=0.7)
+        fig_t.add_vline(x=-t_crit, line_dash='dash', line_color='orange',
+                       line_width=2, opacity=0.7,
+                       annotation_text=f'Kritische Werte: ±{t_crit:.2f}')
+        
+        # Observed t-value
+        fig_t.add_vline(x=t_val, line_color='blue', line_width=4,
+                       annotation_text=f'Unser t-Wert = {t_val:.2f}')
+        
+        fig_t.update_layout(
+            title=f'H₀: β₁ = 0 vs. H₁: β₁ ≠ 0<br>t = b₁/s_b₁ = {b1:.4f}/{sb1:.4f} = {t_val:.2f}',
+            xaxis_title='t-Wert',
+            yaxis_title='Dichte',
+            template='plotly_white',
+            hovermode='x'
+        )
     
-        ax_t.set_xlabel('t-Wert', fontsize=12)
-        ax_t.set_ylabel('Dichte', fontsize=12)
-        ax_t.set_title(f'H₀: β₁ = 0 vs. H₁: β₁ ≠ 0\nt = b₁/s_b₁ = {b1:.4f}/{sb1:.4f} = {t_val:.2f}', 
-                      fontsize=13, fontweight='bold')
-        ax_t.legend(loc='upper right')
-        ax_t.grid(True, alpha=0.3)
-    
-                st.plotly_chart(fig_t, use_container_width=True)
+        st.plotly_chart(fig_t, use_container_width=True)
         
     with col_t2:
         if show_formulas:
@@ -3415,26 +3462,49 @@ elif regression_type == "📈 Einfache Regression":
     col_f1, col_f2 = st.columns([2, 1])
 
     with col_f1:
-        fig_f, ax_f = plt.subplots(figsize=(12, 6))
-    
+        # Create F-distribution plot with plotly
         x_f = np.linspace(0, max(10, f_val + 5), 300)
         y_f = stats.f.pdf(x_f, dfn=1, dfd=df_resid)
-    
-        ax_f.plot(x_f, y_f, 'k-', linewidth=2.5, label=f'F-Verteilung (df₁=1, df₂={df_resid})')
-        ax_f.fill_between(x_f, y_f, where=(x_f > f_val), 
-                         color='purple', alpha=0.4, label=f'p-Wert = {model.f_pvalue:.4g}')
-    
+        
+        fig_f = go.Figure()
+        
+        # Main distribution curve
+        fig_f.add_trace(go.Scatter(
+            x=x_f, y=y_f,
+            mode='lines',
+            line=dict(color='black', width=3),
+            name=f'F-Verteilung (df₁=1, df₂={df_resid})'
+        ))
+        
+        # Shaded p-value region
+        mask = x_f > f_val
+        fig_f.add_trace(go.Scatter(
+            x=x_f[mask], y=y_f[mask],
+            fill='tozeroy',
+            fillcolor='rgba(128, 0, 128, 0.3)',
+            line=dict(width=0),
+            name=f'p-Wert = {model.f_pvalue:.4g}',
+            showlegend=True
+        ))
+        
+        # Critical value
         f_crit = stats.f.ppf(0.95, dfn=1, dfd=df_resid)
-        ax_f.axvline(f_crit, color='orange', linestyle='--', linewidth=2, alpha=0.7, label=f'Kritisch (α=0.05): {f_crit:.2f}')
-        ax_f.axvline(f_val, color='purple', linewidth=4, label=f'Unser F-Wert = {f_val:.2f}')
-    
-        ax_f.set_xlabel('F-Wert', fontsize=12)
-        ax_f.set_ylabel('Dichte', fontsize=12)
-        ax_f.set_title(f'H₀: R² = 0 (Modell erklärt nichts)\nF = MSR/MSE = {msr:.2f}/{mse:.2f} = {f_val:.2f}', 
-                      fontsize=13, fontweight='bold')
-        ax_f.legend(loc='upper right')
-        ax_f.set_xlim(0, max(15, f_val + 5))
-        ax_f.grid(True, alpha=0.3)
+        fig_f.add_vline(x=f_crit, line_dash='dash', line_color='orange',
+                       line_width=2, opacity=0.7,
+                       annotation_text=f'Kritisch: {f_crit:.2f}')
+        
+        # Observed F-value
+        fig_f.add_vline(x=f_val, line_color='purple', line_width=4,
+                       annotation_text=f'Unser F-Wert = {f_val:.2f}')
+        
+        fig_f.update_layout(
+            title=f'H₀: R² = 0 (Modell erklärt nichts)<br>F = MSR/MSE = {msr:.2f}/{mse:.2f} = {f_val:.2f}',
+            xaxis_title='F-Wert',
+            yaxis_title='Dichte',
+            xaxis_range=[0, max(15, f_val + 5)],
+            template='plotly_white',
+            hovermode='x'
+        )
     
                 st.plotly_chart(fig_f, use_container_width=True)
         
