@@ -3502,15 +3502,27 @@ elif regression_type == "📈 Einfache Regression":
         col_diag1, col_diag2 = st.columns(2)
     
         with col_diag1:
-            # Residuenplot (Homoskedastizität & E(ε)=0)
-            fig_diag1, ax_diag1 = plt.subplots(figsize=(8, 5))
-            ax_diag1.scatter(y_pred, model.resid, s=60, c='blue', alpha=0.6)
-            ax_diag1.axhline(0, color='red', linestyle='--', linewidth=2)
-            ax_diag1.set_xlabel('Vorhergesagte Werte (ŷ)')
-            ax_diag1.set_ylabel('Residuen (e)')
-            ax_diag1.set_title('Residuenplot: Prüfung (1) & (2)', fontweight='bold')
-            ax_diag1.grid(True, alpha=0.3)
-                        st.plotly_chart(fig_diag1, use_container_width=True)
+            # Create residual plot with plotly
+            fig_diag1 = go.Figure()
+            
+            fig_diag1.add_trace(go.Scatter(
+                x=y_pred, y=model.resid,
+                mode='markers',
+                marker=dict(size=7, color='blue', opacity=0.6),
+                showlegend=False
+            ))
+            
+            fig_diag1.add_hline(y=0, line_dash='dash', line_color='red', line_width=2)
+            
+            fig_diag1.update_layout(
+                title='Residuenplot: Prüfung (1) & (2)',
+                xaxis_title='Vorhergesagte Werte (ŷ)',
+                yaxis_title='Residuen (e)',
+                template='plotly_white',
+                hovermode='closest'
+            )
+            
+            st.plotly_chart(fig_diag1, use_container_width=True)
                     
             st.markdown("""
             **Interpretation:**
