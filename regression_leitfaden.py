@@ -1030,11 +1030,7 @@ if regression_type == "📊 Multiple Regression":
         
         # Residuen-Plot
         fig_resid = create_plotly_residual_plot(y_pred_mult, model_mult.resid, title="Residual Plot")
-        ax_resid.set_xlabel('Vorhergesagte Werte (ŷ)', fontsize=12)
-        ax_resid.set_ylabel('Residuen (e)', fontsize=12)
-        ax_resid.set_title('Residuenplot: Prüfung der Annahmen', fontsize=13, fontweight='bold')
-        ax_resid.grid(True, alpha=0.3)
-                st.plotly_chart(fig_resid, use_container_width=True)
+        st.plotly_chart(fig_resid, use_container_width=True)
             
     with col_m3_2:
         st.markdown("### 📊 Unsere Schätzungen")
@@ -1154,11 +1150,11 @@ if regression_type == "📊 Multiple Regression":
         """)
         
         # Varianzzerlegung
-        fig_var_mult = create_plotly_bar('SST\n(Total)', 'SSR\n(Erklärt)', 'SSE\n(Unerklärt)', sst_mult, ssr_mult, sse_mult, colors=['gray', 'green', 'red'], title="Variance Decomposition"), alpha=0.7, edgecolor='black')
-        ax_var_mult.bar_label(bars, fmt='%.1f', padding=3)
-        ax_var_mult.set_ylabel('Quadratsumme', fontsize=12)
-        ax_var_mult.set_title(f'Varianzzerlegung: R² = {model_mult.rsquared:.4f}', fontsize=13, fontweight='bold')
-                st.plotly_chart(fig_var_mult, use_container_width=True)
+        fig_var_mult = create_plotly_bar('SST\n(Total)', 'SSR\n(Erklärt)', 'SSE\n(Unerklärt)', 
+                                         sst_mult, ssr_mult, sse_mult, 
+                                         colors=['gray', 'green', 'red'], 
+                                         title=f"Varianzzerlegung: R² = {model_mult.rsquared:.4f}")
+        st.plotly_chart(fig_var_mult, use_container_width=True)
             
     with col_m4_2:
         if show_formulas:
@@ -3606,12 +3602,12 @@ elif regression_type == "📈 Einfache Regression":
             st.latex(f"R^2 = \\frac{{{ssr:.2f}}}{{{sst:.2f}}} = {model.rsquared:.4f}")
     
         # R² als Balken
-        fig_r2bar = create_plotly_bar('SST\n(Total)', 'SSR\n(Erklärt)', 'SSE\n(Unerklärt)', sst, ssr, sse, colors=['gray', 'green', 'red'], title="Variance Decomposition"), alpha=0.7, edgecolor='black')
-        ax_r2.bar_label(bars, fmt='%.1f', padding=3)
-        ax_r2.set_ylabel('Quadratsumme')
-        ax_r2.set_title(f'R² = {model.rsquared:.1%}', fontweight='bold')
-                st.plotly_chart(fig_r2bar, use_container_width=True)
-            
+        fig_r2bar = create_plotly_bar('SST\n(Total)', 'SSR\n(Erklärt)', 'SSE\n(Unerklärt)', 
+                                      sst, ssr, sse, 
+                                      colors=['gray', 'green', 'red'], 
+                                      title=f"R² = {model.rsquared:.1%}")
+        st.plotly_chart(fig_r2bar, use_container_width=True)
+        
         st.success(f"""
         **{model.rsquared:.1%}** der Varianz in Y 
         wird durch X erklärt!
@@ -4050,7 +4046,7 @@ elif regression_type == "📈 Einfache Regression":
             hovermode='x'
         )
     
-                st.plotly_chart(fig_f, use_container_width=True)
+        st.plotly_chart(fig_f, use_container_width=True)
         
     with col_f2:
         if show_formulas:
