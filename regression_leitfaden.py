@@ -408,11 +408,17 @@ nav_options_mult = [
 ]
 
 st.sidebar.markdown("---")
-with st.sidebar.expander("📍 Navigation", expanded=True):
+with st.sidebar.expander("📍 Inhaltsverzeichnis", expanded=True):
     if regression_type == "📈 Einfache Regression":
-        selected_chapter = st.radio("Kapitel auswählen:", nav_options_simple, index=0, label_visibility="collapsed", key="simple_nav")
+        # Bei einfacher Regression: Alle Kapitel werden auf einmal angezeigt
+        st.markdown("**Alle Kapitel werden geladen:**")
+        for chapter in nav_options_simple:
+            st.markdown(f"• {chapter}")
     else:
-        selected_chapter = st.radio("Kapitel auswählen:", nav_options_mult, index=0, label_visibility="collapsed", key="mult_nav")
+        # Bei multipler Regression: Alle Kapitel werden auf einmal angezeigt
+        st.markdown("**Alle Kapitel werden geladen:**")
+        for chapter in nav_options_mult:
+            st.markdown(f"• {chapter}")
 
 # Gemeinsamer Datensatz-Block
 st.sidebar.markdown("---")
@@ -765,632 +771,625 @@ if regression_type == "📊 Multiple Regression":
     # =========================================================
     # M1: VON DER LINIE ZUR EBENE
     # =========================================================
-    if selected_chapter == "M1. Von der Linie zur Ebene":
-        st.markdown("---")
-        st.markdown('<p class="section-header">M1. Von der Linie zur Ebene: Der konzeptionelle Sprung</p>', unsafe_allow_html=True)
-        
-        col_m1_1, col_m1_2 = st.columns([1.5, 1])
-        
-        with col_m1_1:
-            st.markdown("""
-            Bei der **einfachen linearen Regression** haben wir gesehen, wie eine Gerade den Zusammenhang 
-            zwischen **einer** unabhängigen Variable X und der abhängigen Variable Y beschreibt.
-            
-            In der Praxis hängt aber eine Zielvariable oft von **mehreren Faktoren** ab:
-            - Umsatz ← Preis, Werbung, Standort, Saison, ...
-            - Gehalt ← Ausbildung, Erfahrung, Branche, ...
-            - Aktienkurs ← Zinsen, Inflation, Gewinn, ...
-            
-            Die **multiple Regression** erweitert die einfache Regression, um diese Komplexität zu modellieren.
-            """)
-            
-            st.info("""
-            **🔑 Der zentrale Unterschied:**
-            
-            | Aspekt | Einfache Regression | Multiple Regression |
-            |--------|---------------------|---------------------|
-            | **Prädiktoren** | 1 Variable (X) | K Variablen (X₁, X₂, ..., Xₖ) |
-            | **Geometrie** | Gerade in 2D | Ebene/Hyperebene in (K+1)D |
-            | **Gleichung** | ŷ = b₀ + b₁x | ŷ = b₀ + b₁x₁ + b₂x₂ + ... + bₖxₖ |
-            | **Interpretation** | "Pro Einheit X" | "Bei Konstanthaltung der anderen" |
-            """)
-        
-        with col_m1_2:
-            # 3D Visualisierung: Ebene statt Linie
-            fig_3d_plane = plt.figure(figsize=(10, 8))
-            ax_3d_plane = fig_3d_plane.add_subplot(111, projection='3d')
-            
-            # Erstelle Mesh für die Ebene
-            x1_range = np.linspace(x2_preis.min(), x2_preis.max(), 20)
-            x2_range = np.linspace(x3_werbung.min(), x3_werbung.max(), 20)
-            X1_mesh, X2_mesh = np.meshgrid(x1_range, x2_range)
-            
-            # Berechne Ebene
-            Y_mesh = model_mult.params[0] + model_mult.params[1]*X1_mesh + model_mult.params[2]*X2_mesh
-            
-            # Plotte Ebene
-            ax_3d_plane.plot_surface(X1_mesh, X2_mesh, Y_mesh, alpha=0.3, cmap='viridis')
-            
-            # Plotte Datenpunkte
-            ax_3d_plane.scatter(x2_preis, x3_werbung, y_mult, c='red', s=50, alpha=0.7, edgecolor='white')
-            
-            ax_3d_plane.set_xlabel(x1_name, fontsize=10)
-            ax_3d_plane.set_ylabel(x2_name, fontsize=10)
-            ax_3d_plane.set_zlabel(y_name, fontsize=10)
-            ax_3d_plane.set_title('Multiple Regression:\nEbene statt Gerade', fontsize=12, fontweight='bold')
-            ax_3d_plane.view_init(elev=20, azim=-60)
-            
-            plt.tight_layout()
-            st.pyplot(fig_3d_plane)
-            plt.close()
+    st.markdown("---")
+    st.markdown('<p class="section-header">M1. Von der Linie zur Ebene: Der konzeptionelle Sprung</p>', unsafe_allow_html=True)
     
+    col_m1_1, col_m1_2 = st.columns([1.5, 1])
+    
+    with col_m1_1:
+        st.markdown("""
+        Bei der **einfachen linearen Regression** haben wir gesehen, wie eine Gerade den Zusammenhang 
+        zwischen **einer** unabhängigen Variable X und der abhängigen Variable Y beschreibt.
+        
+        In der Praxis hängt aber eine Zielvariable oft von **mehreren Faktoren** ab:
+        - Umsatz ← Preis, Werbung, Standort, Saison, ...
+        - Gehalt ← Ausbildung, Erfahrung, Branche, ...
+        - Aktienkurs ← Zinsen, Inflation, Gewinn, ...
+        
+        Die **multiple Regression** erweitert die einfache Regression, um diese Komplexität zu modellieren.
+        """)
+        
+        st.info("""
+        **🔑 Der zentrale Unterschied:**
+        
+        | Aspekt | Einfache Regression | Multiple Regression |
+        |--------|---------------------|---------------------|
+        | **Prädiktoren** | 1 Variable (X) | K Variablen (X₁, X₂, ..., Xₖ) |
+        | **Geometrie** | Gerade in 2D | Ebene/Hyperebene in (K+1)D |
+        | **Gleichung** | ŷ = b₀ + b₁x | ŷ = b₀ + b₁x₁ + b₂x₂ + ... + bₖxₖ |
+        | **Interpretation** | "Pro Einheit X" | "Bei Konstanthaltung der anderen" |
+        """)
+    
+    with col_m1_2:
+        # 3D Visualisierung: Ebene statt Linie
+        fig_3d_plane = plt.figure(figsize=(10, 8))
+        ax_3d_plane = fig_3d_plane.add_subplot(111, projection='3d')
+        
+        # Erstelle Mesh für die Ebene
+        x1_range = np.linspace(x2_preis.min(), x2_preis.max(), 20)
+        x2_range = np.linspace(x3_werbung.min(), x3_werbung.max(), 20)
+        X1_mesh, X2_mesh = np.meshgrid(x1_range, x2_range)
+        
+        # Berechne Ebene
+        Y_mesh = model_mult.params[0] + model_mult.params[1]*X1_mesh + model_mult.params[2]*X2_mesh
+        
+        # Plotte Ebene
+        ax_3d_plane.plot_surface(X1_mesh, X2_mesh, Y_mesh, alpha=0.3, cmap='viridis')
+        
+        # Plotte Datenpunkte
+        ax_3d_plane.scatter(x2_preis, x3_werbung, y_mult, c='red', s=50, alpha=0.7, edgecolor='white')
+        
+        ax_3d_plane.set_xlabel(x1_name, fontsize=10)
+        ax_3d_plane.set_ylabel(x2_name, fontsize=10)
+        ax_3d_plane.set_zlabel(y_name, fontsize=10)
+        ax_3d_plane.set_title('Multiple Regression:\nEbene statt Gerade', fontsize=12, fontweight='bold')
+        ax_3d_plane.view_init(elev=20, azim=-60)
+        
+        plt.tight_layout()
+        st.pyplot(fig_3d_plane)
+        plt.close()
+
     # =========================================================
     # M2: DAS GRUNDMODELL
     # =========================================================
-    elif selected_chapter == "M2. Das Grundmodell":
-        st.markdown("---")
-        st.markdown('<p class="section-header">M2. Das Grundmodell der Multiplen Regression</p>', unsafe_allow_html=True)
+    st.markdown("---")
+    st.markdown('<p class="section-header">M2. Das Grundmodell der Multiplen Regression</p>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    Das multiple Regressionsmodell erweitert die einfache lineare Regression um **K unabhängige Variablen**.
+    """)
+    
+    if show_formulas:
+        st.markdown("### 📐 Das allgemeine Modell")
+        st.latex(r"y_i = \beta_0 + \beta_1 \cdot x_{1i} + \beta_2 \cdot x_{2i} + \cdots + \beta_K \cdot x_{Ki} + \varepsilon_i")
         
+        st.markdown(f"### 📊 Unser Beispiel: {dataset_choice_mult}")
+        if dataset_choice_mult == "🏙️ Städte-Umsatzstudie (75 Städte)":
+            st.latex(r"\text{Umsatz}_i = \beta_0 + \beta_1 \cdot \text{Preis}_i + \beta_2 \cdot \text{Werbung}_i + \varepsilon_i")
+        elif dataset_choice_mult == "🏠 Häuserpreise mit Pool (1000 Häuser)":
+            st.latex(r"\text{Preis}_i = \beta_0 + \beta_1 \cdot \text{Wohnfläche}_i + \beta_2 \cdot \text{Pool}_i + \varepsilon_i")
+        else:
+            st.latex(r"\text{Umsatz}_i = \beta_0 + \beta_1 \cdot \text{Fläche}_i + \beta_2 \cdot \text{Marketing}_i + \varepsilon_i")
+    
+    col_m2_1, col_m2_2 = st.columns([1, 1])
+    
+    with col_m2_1:
+        st.markdown("### 📋 Modellkomponenten")
         st.markdown("""
-        Das multiple Regressionsmodell erweitert die einfache lineare Regression um **K unabhängige Variablen**.
+        | Symbol | Bedeutung | Beispiel |
+        |--------|-----------|----------|
+        | **yᵢ** | Zielvariable (abhängig) | Umsatz in Stadt i |
+        | **xₖᵢ** | k-ter Prädiktor (unabhängig) | Preis, Werbung in Stadt i |
+        | **β₀** | Achsenabschnitt (Intercept) | Basis-Umsatz ohne Einflüsse |
+        | **βₖ** | Partieller Regressionskoeffizient | Effekt von xₖ **ceteris paribus** |
+        | **εᵢ** | Störgrösse | Alle anderen Einflüsse |
         """)
         
-        if show_formulas:
-            st.markdown("### 📐 Das allgemeine Modell")
-            st.latex(r"y_i = \beta_0 + \beta_1 \cdot x_{1i} + \beta_2 \cdot x_{2i} + \cdots + \beta_K \cdot x_{Ki} + \varepsilon_i")
-            
-            st.markdown(f"### 📊 Unser Beispiel: {dataset_choice_mult}")
-            if dataset_choice_mult == "🏙️ Städte-Umsatzstudie (75 Städte)":
-                st.latex(r"\text{Umsatz}_i = \beta_0 + \beta_1 \cdot \text{Preis}_i + \beta_2 \cdot \text{Werbung}_i + \varepsilon_i")
-            elif dataset_choice_mult == "🏠 Häuserpreise mit Pool (1000 Häuser)":
-                st.latex(r"\text{Preis}_i = \beta_0 + \beta_1 \cdot \text{Wohnfläche}_i + \beta_2 \cdot \text{Pool}_i + \varepsilon_i")
-            else:
-                st.latex(r"\text{Umsatz}_i = \beta_0 + \beta_1 \cdot \text{Fläche}_i + \beta_2 \cdot \text{Marketing}_i + \varepsilon_i")
+        st.success(f"""
+        **🎯 Unser geschätztes Modell:**
         
-        col_m2_1, col_m2_2 = st.columns([1, 1])
-        
-        with col_m2_1:
-            st.markdown("### 📋 Modellkomponenten")
-            st.markdown("""
-            | Symbol | Bedeutung | Beispiel |
-            |--------|-----------|----------|
-            | **yᵢ** | Zielvariable (abhängig) | Umsatz in Stadt i |
-            | **xₖᵢ** | k-ter Prädiktor (unabhängig) | Preis, Werbung in Stadt i |
-            | **β₀** | Achsenabschnitt (Intercept) | Basis-Umsatz ohne Einflüsse |
-            | **βₖ** | Partieller Regressionskoeffizient | Effekt von xₖ **ceteris paribus** |
-            | **εᵢ** | Störgrösse | Alle anderen Einflüsse |
-            """)
-            
-            st.success(f"""
-            **🎯 Unser geschätztes Modell:**
-            
-            Umsatz = {model_mult.params[0]:.2f} 
-                     {model_mult.params[1]:+.2f} · Preis 
-                     {model_mult.params[2]:+.2f} · Werbung
-            """)
-        
-        with col_m2_2:
-            st.markdown("### 🔬 Partielle Koeffizienten")
-            st.markdown(f"""
-            **β₁ (Preis) = {model_mult.params[1]:.3f}**
-            
-            → Pro CHF Preiserhöhung sinkt der Umsatz um {abs(model_mult.params[1]):.2f} Tausend CHF,
-            **wenn Werbung konstant gehalten wird**.
-            
-            **β₂ (Werbung) = {model_mult.params[2]:.3f}**
-            
-            → Pro 1000 CHF mehr Werbung steigt der Umsatz um {model_mult.params[2]:.2f} Tausend CHF,
-            **wenn Preis konstant gehalten wird**.
-            """)
-            
-            st.warning("""
-            **⚠️ Wichtig: Ceteris Paribus**
-            
-            Die Interpretation "bei Konstanthaltung der anderen Variablen" ist zentral!
-            
-            Anders als bei der einfachen Regression misst βₖ den **isolierten Effekt**
-            einer Variable.
-            """)
-        
-        # Daten anzeigen
-        st.markdown("### 📊 Die Daten")
-        df_mult = pd.DataFrame({
-            x1_name: x2_preis,
-            x2_name: x3_werbung,
-            y_name: y_mult
-        })
-        st.dataframe(df_mult.head(15).style.format({
-            'Preis (CHF)': '{:.2f}',
-            'Werbung (CHF1000)': '{:.2f}',
-            'Umsatz (1000 CHF)': '{:.2f}'
-        }), width='stretch')
+        Umsatz = {model_mult.params[0]:.2f} 
+                 {model_mult.params[1]:+.2f} · Preis 
+                 {model_mult.params[2]:+.2f} · Werbung
+        """)
     
+    with col_m2_2:
+        st.markdown("### 🔬 Partielle Koeffizienten")
+        st.markdown(f"""
+        **β₁ (Preis) = {model_mult.params[1]:.3f}**
+        
+        → Pro CHF Preiserhöhung sinkt der Umsatz um {abs(model_mult.params[1]):.2f} Tausend CHF,
+        **wenn Werbung konstant gehalten wird**.
+        
+        **β₂ (Werbung) = {model_mult.params[2]:.3f}**
+        
+        → Pro 1000 CHF mehr Werbung steigt der Umsatz um {model_mult.params[2]:.2f} Tausend CHF,
+        **wenn Preis konstant gehalten wird**.
+        """)
+        
+        st.warning("""
+        **⚠️ Wichtig: Ceteris Paribus**
+        
+        Die Interpretation "bei Konstanthaltung der anderen Variablen" ist zentral!
+        
+        Anders als bei der einfachen Regression misst βₖ den **isolierten Effekt**
+        einer Variable.
+        """)
+    
+    # Daten anzeigen
+    st.markdown("### 📊 Die Daten")
+    df_mult = pd.DataFrame({
+        x1_name: x2_preis,
+        x2_name: x3_werbung,
+        y_name: y_mult
+    })
+    st.dataframe(df_mult.head(15).style.format({
+        'Preis (CHF)': '{:.2f}',
+        'Werbung (CHF1000)': '{:.2f}',
+        'Umsatz (1000 CHF)': '{:.2f}'
+    }), width='stretch')
+
     # =========================================================
     # M3: OLS & GAUSS-MARKOV
     # =========================================================
-    elif selected_chapter == "M3. OLS & Gauss-Markov":
-        st.markdown("---")
-        st.markdown('<p class="section-header">M3. OLS-Schätzer und Gauss-Markov Theorem</p>', unsafe_allow_html=True)
+    st.markdown("---")
+    st.markdown('<p class="section-header">M3. OLS-Schätzer und Gauss-Markov Theorem</p>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    Wie bei der einfachen Regression bestimmen wir die Koeffizienten durch **Minimierung der Fehlerquadratsumme**.
+    """)
+    
+    if show_formulas:
+        st.markdown("### 📐 OLS-Zielfunktion")
+        st.latex(r"\min \sum_{i=1}^{n} e_i^2 = \sum_{i=1}^{n} (y_i - b_0 - b_1 \cdot x_{1i} - b_2 \cdot x_{2i} - \cdots - b_K \cdot x_{Ki})^2")
         
+        st.markdown("### 📊 Matrixform (elegant!)")
+        st.latex(r"\mathbf{b} = (\mathbf{X}^T \mathbf{X})^{-1} \mathbf{X}^T \mathbf{y}")
         st.markdown("""
-        Wie bei der einfachen Regression bestimmen wir die Koeffizienten durch **Minimierung der Fehlerquadratsumme**.
+        Wo:
+        - **y** ist der Vektor der abhängigen Variable (n×1)
+        - **X** ist die Design-Matrix der Prädiktoren (n×(K+1))
+        - **b** ist der Vektor der geschätzten Koeffizienten ((K+1)×1)
+        """)
+    
+    col_m3_1, col_m3_2 = st.columns([1.2, 1])
+    
+    with col_m3_1:
+        st.markdown("### 🏆 Gauss-Markov Theorem")
+        st.markdown("""
+        Wenn die folgenden **Annahmen** erfüllt sind:
+        
+        1. **Linearität**: E(ε|X) = 0
+        2. **Homoskedastizität**: Var(ε|X) = σ²
+        3. **Keine Autokorrelation**: Cov(εᵢ, εⱼ) = 0
+        4. **Keine perfekte Multikollinearität**: X hat vollen Rang
+        
+        Dann ist der OLS-Schätzer **BLUE**:
+        - **B**est: Kleinste Varianz unter allen linearen Schätzern
+        - **L**inear: Lineare Funktion der Daten
+        - **U**nbiased: Erwartungstreu, E(b) = β
+        - **E**stimator: Schätzer für die wahren Parameter
+        """)
+        
+        # Residuen-Plot
+        fig_resid, ax_resid = plt.subplots(figsize=(10, 5))
+        ax_resid.scatter(y_pred_mult, model_mult.resid, alpha=0.6, s=50, c='blue')
+        ax_resid.axhline(0, color='red', linestyle='--', linewidth=2)
+        ax_resid.set_xlabel('Vorhergesagte Werte (ŷ)', fontsize=12)
+        ax_resid.set_ylabel('Residuen (e)', fontsize=12)
+        ax_resid.set_title('Residuenplot: Prüfung der Annahmen', fontsize=13, fontweight='bold')
+        ax_resid.grid(True, alpha=0.3)
+        plt.tight_layout()
+        st.pyplot(fig_resid)
+        plt.close()
+    
+    with col_m3_2:
+        st.markdown("### 📊 Unsere Schätzungen")
+        params_df = pd.DataFrame({
+            'Koeffizient': ['β₀ (Intercept)', f'β₁ ({x1_name.split("(")[0].strip()})', f'β₂ ({x2_name.split("(")[0].strip()})'],
+            'Schätzwert': [f'{model_mult.params[0]:.4f}', f'{model_mult.params[1]:.4f}', f'{model_mult.params[2]:.4f}'],
+            'Std. Error': [f'{model_mult.bse[0]:.4f}', f'{model_mult.bse[1]:.4f}', f'{model_mult.bse[2]:.4f}']
+        })
+        st.dataframe(params_df, width='stretch', hide_index=True)
+        
+        st.success(f"""
+        **✅ Modellgüte:**
+        
+        - R² = {model_mult.rsquared:.4f} ({model_mult.rsquared*100:.1f}%)
+        - Adjustiertes R² = {model_mult.rsquared_adj:.4f}
+        - F-Statistik = {model_mult.fvalue:.2f}
+        - p-Wert (F-Test) = {model_mult.f_pvalue:.4g}
+        """)
+    
+    # 3D Residual Visualization Toggle
+    show_3d_resid_m3 = st.checkbox("🎲 3D-Residuen visualisieren (Abstände zur Ebene)", value=False)
+    
+    if show_3d_resid_m3:
+        st.markdown("### 🎲 3D-Visualisierung: Residuen als Abstände zur Regressions-Ebene")
+        
+        fig_3d_resid = plt.figure(figsize=(12, 8))
+        ax_3d_resid = fig_3d_resid.add_subplot(111, projection='3d')
+        
+        # Regressions-Ebene
+        x1_range = np.linspace(x2_preis.min(), x2_preis.max(), 20)
+        x2_range = np.linspace(x3_werbung.min(), x3_werbung.max(), 20)
+        X1_mesh, X2_mesh = np.meshgrid(x1_range, x2_range)
+        Y_mesh = model_mult.params[0] + model_mult.params[1]*X1_mesh + model_mult.params[2]*X2_mesh
+        ax_3d_resid.plot_surface(X1_mesh, X2_mesh, Y_mesh, alpha=0.3, cmap='viridis')
+        
+        # Datenpunkte
+        ax_3d_resid.scatter(x2_preis, x3_werbung, y_mult, c='red', s=50, alpha=0.7, edgecolor='white', label='Datenpunkte')
+        
+        # Residuen als vertikale Linien
+        for i in range(len(x2_preis)):
+            ax_3d_resid.plot([x2_preis[i], x2_preis[i]], 
+                            [x3_werbung[i], x3_werbung[i]], 
+                            [y_pred_mult[i], y_mult[i]], 
+                            'k-', alpha=0.3, linewidth=0.8)
+        
+        ax_3d_resid.set_xlabel(x1_name, fontsize=10)
+        ax_3d_resid.set_ylabel(x2_name, fontsize=10)
+        ax_3d_resid.set_zlabel(y_name, fontsize=10)
+        ax_3d_resid.set_title('OLS: Minimierung der Residuen-Quadratsumme\n(Vertikale Abstände zur Ebene)', fontsize=12, fontweight='bold')
+        ax_3d_resid.view_init(elev=20, azim=-60)
+        
+        plt.tight_layout()
+        st.pyplot(fig_3d_resid)
+        plt.close()
+        
+        st.info("""
+        **💡 3D-Interpretation:**
+        
+        - **Schwarze Linien** = Residuen (Abstände der roten Punkte zur Ebene)
+        - **OLS minimiert** die Summe der quadrierten Längen dieser Linien
+        - Je kleiner die Linien, desto besser passt die Ebene zu den Daten
+        - **BLUE-Eigenschaft**: Diese Methode liefert die beste lineare unverzerrte Schätzung!
+        """)
+
+    # =========================================================
+    # M4: MODELLVALIDIERUNG
+    # =========================================================
+    st.markdown("---")
+    st.markdown('<p class="section-header">M4. Modellvalidierung: R² und Adjustiertes R²</p>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    Wie gut ist unser Modell? Wir brauchen Kennzahlen, die die **Erklärungskraft** messen.
+    """)
+    
+    # Berechne Kennzahlen
+    sst_mult = np.sum((y_mult - np.mean(y_mult))**2)
+    sse_mult = np.sum(model_mult.resid**2)
+    ssr_mult = sst_mult - sse_mult
+    
+    col_m4_1, col_m4_2 = st.columns([1.5, 1])
+    
+    with col_m4_1:
+        if show_formulas:
+            st.markdown("### 📐 Bestimmtheitsmass R²")
+            st.latex(r"R^2 = 1 - \frac{SSE}{SST} = \frac{SSR}{SST}")
+            st.latex(r"R^2 = 1 - \frac{\sum_{i=1}^{n}(y_i - \hat{y}_i)^2}{\sum_{i=1}^{n}(y_i - \bar{y})^2}")
+        
+        st.markdown(f"""
+        **Interpretation:**
+        
+        R² = {model_mult.rsquared:.4f} bedeutet: **{model_mult.rsquared*100:.1f}%** der Varianz in Y
+        wird durch die Prädiktoren X₁, X₂ erklärt.
+        
+        **⚠️ Problem:** R² steigt **immer**, wenn wir neue Variablen hinzufügen, 
+        selbst wenn sie irrelevant sind!
+        """)
+        
+        # Varianzzerlegung
+        fig_var_mult, ax_var_mult = plt.subplots(figsize=(12, 5))
+        bars = ax_var_mult.bar(['SST\n(Total)', 'SSR\n(Erklärt)', 'SSE\n(Unerklärt)'],
+                                [sst_mult, ssr_mult, sse_mult],
+                                color=['gray', 'green', 'red'], alpha=0.7, edgecolor='black')
+        ax_var_mult.bar_label(bars, fmt='%.1f', padding=3)
+        ax_var_mult.set_ylabel('Quadratsumme', fontsize=12)
+        ax_var_mult.set_title(f'Varianzzerlegung: R² = {model_mult.rsquared:.4f}', fontsize=13, fontweight='bold')
+        plt.tight_layout()
+        st.pyplot(fig_var_mult)
+        plt.close()
+    
+    with col_m4_2:
+        if show_formulas:
+            st.markdown("### 📐 Adjustiertes R²")
+            st.latex(r"R^2_{adj} = 1 - (1-R^2) \cdot \frac{n-1}{n-K-1}")
+        
+        st.markdown(f"""
+        **Adjustiertes R² = {model_mult.rsquared_adj:.4f}**
+        
+        **Vorteile:**
+        - Bestraft unnötige Komplexität (mehr K → Strafe)
+        - Erlaubt fairen Vergleich von Modellen
+        - Kann sogar sinken beim Hinzufügen schwacher Prädiktoren!
+        
+        **Interpretation:**
+        
+        Unser Modell mit K=2 Prädiktoren hat:
+        - R² = {model_mult.rsquared:.4f}
+        - R²_adj = {model_mult.rsquared_adj:.4f}
+        
+        Die Differenz von {(model_mult.rsquared - model_mult.rsquared_adj):.4f} ist klein
+        → Die Prädiktoren sind **substanziell relevant**.
+        """)
+        
+        # Vergleich
+        st.info(f"""
+        **📊 Vergleich:**
+        
+        | Mass | Wert | Deutung |
+        |-----|------|---------|
+        | R² | {model_mult.rsquared:.4f} | Roh-Erklärungskraft |
+        | R²_adj | {model_mult.rsquared_adj:.4f} | Korrigiert für Komplexität |
+        | Differenz | {(model_mult.rsquared - model_mult.rsquared_adj):.4f} | Sehr klein → gut! |
+        """)
+    
+    # 3D Variance Decomposition Toggle
+    show_3d_var_m4 = st.checkbox("🎲 3D-Varianzzerlegung visualisieren", value=False)
+    
+    if show_3d_var_m4:
+        st.markdown("### 🎲 3D-Visualisierung: Varianzzerlegung im Prädiktorraum")
+        
+        fig_3d_var = plt.figure(figsize=(14, 6))
+        
+        # Left: Explained variance (SSR)
+        ax1 = fig_3d_var.add_subplot(121, projection='3d')
+        scatter1 = ax1.scatter(x2_preis, x3_werbung, y_pred_mult, c=y_pred_mult, cmap='Greens', s=60, alpha=0.7, edgecolor='darkgreen')
+        ax1.set_xlabel(x1_name, fontsize=9)
+        ax1.set_ylabel(x2_name, fontsize=9)
+        ax1.set_zlabel(y_name, fontsize=9)
+        ax1.set_title(f'SSR (Erklärt): {ssr_mult:.1f}\nVarianz durch Modell', fontsize=11, fontweight='bold', color='darkgreen')
+        ax1.view_init(elev=20, azim=-60)
+        plt.colorbar(scatter1, ax=ax1, shrink=0.5, pad=0.1)
+        
+        # Right: Unexplained variance (SSE)
+        ax2 = fig_3d_var.add_subplot(122, projection='3d')
+        residual_sizes = np.abs(model_mult.resid) * 100  # Scale for visibility
+        scatter2 = ax2.scatter(x2_preis, x3_werbung, model_mult.resid, c=model_mult.resid, cmap='Reds', s=residual_sizes, alpha=0.7, edgecolor='darkred')
+        ax2.axplane(0, axis='z', alpha=0.2, color='gray')  # Zero plane
+        ax2.set_xlabel(x1_name, fontsize=9)
+        ax2.set_ylabel(x2_name, fontsize=9)
+        ax2.set_zlabel('Residuen', fontsize=9)
+        ax2.set_title(f'SSE (Unerklärt): {sse_mult:.1f}\nNicht erfasste Varianz', fontsize=11, fontweight='bold', color='darkred')
+        ax2.view_init(elev=20, azim=-60)
+        plt.colorbar(scatter2, ax=ax2, shrink=0.5, pad=0.1)
+        
+        plt.tight_layout()
+        st.pyplot(fig_3d_var)
+        plt.close()
+        
+        st.info(f"""
+        **💡 3D-Interpretation:**
+        
+        - **Links (grün)**: Vorhergesagte Werte ŷ → zeigt die **Systematik** die unser Modell erfasst
+        - **Rechts (rot)**: Residuen e → zeigt die **Abweichungen** die unser Modell nicht erklärt
+        - **R² = {model_mult.rsquared:.4f}** bedeutet: {model_mult.rsquared*100:.1f}% der Varianz ist "grün" (erklärt)
+        - Grössere rote Punkte = grössere Residuen = schlechtere Vorhersage an dieser Stelle
+        """)
+
+    # =========================================================
+    # M5: ANWENDUNGSBEISPIEL
+    # =========================================================
+    st.markdown("---")
+    st.markdown('<p class="section-header">M5. Anwendungsbeispiel und Interpretation</p>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    Wie nutzen wir unser Modell in der Praxis? Schauen wir uns konkrete Szenarien an.
+    """)
+    
+    col_m5_1, col_m5_2 = st.columns([1, 1])
+    
+    with col_m5_1:
+        st.markdown("### 🔮 Prognose")
+        st.markdown(f"Wir wollen {y_name.split('(')[0].strip()} für einen neuen Datenpunkt vorhersagen.")
+        
+        # Interaktive Eingabe - dynamic ranges based on dataset
+        if dataset_choice_mult == "🏙️ Städte-Umsatzstudie (75 Städte)":
+            slider1_val = st.slider(x1_name, min_value=4.5, max_value=7.0, value=5.5, step=0.1)
+            slider2_val = st.slider(x2_name, min_value=0.5, max_value=3.5, value=2.0, step=0.1)
+        elif dataset_choice_mult == "🏠 Häuserpreise mit Pool (1000 Häuser)":
+            slider1_val = st.slider(x1_name, min_value=20.0, max_value=30.0, value=25.0, step=0.5)
+            slider2_val = st.slider(x2_name, min_value=0.0, max_value=1.0, value=0.0, step=1.0)
+        else:  # Elektronikmarkt
+            slider1_val = st.slider(x1_name, min_value=2.0, max_value=12.0, value=7.0, step=0.5)
+            slider2_val = st.slider(x2_name, min_value=0.5, max_value=5.0, value=2.5, step=0.5)
+        
+        # Prognose berechnen
+        new_X = np.array([1, slider1_val, slider2_val])
+        pred_value = model_mult.predict(new_X)[0]
+        
+        # Konfidenzintervall
+        pred_frame = pd.DataFrame({'const': [1], 'x1': [slider1_val], 'x2': [slider2_val]})
+        pred_obj = model_mult.get_prediction(pred_frame)
+        pred_summary = pred_obj.summary_frame(alpha=0.05)
+        
+        st.success(f"""
+        **Prognose für:**
+        - {x1_name} = {slider1_val:.2f}
+        - {x2_name} = {slider2_val:.2f}
+        
+        **Erwarteter {y_name}:**
+        
+        {pred_value:.2f}
+        
+        **95% Konfidenzintervall:**
+        [{pred_summary['mean_ci_lower'].values[0]:.2f}, {pred_summary['mean_ci_upper'].values[0]:.2f}]
         """)
         
         if show_formulas:
-            st.markdown("### 📐 OLS-Zielfunktion")
-            st.latex(r"\min \sum_{i=1}^{n} e_i^2 = \sum_{i=1}^{n} (y_i - b_0 - b_1 \cdot x_{1i} - b_2 \cdot x_{2i} - \cdots - b_K \cdot x_{Ki})^2")
-            
-            st.markdown("### 📊 Matrixform (elegant!)")
-            st.latex(r"\mathbf{b} = (\mathbf{X}^T \mathbf{X})^{-1} \mathbf{X}^T \mathbf{y}")
-            st.markdown("""
-            Wo:
-            - **y** ist der Vektor der abhängigen Variable (n×1)
-            - **X** ist die Design-Matrix der Prädiktoren (n×(K+1))
-            - **b** ist der Vektor der geschätzten Koeffizienten ((K+1)×1)
-            """)
+            st.latex(r"\hat{y} = b_0 + b_1 \cdot x_1 + b_2 \cdot x_2")
+            st.latex(f"\\hat{{y}} = {model_mult.params[0]:.2f} + {model_mult.params[1]:.2f} \\cdot {slider1_val:.2f} + {model_mult.params[2]:.2f} \\cdot {slider2_val:.2f}")
+            st.latex(f"\\hat{{y}} = {pred_value:.2f}")
+    
+    with col_m5_2:
+        st.markdown("### 📊 Sensitivitätsanalyse")
+        st.markdown(f"Wie verändert sich {y_name.split('(')[0].strip()} bei Änderung der Variablen?")
         
-        col_m3_1, col_m3_2 = st.columns([1.2, 1])
+        # Sensitivität: Variable 1
+        if dataset_choice_mult == "🏙️ Städte-Umsatzstudie (75 Städte)":
+            var1_range = np.linspace(4.5, 7.0, 50)
+            var2_range = np.linspace(0.5, 3.5, 50)
+        elif dataset_choice_mult == "🏠 Häuserpreise mit Pool (1000 Häuser)":
+            var1_range = np.linspace(20.0, 30.0, 50)
+            var2_range = np.array([0.0, 1.0])  # Dummy variable
+        else:  # Elektronikmarkt
+            var1_range = np.linspace(2.0, 12.0, 50)
+            var2_range = np.linspace(0.5, 5.0, 50)
         
-        with col_m3_1:
-            st.markdown("### 🏆 Gauss-Markov Theorem")
-            st.markdown("""
-            Wenn die folgenden **Annahmen** erfüllt sind:
-            
-            1. **Linearität**: E(ε|X) = 0
-            2. **Homoskedastizität**: Var(ε|X) = σ²
-            3. **Keine Autokorrelation**: Cov(εᵢ, εⱼ) = 0
-            4. **Keine perfekte Multikollinearität**: X hat vollen Rang
-            
-            Dann ist der OLS-Schätzer **BLUE**:
-            - **B**est: Kleinste Varianz unter allen linearen Schätzern
-            - **L**inear: Lineare Funktion der Daten
-            - **U**nbiased: Erwartungstreu, E(b) = β
-            - **E**stimator: Schätzer für die wahren Parameter
-            """)
-            
-            # Residuen-Plot
-            fig_resid, ax_resid = plt.subplots(figsize=(10, 5))
-            ax_resid.scatter(y_pred_mult, model_mult.resid, alpha=0.6, s=50, c='blue')
-            ax_resid.axhline(0, color='red', linestyle='--', linewidth=2)
-            ax_resid.set_xlabel('Vorhergesagte Werte (ŷ)', fontsize=12)
-            ax_resid.set_ylabel('Residuen (e)', fontsize=12)
-            ax_resid.set_title('Residuenplot: Prüfung der Annahmen', fontsize=13, fontweight='bold')
-            ax_resid.grid(True, alpha=0.3)
-            plt.tight_layout()
-            st.pyplot(fig_resid)
-            plt.close()
+        response_var1 = model_mult.params[0] + model_mult.params[1]*var1_range + model_mult.params[2]*slider2_val
         
-        with col_m3_2:
-            st.markdown("### 📊 Unsere Schätzungen")
-            params_df = pd.DataFrame({
-                'Koeffizient': ['β₀ (Intercept)', f'β₁ ({x1_name.split("(")[0].strip()})', f'β₂ ({x2_name.split("(")[0].strip()})'],
-                'Schätzwert': [f'{model_mult.params[0]:.4f}', f'{model_mult.params[1]:.4f}', f'{model_mult.params[2]:.4f}'],
-                'Std. Error': [f'{model_mult.bse[0]:.4f}', f'{model_mult.bse[1]:.4f}', f'{model_mult.bse[2]:.4f}']
-            })
-            st.dataframe(params_df, width='stretch', hide_index=True)
-            
-            st.success(f"""
-            **✅ Modellgüte:**
-            
-            - R² = {model_mult.rsquared:.4f} ({model_mult.rsquared*100:.1f}%)
-            - Adjustiertes R² = {model_mult.rsquared_adj:.4f}
-            - F-Statistik = {model_mult.fvalue:.2f}
-            - p-Wert (F-Test) = {model_mult.f_pvalue:.4g}
-            """)
+        fig_sens, ax_sens1 = plt.subplots(1, 1, figsize=(10, 5))
         
-        # 3D Residual Visualization Toggle
-        show_3d_resid_m3 = st.checkbox("🎲 3D-Residuen visualisieren (Abstände zur Ebene)", value=False)
+        # Variable 1 Sensitivität
+        ax_sens1.plot(var1_range, response_var1, 'b-', linewidth=2)
+        ax_sens1.scatter([slider1_val], [pred_value], c='red', s=100, zorder=5, label='Aktuell')
+        ax_sens1.set_xlabel(x1_name, fontsize=11)
+        ax_sens1.set_ylabel(y_name, fontsize=11)
+        ax_sens1.set_title(f'Sensitivität {x1_name.split("(")[0].strip()}\n({x2_name.split("(")[0].strip()}={slider2_val:.1f} konstant)', fontsize=11, fontweight='bold')
+        ax_sens1.grid(True, alpha=0.3)
+        ax_sens1.legend()
         
-        if show_3d_resid_m3:
-            st.markdown("### 🎲 3D-Visualisierung: Residuen als Abstände zur Regressions-Ebene")
+        plt.tight_layout()
+        st.pyplot(fig_sens)
+        plt.close()
+
+    # =========================================================
+    # M6: DUMMY-VARIABLEN
+    # =========================================================
+    st.markdown("---")
+    st.markdown('<p class="section-header">M6. Dummy-Variablen: Kategoriale Prädiktoren</p>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    Nicht alle Prädiktoren sind numerisch! Was ist mit **kategorialen Variablen** wie Region, 
+    Geschlecht, oder Produkttyp?
+    
+    **Lösung: Dummy-Variablen** (0/1-Kodierung)
+    """)
+    
+    # Erstelle Dummy-Daten
+    np.random.seed(42)
+    regions = np.random.choice(['Nord', 'Süd', 'Ost'], size=n_mult)
+    df_dummy = pd.DataFrame({
+        'Preis': x2_preis,
+        'Werbung': x3_werbung,
+        'Region': regions,
+        'Umsatz': y_mult
+    })
+    
+    # Dummy-Kodierung
+    df_dummy_encoded = pd.get_dummies(df_dummy, columns=['Region'], drop_first=True)
+    
+    col_m6_1, col_m6_2 = st.columns([1, 1])
+    
+    with col_m6_1:
+        st.markdown("### 📋 Konzept")
+        st.markdown("""
+        Für eine kategoriale Variable mit **m Ausprägungen** erstellen wir **m-1 Dummy-Variablen**.
+        
+        **Beispiel: Region (3 Ausprägungen)**
+        - Nord, Süd, Ost
+        - Wir brauchen **2 Dummies**: Region_Ost, Region_Süd
+        - **Referenzkategorie**: Nord (beide Dummies = 0)
+        """)
+        
+        st.dataframe(df_dummy[['Region']].head(10), width='stretch')
+        st.markdown("**→ wird zu →**")
+        st.dataframe(df_dummy_encoded[['Region_Ost', 'Region_Süd']].head(10), width='stretch')
+        
+        st.warning("""
+        **⚠️ Dummy-Variable Trap:**
+        
+        Niemals **alle** m Dummies verwenden! Das führt zu perfekter Multikollinearität.
+        
+        Grund: Region_Nord = 1 - Region_Ost - Region_Süd
+        """)
+    
+    with col_m6_2:
+        if show_formulas:
+            st.markdown("### 📐 Modell mit Dummies")
+            st.latex(r"\text{Umsatz}_i = \beta_0 + \beta_1 \cdot \text{Preis}_i + \beta_2 \cdot \text{Werbung}_i + \beta_3 \cdot \text{Ost}_i + \beta_4 \cdot \text{Süd}_i + \varepsilon_i")
+        
+        st.markdown("### 📊 Interpretation")
+        st.markdown("""
+        **β₀:** Basis-Umsatz in der **Referenzregion** (Nord)
+        
+        **β₃ (Ost-Dummy):** Zusätzlicher Umsatz in **Ost** verglichen mit Nord
+        (ceteris paribus)
+        
+        **β₄ (Süd-Dummy):** Zusätzlicher Umsatz in **Süd** verglichen mit Nord
+        (ceteris paribus)
+        
+        **Prognose für Ost:**
+        ŷ = β₀ + β₁·Preis + β₂·Werbung + β₃·1 + β₄·0
+        
+        **Prognose für Nord:**
+        ŷ = β₀ + β₁·Preis + β₂·Werbung + β₃·0 + β₄·0
+        """)
+        
+        # Modell mit Dummies fitten
+        X_dummy = df_dummy_encoded[['Preis', 'Werbung', 'Region_Ost', 'Region_Süd']]
+        X_dummy_const = sm.add_constant(X_dummy)
+        model_dummy = sm.OLS(df_dummy_encoded['Umsatz'], X_dummy_const).fit()
+        
+        st.success(f"""
+        **Unser Modell:**
+        
+        β₀ = {model_dummy.params[0]:.2f} (Nord-Basis)
+        β₁ = {model_dummy.params[1]:.2f} (Preis)
+        β₂ = {model_dummy.params[2]:.2f} (Werbung)
+        β₃ = {model_dummy.params[3]:.2f} (Ost-Effekt)
+        β₄ = {model_dummy.params[4]:.2f} (Süd-Effekt)
+        """)
+
+    # =========================================================
+    # M7: MULTIKOLLINEARITÄT
+    # =========================================================
+    st.markdown("---")
+    st.markdown('<p class="section-header">M7. Multikollinearität: Wenn Prädiktoren korreliert sind</p>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    **Multikollinearität** liegt vor, wenn unabhängige Variablen **stark miteinander korrelieren**.
+    
+    Das ist ein **Problem**, weil es schwer wird, die individuellen Effekte zu trennen!
+    """)
+    
+    # Add 3D toggle
+    show_3d_m7 = st.checkbox("🎲 3D-Ansicht aktivieren (Multikollinearität)", value=False, help="Zeigt die Beziehung zwischen beiden Prädiktoren und der Zielvariable in 3D - Multikollinearität wird durch die Ausrichtung der Punktwolke sichtbar")
+    
+    col_m7_1, col_m7_2 = st.columns([1.2, 1])
+    
+    with col_m7_1:
+        st.markdown("### 🔍 Diagnose")
+        
+        if show_3d_m7:
+            # 3D Scatter: Zeigt wie Prädiktoren zusammen die Zielvariable beeinflussen
+            fig_3d_m7 = plt.figure(figsize=(10, 8))
+            ax_3d_m7 = fig_3d_m7.add_subplot(111, projection='3d')
             
-            fig_3d_resid = plt.figure(figsize=(12, 8))
-            ax_3d_resid = fig_3d_resid.add_subplot(111, projection='3d')
+            # Scatter Plot der Datenpunkte
+            scatter = ax_3d_m7.scatter(x2_preis, x3_werbung, y_mult, c=y_mult, cmap='viridis', s=50, alpha=0.6, edgecolor='white')
             
-            # Regressions-Ebene
+            # Regression Ebene
             x1_range = np.linspace(x2_preis.min(), x2_preis.max(), 20)
             x2_range = np.linspace(x3_werbung.min(), x3_werbung.max(), 20)
             X1_mesh, X2_mesh = np.meshgrid(x1_range, x2_range)
             Y_mesh = model_mult.params[0] + model_mult.params[1]*X1_mesh + model_mult.params[2]*X2_mesh
-            ax_3d_resid.plot_surface(X1_mesh, X2_mesh, Y_mesh, alpha=0.3, cmap='viridis')
+            ax_3d_m7.plot_surface(X1_mesh, X2_mesh, Y_mesh, alpha=0.2, cmap='coolwarm')
             
-            # Datenpunkte
-            ax_3d_resid.scatter(x2_preis, x3_werbung, y_mult, c='red', s=50, alpha=0.7, edgecolor='white', label='Datenpunkte')
+            ax_3d_m7.set_xlabel(x1_name, fontsize=10)
+            ax_3d_m7.set_ylabel(x2_name, fontsize=10)
+            ax_3d_m7.set_zlabel(y_name, fontsize=10)
+            ax_3d_m7.set_title('3D: Multikollinearität Visualisierung\n(Korrelation zwischen Prädiktoren sichtbar in Punktverteilung)', fontsize=11, fontweight='bold')
+            ax_3d_m7.view_init(elev=25, azim=-60)
             
-            # Residuen als vertikale Linien
-            for i in range(len(x2_preis)):
-                ax_3d_resid.plot([x2_preis[i], x2_preis[i]], 
-                                [x3_werbung[i], x3_werbung[i]], 
-                                [y_pred_mult[i], y_mult[i]], 
-                                'k-', alpha=0.3, linewidth=0.8)
-            
-            ax_3d_resid.set_xlabel(x1_name, fontsize=10)
-            ax_3d_resid.set_ylabel(x2_name, fontsize=10)
-            ax_3d_resid.set_zlabel(y_name, fontsize=10)
-            ax_3d_resid.set_title('OLS: Minimierung der Residuen-Quadratsumme\n(Vertikale Abstände zur Ebene)', fontsize=12, fontweight='bold')
-            ax_3d_resid.view_init(elev=20, azim=-60)
-            
+            plt.colorbar(scatter, ax=ax_3d_m7, pad=0.1, label=y_name)
             plt.tight_layout()
-            st.pyplot(fig_3d_resid)
+            st.pyplot(fig_3d_m7)
             plt.close()
             
             st.info("""
             **💡 3D-Interpretation:**
             
-            - **Schwarze Linien** = Residuen (Abstände der roten Punkte zur Ebene)
-            - **OLS minimiert** die Summe der quadrierten Längen dieser Linien
-            - Je kleiner die Linien, desto besser passt die Ebene zu den Daten
-            - **BLUE-Eigenschaft**: Diese Methode liefert die beste lineare unverzerrte Schätzung!
+            - Wenn Prädiktoren **unkorreliert** sind: Punkte bilden eine "Wolke" über die gesamte x-y-Ebene
+            - Wenn Prädiktoren **korreliert** sind: Punkte liegen entlang einer Diagonale/Linie in der x-y-Ebene
+            - **Problem:** Korrelierte Prädiktoren → schwer zu trennen, welcher Prädiktor welchen Effekt hat!
             """)
-    
-    # =========================================================
-    # M4: MODELLVALIDIERUNG
-    # =========================================================
-    elif selected_chapter == "M4. Modellvalidierung":
-        st.markdown("---")
-        st.markdown('<p class="section-header">M4. Modellvalidierung: R² und Adjustiertes R²</p>', unsafe_allow_html=True)
-        
-        st.markdown("""
-        Wie gut ist unser Modell? Wir brauchen Kennzahlen, die die **Erklärungskraft** messen.
-        """)
-        
-        # Berechne Kennzahlen
-        sst_mult = np.sum((y_mult - np.mean(y_mult))**2)
-        sse_mult = np.sum(model_mult.resid**2)
-        ssr_mult = sst_mult - sse_mult
-        
-        col_m4_1, col_m4_2 = st.columns([1.5, 1])
-        
-        with col_m4_1:
-            if show_formulas:
-                st.markdown("### 📐 Bestimmtheitsmass R²")
-                st.latex(r"R^2 = 1 - \frac{SSE}{SST} = \frac{SSR}{SST}")
-                st.latex(r"R^2 = 1 - \frac{\sum_{i=1}^{n}(y_i - \hat{y}_i)^2}{\sum_{i=1}^{n}(y_i - \bar{y})^2}")
+        else:
+            # Original 2D Correlation Matrix
+            # Korrelationsmatrix
+            corr_matrix = np.corrcoef(x2_preis, x3_werbung)
             
-            st.markdown(f"""
-            **Interpretation:**
+            fig_corr, ax_corr = plt.subplots(figsize=(8, 6))
+            im = ax_corr.imshow(corr_matrix, cmap='RdBu_r', vmin=-1, vmax=1, aspect='auto')
+            ax_corr.set_xticks([0, 1])
+            ax_corr.set_yticks([0, 1])
             
-            R² = {model_mult.rsquared:.4f} bedeutet: **{model_mult.rsquared*100:.1f}%** der Varianz in Y
-            wird durch die Prädiktoren X₁, X₂ erklärt.
-            
-            **⚠️ Problem:** R² steigt **immer**, wenn wir neue Variablen hinzufügen, 
-            selbst wenn sie irrelevant sind!
-            """)
-            
-            # Varianzzerlegung
-            fig_var_mult, ax_var_mult = plt.subplots(figsize=(12, 5))
-            bars = ax_var_mult.bar(['SST\n(Total)', 'SSR\n(Erklärt)', 'SSE\n(Unerklärt)'],
-                                    [sst_mult, ssr_mult, sse_mult],
-                                    color=['gray', 'green', 'red'], alpha=0.7, edgecolor='black')
-            ax_var_mult.bar_label(bars, fmt='%.1f', padding=3)
-            ax_var_mult.set_ylabel('Quadratsumme', fontsize=12)
-            ax_var_mult.set_title(f'Varianzzerlegung: R² = {model_mult.rsquared:.4f}', fontsize=13, fontweight='bold')
-            plt.tight_layout()
-            st.pyplot(fig_var_mult)
-            plt.close()
-        
-        with col_m4_2:
-            if show_formulas:
-                st.markdown("### 📐 Adjustiertes R²")
-                st.latex(r"R^2_{adj} = 1 - (1-R^2) \cdot \frac{n-1}{n-K-1}")
-            
-            st.markdown(f"""
-            **Adjustiertes R² = {model_mult.rsquared_adj:.4f}**
-            
-            **Vorteile:**
-            - Bestraft unnötige Komplexität (mehr K → Strafe)
-            - Erlaubt fairen Vergleich von Modellen
-            - Kann sogar sinken beim Hinzufügen schwacher Prädiktoren!
-            
-            **Interpretation:**
-            
-            Unser Modell mit K=2 Prädiktoren hat:
-            - R² = {model_mult.rsquared:.4f}
-            - R²_adj = {model_mult.rsquared_adj:.4f}
-            
-            Die Differenz von {(model_mult.rsquared - model_mult.rsquared_adj):.4f} ist klein
-            → Die Prädiktoren sind **substanziell relevant**.
-            """)
-            
-            # Vergleich
-            st.info(f"""
-            **📊 Vergleich:**
-            
-            | Mass | Wert | Deutung |
-            |-----|------|---------|
-            | R² | {model_mult.rsquared:.4f} | Roh-Erklärungskraft |
-            | R²_adj | {model_mult.rsquared_adj:.4f} | Korrigiert für Komplexität |
-            | Differenz | {(model_mult.rsquared - model_mult.rsquared_adj):.4f} | Sehr klein → gut! |
-            """)
-        
-        # 3D Variance Decomposition Toggle
-        show_3d_var_m4 = st.checkbox("🎲 3D-Varianzzerlegung visualisieren", value=False)
-        
-        if show_3d_var_m4:
-            st.markdown("### 🎲 3D-Visualisierung: Varianzzerlegung im Prädiktorraum")
-            
-            fig_3d_var = plt.figure(figsize=(14, 6))
-            
-            # Left: Explained variance (SSR)
-            ax1 = fig_3d_var.add_subplot(121, projection='3d')
-            scatter1 = ax1.scatter(x2_preis, x3_werbung, y_pred_mult, c=y_pred_mult, cmap='Greens', s=60, alpha=0.7, edgecolor='darkgreen')
-            ax1.set_xlabel(x1_name, fontsize=9)
-            ax1.set_ylabel(x2_name, fontsize=9)
-            ax1.set_zlabel(y_name, fontsize=9)
-            ax1.set_title(f'SSR (Erklärt): {ssr_mult:.1f}\nVarianz durch Modell', fontsize=11, fontweight='bold', color='darkgreen')
-            ax1.view_init(elev=20, azim=-60)
-            plt.colorbar(scatter1, ax=ax1, shrink=0.5, pad=0.1)
-            
-            # Right: Unexplained variance (SSE)
-            ax2 = fig_3d_var.add_subplot(122, projection='3d')
-            residual_sizes = np.abs(model_mult.resid) * 100  # Scale for visibility
-            scatter2 = ax2.scatter(x2_preis, x3_werbung, model_mult.resid, c=model_mult.resid, cmap='Reds', s=residual_sizes, alpha=0.7, edgecolor='darkred')
-            ax2.axplane(0, axis='z', alpha=0.2, color='gray')  # Zero plane
-            ax2.set_xlabel(x1_name, fontsize=9)
-            ax2.set_ylabel(x2_name, fontsize=9)
-            ax2.set_zlabel('Residuen', fontsize=9)
-            ax2.set_title(f'SSE (Unerklärt): {sse_mult:.1f}\nNicht erfasste Varianz', fontsize=11, fontweight='bold', color='darkred')
-            ax2.view_init(elev=20, azim=-60)
-            plt.colorbar(scatter2, ax=ax2, shrink=0.5, pad=0.1)
-            
-            plt.tight_layout()
-            st.pyplot(fig_3d_var)
-            plt.close()
-            
-            st.info(f"""
-            **💡 3D-Interpretation:**
-            
-            - **Links (grün)**: Vorhergesagte Werte ŷ → zeigt die **Systematik** die unser Modell erfasst
-            - **Rechts (rot)**: Residuen e → zeigt die **Abweichungen** die unser Modell nicht erklärt
-            - **R² = {model_mult.rsquared:.4f}** bedeutet: {model_mult.rsquared*100:.1f}% der Varianz ist "grün" (erklärt)
-            - Grössere rote Punkte = grössere Residuen = schlechtere Vorhersage an dieser Stelle
-            """)
-    
-    # =========================================================
-    # M5: ANWENDUNGSBEISPIEL
-    # =========================================================
-    elif selected_chapter == "M5. Anwendungsbeispiel":
-        st.markdown("---")
-        st.markdown('<p class="section-header">M5. Anwendungsbeispiel und Interpretation</p>', unsafe_allow_html=True)
-        
-        st.markdown("""
-        Wie nutzen wir unser Modell in der Praxis? Schauen wir uns konkrete Szenarien an.
-        """)
-        
-        col_m5_1, col_m5_2 = st.columns([1, 1])
-        
-        with col_m5_1:
-            st.markdown("### 🔮 Prognose")
-            st.markdown(f"Wir wollen {y_name.split('(')[0].strip()} für einen neuen Datenpunkt vorhersagen.")
-            
-            # Interaktive Eingabe - dynamic ranges based on dataset
-            if dataset_choice_mult == "🏙️ Städte-Umsatzstudie (75 Städte)":
-                slider1_val = st.slider(x1_name, min_value=4.5, max_value=7.0, value=5.5, step=0.1)
-                slider2_val = st.slider(x2_name, min_value=0.5, max_value=3.5, value=2.0, step=0.1)
-            elif dataset_choice_mult == "🏠 Häuserpreise mit Pool (1000 Häuser)":
-                slider1_val = st.slider(x1_name, min_value=20.0, max_value=30.0, value=25.0, step=0.5)
-                slider2_val = st.slider(x2_name, min_value=0.0, max_value=1.0, value=0.0, step=1.0)
-            else:  # Elektronikmarkt
-                slider1_val = st.slider(x1_name, min_value=2.0, max_value=12.0, value=7.0, step=0.5)
-                slider2_val = st.slider(x2_name, min_value=0.5, max_value=5.0, value=2.5, step=0.5)
-            
-            # Prognose berechnen
-            new_X = np.array([1, slider1_val, slider2_val])
-            pred_value = model_mult.predict(new_X)[0]
-            
-            # Konfidenzintervall
-            pred_frame = pd.DataFrame({'const': [1], 'x1': [slider1_val], 'x2': [slider2_val]})
-            pred_obj = model_mult.get_prediction(pred_frame)
-            pred_summary = pred_obj.summary_frame(alpha=0.05)
-            
-            st.success(f"""
-            **Prognose für:**
-            - {x1_name} = {slider1_val:.2f}
-            - {x2_name} = {slider2_val:.2f}
-            
-            **Erwarteter {y_name}:**
-            
-            {pred_value:.2f}
-            
-            **95% Konfidenzintervall:**
-            [{pred_summary['mean_ci_lower'].values[0]:.2f}, {pred_summary['mean_ci_upper'].values[0]:.2f}]
-            """)
-            
-            if show_formulas:
-                st.latex(r"\hat{y} = b_0 + b_1 \cdot x_1 + b_2 \cdot x_2")
-                st.latex(f"\\hat{{y}} = {model_mult.params[0]:.2f} + {model_mult.params[1]:.2f} \\cdot {slider1_val:.2f} + {model_mult.params[2]:.2f} \\cdot {slider2_val:.2f}")
-                st.latex(f"\\hat{{y}} = {pred_value:.2f}")
-        
-        with col_m5_2:
-            st.markdown("### 📊 Sensitivitätsanalyse")
-            st.markdown(f"Wie verändert sich {y_name.split('(')[0].strip()} bei Änderung der Variablen?")
-            
-            # Sensitivität: Variable 1
-            if dataset_choice_mult == "🏙️ Städte-Umsatzstudie (75 Städte)":
-                var1_range = np.linspace(4.5, 7.0, 50)
-                var2_range = np.linspace(0.5, 3.5, 50)
-            elif dataset_choice_mult == "🏠 Häuserpreise mit Pool (1000 Häuser)":
-                var1_range = np.linspace(20.0, 30.0, 50)
-                var2_range = np.array([0.0, 1.0])  # Dummy variable
-            else:  # Elektronikmarkt
-                var1_range = np.linspace(2.0, 12.0, 50)
-                var2_range = np.linspace(0.5, 5.0, 50)
-            
-            response_var1 = model_mult.params[0] + model_mult.params[1]*var1_range + model_mult.params[2]*slider2_val
-            
-            fig_sens, ax_sens1 = plt.subplots(1, 1, figsize=(10, 5))
-            
-            # Variable 1 Sensitivität
-            ax_sens1.plot(var1_range, response_var1, 'b-', linewidth=2)
-            ax_sens1.scatter([slider1_val], [pred_value], c='red', s=100, zorder=5, label='Aktuell')
-            ax_sens1.set_xlabel(x1_name, fontsize=11)
-            ax_sens1.set_ylabel(y_name, fontsize=11)
-            ax_sens1.set_title(f'Sensitivität {x1_name.split("(")[0].strip()}\n({x2_name.split("(")[0].strip()}={slider2_val:.1f} konstant)', fontsize=11, fontweight='bold')
-            ax_sens1.grid(True, alpha=0.3)
-            ax_sens1.legend()
-            
-            plt.tight_layout()
-            st.pyplot(fig_sens)
-            plt.close()
-    
-    # =========================================================
-    # M6: DUMMY-VARIABLEN
-    # =========================================================
-    elif selected_chapter == "M6. Dummy-Variablen":
-        st.markdown("---")
-        st.markdown('<p class="section-header">M6. Dummy-Variablen: Kategoriale Prädiktoren</p>', unsafe_allow_html=True)
-        
-        st.markdown("""
-        Nicht alle Prädiktoren sind numerisch! Was ist mit **kategorialen Variablen** wie Region, 
-        Geschlecht, oder Produkttyp?
-        
-        **Lösung: Dummy-Variablen** (0/1-Kodierung)
-        """)
-        
-        # Erstelle Dummy-Daten
-        np.random.seed(42)
-        regions = np.random.choice(['Nord', 'Süd', 'Ost'], size=n_mult)
-        df_dummy = pd.DataFrame({
-            'Preis': x2_preis,
-            'Werbung': x3_werbung,
-            'Region': regions,
-            'Umsatz': y_mult
-        })
-        
-        # Dummy-Kodierung
-        df_dummy_encoded = pd.get_dummies(df_dummy, columns=['Region'], drop_first=True)
-        
-        col_m6_1, col_m6_2 = st.columns([1, 1])
-        
-        with col_m6_1:
-            st.markdown("### 📋 Konzept")
-            st.markdown("""
-            Für eine kategoriale Variable mit **m Ausprägungen** erstellen wir **m-1 Dummy-Variablen**.
-            
-            **Beispiel: Region (3 Ausprägungen)**
-            - Nord, Süd, Ost
-            - Wir brauchen **2 Dummies**: Region_Ost, Region_Süd
-            - **Referenzkategorie**: Nord (beide Dummies = 0)
-            """)
-            
-            st.dataframe(df_dummy[['Region']].head(10), width='stretch')
-            st.markdown("**→ wird zu →**")
-            st.dataframe(df_dummy_encoded[['Region_Ost', 'Region_Süd']].head(10), width='stretch')
-            
-            st.warning("""
-            **⚠️ Dummy-Variable Trap:**
-            
-            Niemals **alle** m Dummies verwenden! Das führt zu perfekter Multikollinearität.
-            
-            Grund: Region_Nord = 1 - Region_Ost - Region_Süd
-            """)
-        
-        with col_m6_2:
-            if show_formulas:
-                st.markdown("### 📐 Modell mit Dummies")
-                st.latex(r"\text{Umsatz}_i = \beta_0 + \beta_1 \cdot \text{Preis}_i + \beta_2 \cdot \text{Werbung}_i + \beta_3 \cdot \text{Ost}_i + \beta_4 \cdot \text{Süd}_i + \varepsilon_i")
-            
-            st.markdown("### 📊 Interpretation")
-            st.markdown("""
-            **β₀:** Basis-Umsatz in der **Referenzregion** (Nord)
-            
-            **β₃ (Ost-Dummy):** Zusätzlicher Umsatz in **Ost** verglichen mit Nord
-            (ceteris paribus)
-            
-            **β₄ (Süd-Dummy):** Zusätzlicher Umsatz in **Süd** verglichen mit Nord
-            (ceteris paribus)
-            
-            **Prognose für Ost:**
-            ŷ = β₀ + β₁·Preis + β₂·Werbung + β₃·1 + β₄·0
-            
-            **Prognose für Nord:**
-            ŷ = β₀ + β₁·Preis + β₂·Werbung + β₃·0 + β₄·0
-            """)
-            
-            # Modell mit Dummies fitten
-            X_dummy = df_dummy_encoded[['Preis', 'Werbung', 'Region_Ost', 'Region_Süd']]
-            X_dummy_const = sm.add_constant(X_dummy)
-            model_dummy = sm.OLS(df_dummy_encoded['Umsatz'], X_dummy_const).fit()
-            
-            st.success(f"""
-            **Unser Modell:**
-            
-            β₀ = {model_dummy.params[0]:.2f} (Nord-Basis)
-            β₁ = {model_dummy.params[1]:.2f} (Preis)
-            β₂ = {model_dummy.params[2]:.2f} (Werbung)
-            β₃ = {model_dummy.params[3]:.2f} (Ost-Effekt)
-            β₄ = {model_dummy.params[4]:.2f} (Süd-Effekt)
-            """)
-    
-    # =========================================================
-    # M7: MULTIKOLLINEARITÄT
-    # =========================================================
-    elif selected_chapter == "M7. Multikollinearität":
-        st.markdown("---")
-        st.markdown('<p class="section-header">M7. Multikollinearität: Wenn Prädiktoren korreliert sind</p>', unsafe_allow_html=True)
-        
-        st.markdown("""
-        **Multikollinearität** liegt vor, wenn unabhängige Variablen **stark miteinander korrelieren**.
-        
-        Das ist ein **Problem**, weil es schwer wird, die individuellen Effekte zu trennen!
-        """)
-        
-        # Add 3D toggle
-        show_3d_m7 = st.checkbox("🎲 3D-Ansicht aktivieren (Multikollinearität)", value=False, help="Zeigt die Beziehung zwischen beiden Prädiktoren und der Zielvariable in 3D - Multikollinearität wird durch die Ausrichtung der Punktwolke sichtbar")
-        
-        col_m7_1, col_m7_2 = st.columns([1.2, 1])
-        
-        with col_m7_1:
-            st.markdown("### 🔍 Diagnose")
-            
-            if show_3d_m7:
-                # 3D Scatter: Zeigt wie Prädiktoren zusammen die Zielvariable beeinflussen
-                fig_3d_m7 = plt.figure(figsize=(10, 8))
-                ax_3d_m7 = fig_3d_m7.add_subplot(111, projection='3d')
-                
-                # Scatter Plot der Datenpunkte
-                scatter = ax_3d_m7.scatter(x2_preis, x3_werbung, y_mult, c=y_mult, cmap='viridis', s=50, alpha=0.6, edgecolor='white')
-                
-                # Regression Ebene
-                x1_range = np.linspace(x2_preis.min(), x2_preis.max(), 20)
-                x2_range = np.linspace(x3_werbung.min(), x3_werbung.max(), 20)
-                X1_mesh, X2_mesh = np.meshgrid(x1_range, x2_range)
-                Y_mesh = model_mult.params[0] + model_mult.params[1]*X1_mesh + model_mult.params[2]*X2_mesh
-                ax_3d_m7.plot_surface(X1_mesh, X2_mesh, Y_mesh, alpha=0.2, cmap='coolwarm')
-                
-                ax_3d_m7.set_xlabel(x1_name, fontsize=10)
-                ax_3d_m7.set_ylabel(x2_name, fontsize=10)
-                ax_3d_m7.set_zlabel(y_name, fontsize=10)
-                ax_3d_m7.set_title('3D: Multikollinearität Visualisierung\n(Korrelation zwischen Prädiktoren sichtbar in Punktverteilung)', fontsize=11, fontweight='bold')
-                ax_3d_m7.view_init(elev=25, azim=-60)
-                
-                plt.colorbar(scatter, ax=ax_3d_m7, pad=0.1, label=y_name)
-                plt.tight_layout()
-                st.pyplot(fig_3d_m7)
-                plt.close()
-                
-                st.info("""
-                **💡 3D-Interpretation:**
-                
-                - Wenn Prädiktoren **unkorreliert** sind: Punkte bilden eine "Wolke" über die gesamte x-y-Ebene
-                - Wenn Prädiktoren **korreliert** sind: Punkte liegen entlang einer Diagonale/Linie in der x-y-Ebene
-                - **Problem:** Korrelierte Prädiktoren → schwer zu trennen, welcher Prädiktor welchen Effekt hat!
-                """)
-            else:
-                # Original 2D Correlation Matrix
-                # Korrelationsmatrix
-                corr_matrix = np.corrcoef(x2_preis, x3_werbung)
-                
-                fig_corr, ax_corr = plt.subplots(figsize=(8, 6))
-                im = ax_corr.imshow(corr_matrix, cmap='RdBu_r', vmin=-1, vmax=1, aspect='auto')
-                ax_corr.set_xticks([0, 1])
-                ax_corr.set_yticks([0, 1])
-                
-                # Use dynamic names
-                var1_short = x1_name.split('(')[0].strip()
-                var2_short = x2_name.split('(')[0].strip()
-                ax_corr.set_xticklabels([var1_short, var2_short])
-                ax_corr.set_yticklabels([var1_short, var2_short])
+            # Use dynamic names
+            var1_short = x1_name.split('(')[0].strip()
+            var2_short = x2_name.split('(')[0].strip()
+            ax_corr.set_xticklabels([var1_short, var2_short])
+            ax_corr.set_yticklabels([var1_short, var2_short])
             
             # Werte einzeichnen
             for i in range(2):
@@ -1418,271 +1417,269 @@ if regression_type == "📊 Multiple Regression":
                 "Stark - Multikollinearität! ❌"
             }
             """)
-        
-        with col_m7_2:
-            st.markdown("### 📊 VIF (Variance Inflation Factor)")
-            
-            if show_formulas:
-                st.latex(r"VIF_k = \frac{1}{1 - R_k^2}")
-                st.markdown("""
-                Wo R²ₖ das R² ist, wenn wir xₖ durch alle anderen Prädiktoren vorhersagen.
-                """)
-            
-            # Berechne VIF
-            from statsmodels.stats.outliers_influence import variance_inflation_factor
-            X_for_vif = np.column_stack([x2_preis, x3_werbung])
-            vif_data = pd.DataFrame({
-                'Variable': [x1_name.split('(')[0].strip(), x2_name.split('(')[0].strip()],
-                'VIF': [variance_inflation_factor(X_for_vif, i) for i in range(X_for_vif.shape[1])]
-            })
-            
-            st.dataframe(vif_data, width='stretch', hide_index=True)
-            
-            st.markdown("""
-            **Interpretation:**
-            - VIF < 5: Keine Multikollinearität ✅
-            - 5 < VIF < 10: Moderate Multikollinearität ⚠️
-            - VIF > 10: Starke Multikollinearität ❌
-            """)
-            
-            st.warning("""
-            **⚠️ Konsequenzen von Multikollinearität:**
-            
-            1. **Standardfehler steigen** → unsichere Schätzungen
-            2. **Koeffizienten instabil** → ändern sich stark bei kleinen Datenänderungen
-            3. **t-Tests unzuverlässig** → falsche Schlüsse über Signifikanz
-            4. **Interpretation schwierig** → "ceteris paribus" fraglich
-            
-            **Lösungen:**
-            - Variable(n) entfernen
-            - Mehr Daten sammeln
-            - Ridge/Lasso Regression
-            - Hauptkomponentenanalyse
-            """)
     
+    with col_m7_2:
+        st.markdown("### 📊 VIF (Variance Inflation Factor)")
+        
+        if show_formulas:
+            st.latex(r"VIF_k = \frac{1}{1 - R_k^2}")
+            st.markdown("""
+            Wo R²ₖ das R² ist, wenn wir xₖ durch alle anderen Prädiktoren vorhersagen.
+            """)
+        
+        # Berechne VIF
+        from statsmodels.stats.outliers_influence import variance_inflation_factor
+        X_for_vif = np.column_stack([x2_preis, x3_werbung])
+        vif_data = pd.DataFrame({
+            'Variable': [x1_name.split('(')[0].strip(), x2_name.split('(')[0].strip()],
+            'VIF': [variance_inflation_factor(X_for_vif, i) for i in range(X_for_vif.shape[1])]
+        })
+        
+        st.dataframe(vif_data, width='stretch', hide_index=True)
+        
+        st.markdown("""
+        **Interpretation:**
+        - VIF < 5: Keine Multikollinearität ✅
+        - 5 < VIF < 10: Moderate Multikollinearität ⚠️
+        - VIF > 10: Starke Multikollinearität ❌
+        """)
+        
+        st.warning("""
+        **⚠️ Konsequenzen von Multikollinearität:**
+        
+        1. **Standardfehler steigen** → unsichere Schätzungen
+        2. **Koeffizienten instabil** → ändern sich stark bei kleinen Datenänderungen
+        3. **t-Tests unzuverlässig** → falsche Schlüsse über Signifikanz
+        4. **Interpretation schwierig** → "ceteris paribus" fraglich
+        
+        **Lösungen:**
+        - Variable(n) entfernen
+        - Mehr Daten sammeln
+        - Ridge/Lasso Regression
+        - Hauptkomponentenanalyse
+        """)
+
     # =========================================================
     # M8: RESIDUEN-DIAGNOSTIK
     # =========================================================
-    elif selected_chapter == "M8. Residuen-Diagnostik":
-        st.markdown("---")
-        st.markdown('<p class="section-header">M8. Residuen-Diagnostik: Modellprüfung</p>', unsafe_allow_html=True)
-        
+    st.markdown("---")
+    st.markdown('<p class="section-header">M8. Residuen-Diagnostik: Modellprüfung</p>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    Bevor wir unserem Modell vertrauen, müssen wir die **Gauss-Markov Annahmen** prüfen!
+    """)
+    
+    # Diagnostik-Plots
+    fig_diag, axes = plt.subplots(2, 2, figsize=(14, 10))
+    
+    # 1. Residuen vs. Fitted
+    axes[0, 0].scatter(y_pred_mult, model_mult.resid, alpha=0.6, s=50)
+    axes[0, 0].axhline(0, color='red', linestyle='--', linewidth=2)
+    axes[0, 0].set_xlabel('Fitted values', fontsize=11)
+    axes[0, 0].set_ylabel('Residuals', fontsize=11)
+    axes[0, 0].set_title('Residuals vs Fitted\n(Linearität & Homoskedastizität)', fontsize=11, fontweight='bold')
+    axes[0, 0].grid(True, alpha=0.3)
+    
+    # 2. Q-Q Plot
+    from scipy.stats import probplot
+    probplot(model_mult.resid, dist="norm", plot=axes[0, 1])
+    axes[0, 1].set_title('Normal Q-Q\n(Normalität)', fontsize=11, fontweight='bold')
+    axes[0, 1].grid(True, alpha=0.3)
+    
+    # 3. Scale-Location
+    standardized_resid = model_mult.resid / np.std(model_mult.resid)
+    axes[1, 0].scatter(y_pred_mult, np.sqrt(np.abs(standardized_resid)), alpha=0.6, s=50)
+    axes[1, 0].set_xlabel('Fitted values', fontsize=11)
+    axes[1, 0].set_ylabel('√|Standardized residuals|', fontsize=11)
+    axes[1, 0].set_title('Scale-Location\n(Homoskedastizität)', fontsize=11, fontweight='bold')
+    axes[1, 0].grid(True, alpha=0.3)
+    
+    # 4. Residuals vs Leverage
+    from statsmodels.stats.outliers_influence import OLSInfluence
+    influence = OLSInfluence(model_mult)
+    leverage = influence.hat_matrix_diag
+    axes[1, 1].scatter(leverage, standardized_resid, alpha=0.6, s=50)
+    axes[1, 1].axhline(0, color='red', linestyle='--', linewidth=2)
+    axes[1, 1].set_xlabel('Leverage', fontsize=11)
+    axes[1, 1].set_ylabel('Standardized residuals', fontsize=11)
+    axes[1, 1].set_title('Residuals vs Leverage\n(Einflussreiche Punkte)', fontsize=11, fontweight='bold')
+    axes[1, 1].grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    st.pyplot(fig_diag)
+    plt.close()
+    
+    col_m8_1, col_m8_2 = st.columns([1, 1])
+    
+    with col_m8_1:
+        st.markdown("### ✅ Was wir suchen")
         st.markdown("""
-        Bevor wir unserem Modell vertrauen, müssen wir die **Gauss-Markov Annahmen** prüfen!
+        **Plot 1 (Residuals vs Fitted):**
+        - Zufällige Streuung um 0
+        - Keine Muster (Kurven, Trichter)
+        
+        **Plot 2 (Q-Q):**
+        - Punkte auf der Diagonale
+        - Zeigt Normalverteilung der Residuen
+        
+        **Plot 3 (Scale-Location):**
+        - Horizontales Band
+        - Konstante Varianz (Homoskedastizität)
+        
+        **Plot 4 (Residuals vs Leverage):**
+        - Keine Punkte ausserhalb Cook's Distance
+        - Zeigt einflussreiche Beobachtungen
         """)
+    
+    with col_m8_2:
+        st.markdown("### 📊 Statistische Tests")
         
-        # Diagnostik-Plots
-        fig_diag, axes = plt.subplots(2, 2, figsize=(14, 10))
+        # Jarque-Bera Test (Normalität)
+        from scipy.stats import jarque_bera
+        jb_stat, jb_pval = jarque_bera(model_mult.resid)
         
-        # 1. Residuen vs. Fitted
-        axes[0, 0].scatter(y_pred_mult, model_mult.resid, alpha=0.6, s=50)
-        axes[0, 0].axhline(0, color='red', linestyle='--', linewidth=2)
-        axes[0, 0].set_xlabel('Fitted values', fontsize=11)
-        axes[0, 0].set_ylabel('Residuals', fontsize=11)
-        axes[0, 0].set_title('Residuals vs Fitted\n(Linearität & Homoskedastizität)', fontsize=11, fontweight='bold')
-        axes[0, 0].grid(True, alpha=0.3)
+        # Breusch-Pagan Test (Heteroskedastizität)
+        from statsmodels.stats.diagnostic import het_breuschpagan
+        bp_stat, bp_pval, _, _ = het_breuschpagan(model_mult.resid, X_mult)
         
-        # 2. Q-Q Plot
-        from scipy.stats import probplot
-        probplot(model_mult.resid, dist="norm", plot=axes[0, 1])
-        axes[0, 1].set_title('Normal Q-Q\n(Normalität)', fontsize=11, fontweight='bold')
-        axes[0, 1].grid(True, alpha=0.3)
+        st.info(f"""
+        **Jarque-Bera Test (Normalität):**
+        - Statistik: {jb_stat:.3f}
+        - p-Wert: {jb_pval:.4f}
+        - {'✅ H₀ nicht verwerfen → Normalität OK' if jb_pval > 0.05 else '❌ H₀ verwerfen → Nicht normalverteilt'}
         
-        # 3. Scale-Location
-        standardized_resid = model_mult.resid / np.std(model_mult.resid)
-        axes[1, 0].scatter(y_pred_mult, np.sqrt(np.abs(standardized_resid)), alpha=0.6, s=50)
-        axes[1, 0].set_xlabel('Fitted values', fontsize=11)
-        axes[1, 0].set_ylabel('√|Standardized residuals|', fontsize=11)
-        axes[1, 0].set_title('Scale-Location\n(Homoskedastizität)', fontsize=11, fontweight='bold')
-        axes[1, 0].grid(True, alpha=0.3)
+        **Breusch-Pagan Test (Homoskedastizität):**
+        - Statistik: {bp_stat:.3f}
+        - p-Wert: {bp_pval:.4f}
+        - {'✅ H₀ nicht verwerfen → Homoskedastizität OK' if bp_pval > 0.05 else '❌ H₀ verwerfen → Heteroskedastizität'}
+        """)
+    
+    # 3D Residual Diagnostics Toggle
+    show_3d_resid_m8 = st.checkbox("🎲 3D-Residuen über Prädiktorraum", value=False)
+    
+    if show_3d_resid_m8:
+        st.markdown("### 🎲 3D-Visualisierung: Residuen im Prädiktorraum")
         
-        # 4. Residuals vs Leverage
-        from statsmodels.stats.outliers_influence import OLSInfluence
-        influence = OLSInfluence(model_mult)
-        leverage = influence.hat_matrix_diag
-        axes[1, 1].scatter(leverage, standardized_resid, alpha=0.6, s=50)
-        axes[1, 1].axhline(0, color='red', linestyle='--', linewidth=2)
-        axes[1, 1].set_xlabel('Leverage', fontsize=11)
-        axes[1, 1].set_ylabel('Standardized residuals', fontsize=11)
-        axes[1, 1].set_title('Residuals vs Leverage\n(Einflussreiche Punkte)', fontsize=11, fontweight='bold')
-        axes[1, 1].grid(True, alpha=0.3)
+        fig_3d_resid_m8 = plt.figure(figsize=(12, 8))
+        ax_3d_resid_m8 = fig_3d_resid_m8.add_subplot(111, projection='3d')
         
+        # Scatter plot with residuals colored
+        scatter_m8 = ax_3d_resid_m8.scatter(x2_preis, x3_werbung, model_mult.resid, 
+                                            c=model_mult.resid, cmap='RdBu_r', 
+                                            s=100, alpha=0.7, edgecolor='black')
+        
+        # Zero plane
+        x1_range = np.linspace(x2_preis.min(), x2_preis.max(), 10)
+        x2_range = np.linspace(x3_werbung.min(), x3_werbung.max(), 10)
+        X1_mesh, X2_mesh = np.meshgrid(x1_range, x2_range)
+        Z_zero = np.zeros_like(X1_mesh)
+        ax_3d_resid_m8.plot_surface(X1_mesh, X2_mesh, Z_zero, alpha=0.2, color='gray')
+        
+        ax_3d_resid_m8.set_xlabel(x1_name, fontsize=10)
+        ax_3d_resid_m8.set_ylabel(x2_name, fontsize=10)
+        ax_3d_resid_m8.set_zlabel('Residuen', fontsize=10)
+        ax_3d_resid_m8.set_title('Residuen über Prädiktorraum\n(Muster → Modellverletzungen)', fontsize=12, fontweight='bold')
+        ax_3d_resid_m8.view_init(elev=20, azim=-60)
+        
+        plt.colorbar(scatter_m8, ax=ax_3d_resid_m8, pad=0.1, label='Residuengrösse')
         plt.tight_layout()
-        st.pyplot(fig_diag)
+        st.pyplot(fig_3d_resid_m8)
         plt.close()
         
-        col_m8_1, col_m8_2 = st.columns([1, 1])
+        st.info("""
+        **💡 3D-Interpretation:**
         
-        with col_m8_1:
-            st.markdown("### ✅ Was wir suchen")
-            st.markdown("""
-            **Plot 1 (Residuals vs Fitted):**
-            - Zufällige Streuung um 0
-            - Keine Muster (Kurven, Trichter)
-            
-            **Plot 2 (Q-Q):**
-            - Punkte auf der Diagonale
-            - Zeigt Normalverteilung der Residuen
-            
-            **Plot 3 (Scale-Location):**
-            - Horizontales Band
-            - Konstante Varianz (Homoskedastizität)
-            
-            **Plot 4 (Residuals vs Leverage):**
-            - Keine Punkte ausserhalb Cook's Distance
-            - Zeigt einflussreiche Beobachtungen
-            """)
-        
-        with col_m8_2:
-            st.markdown("### 📊 Statistische Tests")
-            
-            # Jarque-Bera Test (Normalität)
-            from scipy.stats import jarque_bera
-            jb_stat, jb_pval = jarque_bera(model_mult.resid)
-            
-            # Breusch-Pagan Test (Heteroskedastizität)
-            from statsmodels.stats.diagnostic import het_breuschpagan
-            bp_stat, bp_pval, _, _ = het_breuschpagan(model_mult.resid, X_mult)
-            
-            st.info(f"""
-            **Jarque-Bera Test (Normalität):**
-            - Statistik: {jb_stat:.3f}
-            - p-Wert: {jb_pval:.4f}
-            - {'✅ H₀ nicht verwerfen → Normalität OK' if jb_pval > 0.05 else '❌ H₀ verwerfen → Nicht normalverteilt'}
-            
-            **Breusch-Pagan Test (Homoskedastizität):**
-            - Statistik: {bp_stat:.3f}
-            - p-Wert: {bp_pval:.4f}
-            - {'✅ H₀ nicht verwerfen → Homoskedastizität OK' if bp_pval > 0.05 else '❌ H₀ verwerfen → Heteroskedastizität'}
-            """)
-        
-        # 3D Residual Diagnostics Toggle
-        show_3d_resid_m8 = st.checkbox("🎲 3D-Residuen über Prädiktorraum", value=False)
-        
-        if show_3d_resid_m8:
-            st.markdown("### 🎲 3D-Visualisierung: Residuen im Prädiktorraum")
-            
-            fig_3d_resid_m8 = plt.figure(figsize=(12, 8))
-            ax_3d_resid_m8 = fig_3d_resid_m8.add_subplot(111, projection='3d')
-            
-            # Scatter plot with residuals colored
-            scatter_m8 = ax_3d_resid_m8.scatter(x2_preis, x3_werbung, model_mult.resid, 
-                                                c=model_mult.resid, cmap='RdBu_r', 
-                                                s=100, alpha=0.7, edgecolor='black')
-            
-            # Zero plane
-            x1_range = np.linspace(x2_preis.min(), x2_preis.max(), 10)
-            x2_range = np.linspace(x3_werbung.min(), x3_werbung.max(), 10)
-            X1_mesh, X2_mesh = np.meshgrid(x1_range, x2_range)
-            Z_zero = np.zeros_like(X1_mesh)
-            ax_3d_resid_m8.plot_surface(X1_mesh, X2_mesh, Z_zero, alpha=0.2, color='gray')
-            
-            ax_3d_resid_m8.set_xlabel(x1_name, fontsize=10)
-            ax_3d_resid_m8.set_ylabel(x2_name, fontsize=10)
-            ax_3d_resid_m8.set_zlabel('Residuen', fontsize=10)
-            ax_3d_resid_m8.set_title('Residuen über Prädiktorraum\n(Muster → Modellverletzungen)', fontsize=12, fontweight='bold')
-            ax_3d_resid_m8.view_init(elev=20, azim=-60)
-            
-            plt.colorbar(scatter_m8, ax=ax_3d_resid_m8, pad=0.1, label='Residuengrösse')
-            plt.tight_layout()
-            st.pyplot(fig_3d_resid_m8)
-            plt.close()
-            
-            st.info("""
-            **💡 3D-Interpretation:**
-            
-            - **Graue Ebene** = Null-Linie (perfekte Vorhersage)
-            - **Rote Punkte** = Positive Residuen (Modell unterschätzt)
-            - **Blaue Punkte** = Negative Residuen (Modell überschätzt)
-            - **Zufällige Verteilung** = Gutes Modell ✅
-            - **Systematische Muster** = Modellprobleme (Nonlinearität, fehlende Variablen) ❌
-            - **Cluster in Bereichen** = Heteroskedastizität ⚠️
-            """)
-    
+        - **Graue Ebene** = Null-Linie (perfekte Vorhersage)
+        - **Rote Punkte** = Positive Residuen (Modell unterschätzt)
+        - **Blaue Punkte** = Negative Residuen (Modell überschätzt)
+        - **Zufällige Verteilung** = Gutes Modell ✅
+        - **Systematische Muster** = Modellprobleme (Nonlinearität, fehlende Variablen) ❌
+        - **Cluster in Bereichen** = Heteroskedastizität ⚠️
+        """)
+
     # =========================================================
     # M9: ZUSAMMENFASSUNG
     # =========================================================
-    elif selected_chapter == "M9. Zusammenfassung":
-        st.markdown("---")
-        st.markdown('<p class="section-header">M9. Zusammenfassung: Multiple Regression</p>', unsafe_allow_html=True)
+    st.markdown("---")
+    st.markdown('<p class="section-header">M9. Zusammenfassung: Multiple Regression</p>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    Sie haben die **multiple Regression** von Grund auf verstanden! 🎉
+    
+    Fassen wir die wichtigsten Konzepte zusammen:
+    """)
+    
+    # Vollständiger R-Output
+    st.markdown("### 💻 Vollständiger Modell-Output")
+    st.code(model_mult.summary().as_text(), language=None)
+    
+    col_m9_1, col_m9_2 = st.columns([1, 1])
+    
+    with col_m9_1:
+        st.markdown("### 📋 Kernkonzepte")
+        concepts_table = pd.DataFrame({
+            'Konzept': [
+                'Grundmodell',
+                'OLS-Schätzer',
+                'R²',
+                'Adjustiertes R²',
+                't-Test',
+                'F-Test',
+                'Partielle Koeffizienten',
+                'Dummy-Variablen',
+                'Multikollinearität',
+                'VIF'
+            ],
+            'Status': ['✅'] * 10
+        })
+        st.dataframe(concepts_table, width='stretch', hide_index=True)
+    
+    with col_m9_2:
+        st.markdown("### 📊 Unser Modell")
+        st.success(f"""
+        **Modellgleichung:**
         
-        st.markdown("""
-        Sie haben die **multiple Regression** von Grund auf verstanden! 🎉
+        {y_name.split('(')[0].strip()} = {model_mult.params[0]:.2f} 
+                 {model_mult.params[1]:+.2f} · {x1_name.split('(')[0].strip()} 
+                 {model_mult.params[2]:+.2f} · {x2_name.split('(')[0].strip()}
         
-        Fassen wir die wichtigsten Konzepte zusammen:
+        **Modellgüte:**
+        - R² = {model_mult.rsquared:.4f}
+        - R²_adj = {model_mult.rsquared_adj:.4f}
+        - F = {model_mult.fvalue:.2f} (p < 0.001)
+        
+        **Interpretation:**
+        - Pro Einheit {x1_name.split('(')[0].strip()}: {model_mult.params[1]:.2f} Einheiten {y_name.split('(')[0].strip()}
+        - Pro Einheit {x2_name.split('(')[0].strip()}: {model_mult.params[2]:+.2f} Einheiten {y_name.split('(')[0].strip()}
+        
+        Beide Effekte sind **statistisch signifikant** (p < 0.05)!
         """)
-        
-        # Vollständiger R-Output
-        st.markdown("### 💻 Vollständiger Modell-Output")
-        st.code(model_mult.summary().as_text(), language=None)
-        
-        col_m9_1, col_m9_2 = st.columns([1, 1])
-        
-        with col_m9_1:
-            st.markdown("### 📋 Kernkonzepte")
-            concepts_table = pd.DataFrame({
-                'Konzept': [
-                    'Grundmodell',
-                    'OLS-Schätzer',
-                    'R²',
-                    'Adjustiertes R²',
-                    't-Test',
-                    'F-Test',
-                    'Partielle Koeffizienten',
-                    'Dummy-Variablen',
-                    'Multikollinearität',
-                    'VIF'
-                ],
-                'Status': ['✅'] * 10
-            })
-            st.dataframe(concepts_table, width='stretch', hide_index=True)
-        
-        with col_m9_2:
-            st.markdown("### 📊 Unser Modell")
-            st.success(f"""
-            **Modellgleichung:**
-            
-            {y_name.split('(')[0].strip()} = {model_mult.params[0]:.2f} 
-                     {model_mult.params[1]:+.2f} · {x1_name.split('(')[0].strip()} 
-                     {model_mult.params[2]:+.2f} · {x2_name.split('(')[0].strip()}
-            
-            **Modellgüte:**
-            - R² = {model_mult.rsquared:.4f}
-            - R²_adj = {model_mult.rsquared_adj:.4f}
-            - F = {model_mult.fvalue:.2f} (p < 0.001)
-            
-            **Interpretation:**
-            - Pro Einheit {x1_name.split('(')[0].strip()}: {model_mult.params[1]:.2f} Einheiten {y_name.split('(')[0].strip()}
-            - Pro Einheit {x2_name.split('(')[0].strip()}: {model_mult.params[2]:+.2f} Einheiten {y_name.split('(')[0].strip()}
-            
-            Beide Effekte sind **statistisch signifikant** (p < 0.05)!
-            """)
-        
-        st.markdown("### 🎯 Wichtigste Erkenntnisse")
-        st.markdown("""
-        1. **Multiple Regression** erlaubt uns, den Einfluss **mehrerer Variablen gleichzeitig** zu untersuchen
-        
-        2. **Partielle Koeffizienten** messen den Effekt **ceteris paribus** (bei Konstanthaltung der anderen)
-        
-        3. **Adjustiertes R²** ist besser als R² für Modellvergleiche (bestraft Komplexität)
-        
-        4. **Multikollinearität** ist ein Problem - prüfen mit Korrelationen und VIF
-        
-        5. **Residuen-Diagnostik** ist essentiell - Annahmen müssen erfüllt sein!
-        
-        6. **Dummy-Variablen** ermöglichen kategoriale Prädiktoren
-        
-        7. **F-Test** prüft Gesamtsignifikanz, **t-Tests** prüfen einzelne Koeffizienten
-        """)
-        
-        st.info("""
-        **🚀 Nächste Schritte:**
-        
-        - Experimentieren Sie mit den Parametern
-        - Vergleichen Sie einfache vs. multiple Regression
-        - Prüfen Sie die Residuen-Diagnostik
-        - Erkunden Sie Prognosen für verschiedene Szenarien
-        """)
+    
+    st.markdown("### 🎯 Wichtigste Erkenntnisse")
+    st.markdown("""
+    1. **Multiple Regression** erlaubt uns, den Einfluss **mehrerer Variablen gleichzeitig** zu untersuchen
+    
+    2. **Partielle Koeffizienten** messen den Effekt **ceteris paribus** (bei Konstanthaltung der anderen)
+    
+    3. **Adjustiertes R²** ist besser als R² für Modellvergleiche (bestraft Komplexität)
+    
+    4. **Multikollinearität** ist ein Problem - prüfen mit Korrelationen und VIF
+    
+    5. **Residuen-Diagnostik** ist essentiell - Annahmen müssen erfüllt sein!
+    
+    6. **Dummy-Variablen** ermöglichen kategoriale Prädiktoren
+    
+    7. **F-Test** prüft Gesamtsignifikanz, **t-Tests** prüfen einzelne Koeffizienten
+    """)
+    
+    st.info("""
+    **🚀 Nächste Schritte:**
+    
+    - Experimentieren Sie mit den Parametern
+    - Vergleichen Sie einfache vs. multiple Regression
+    - Prüfen Sie die Residuen-Diagnostik
+    - Erkunden Sie Prognosen für verschiedene Szenarien
+    """)
 
 # Nur bei Einfacher Regression: Zeige die bestehenden Kapitel
 elif regression_type == "📈 Einfache Regression":
