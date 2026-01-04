@@ -1150,10 +1150,12 @@ if regression_type == "📊 Multiple Regression":
         """)
         
         # Varianzzerlegung
-        fig_var_mult = create_plotly_bar('SST\n(Total)', 'SSR\n(Erklärt)', 'SSE\n(Unerklärt)', 
-                                         sst_mult, ssr_mult, sse_mult, 
-                                         colors=['gray', 'green', 'red'], 
-                                         title=f"Varianzzerlegung: R² = {model_mult.rsquared:.4f}")
+        fig_var_mult = create_plotly_bar(
+            categories=['SST\n(Total)', 'SSR\n(Erklärt)', 'SSE\n(Unerklärt)'],
+            values=[sst_mult, ssr_mult, sse_mult],
+            colors=['gray', 'green', 'red'],
+            title=f"Varianzzerlegung: R² = {model_mult.rsquared:.4f}"
+        )
         st.plotly_chart(fig_var_mult, use_container_width=True)
             
     with col_m4_2:
@@ -3602,10 +3604,12 @@ elif regression_type == "📈 Einfache Regression":
             st.latex(f"R^2 = \\frac{{{ssr:.2f}}}{{{sst:.2f}}} = {model.rsquared:.4f}")
     
         # R² als Balken
-        fig_r2bar = create_plotly_bar('SST\n(Total)', 'SSR\n(Erklärt)', 'SSE\n(Unerklärt)', 
-                                      sst, ssr, sse, 
-                                      colors=['gray', 'green', 'red'], 
-                                      title=f"R² = {model.rsquared:.1%}")
+        fig_r2bar = create_plotly_bar(
+            categories=['SST\n(Total)', 'SSR\n(Erklärt)', 'SSE\n(Unerklärt)'],
+            values=[sst, ssr, sse],
+            colors=['gray', 'green', 'red'],
+            title=f"R² = {model.rsquared:.1%}"
+        )
         st.plotly_chart(fig_r2bar, use_container_width=True)
         
         st.success(f"""
