@@ -18,7 +18,7 @@ Interaktiver Leitfaden zur einfachen und multiplen linearen Regression mit Strea
    ```
 3) App starten:
    ```bash
-   streamlit run regression_leitfaden.py
+   streamlit run app.py
    ```
    Browser öffnet automatisch oder manuell `http://localhost:8501` aufrufen.
 
@@ -26,7 +26,7 @@ Interaktiver Leitfaden zur einfachen und multiplen linearen Regression mit Strea
 
 | Datei | Beschreibung |
 |-------|--------------|
-| regression_leitfaden.py | Haupt-App mit allen Kapiteln |
+| app.py | Haupt-App mit allen Kapiteln |
 | requirements.txt | Laufzeitabhängigkeiten |
 | README.md | Projektüberblick |
 
