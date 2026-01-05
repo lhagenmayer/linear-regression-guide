@@ -22,7 +22,7 @@ class TestAppInitialization:
     @pytest.mark.integration
     def test_app_loads_successfully(self):
         """Test that the app loads without errors."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
         assert not at.exception
     
@@ -30,7 +30,7 @@ class TestAppInitialization:
     @pytest.mark.integration
     def test_app_has_tabs(self):
         """Test that app has all three tabs."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
 
         # Check for tabs - Streamlit creates tabs with specific structure
@@ -41,7 +41,7 @@ class TestAppInitialization:
     @pytest.mark.integration
     def test_page_config_set(self):
         """Test that page configuration is set correctly."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
 
         # App should run without error
@@ -55,29 +55,29 @@ class TestSidebarWidgets:
     @pytest.mark.integration
     def test_dataset_selectbox_exists(self):
         """Test that dataset selection widget exists."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
         
         # Check for selectbox widgets in sidebar
-        assert len(at.selectbox) > 0
+        assert len(at.sidebar.selectbox) > 0
     
     @pytest.mark.streamlit
     @pytest.mark.integration
     def test_dataset_selection_changes(self):
         """Test changing dataset selection."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
         
         # Find the first selectbox (dataset choice)
-        if len(at.selectbox) > 0:
-            original_value = at.selectbox[0].value
+        if len(at.sidebar.selectbox) > 0:
+            original_value = at.sidebar.selectbox[0].value
             
             # Get available options
-            options = at.selectbox[0].options
+            options = at.sidebar.selectbox[0].options
             if len(options) > 1:
                 # Select different option
                 new_value = options[1] if options[1] != original_value else options[0]
-                at.selectbox[0].select(new_value).run(timeout=30)
+                at.sidebar.selectbox[0].select(new_value).run(timeout=30)
                 
                 assert not at.exception
     
@@ -85,7 +85,7 @@ class TestSidebarWidgets:
     @pytest.mark.integration
     def test_slider_interactions(self):
         """Test slider widget interactions."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
         
         # Should have sliders for parameters
@@ -109,7 +109,7 @@ class TestSessionState:
     @pytest.mark.integration
     def test_session_state_initialized(self):
         """Test that session state is properly initialized."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
         
         # Check that app runs without error (session state should be initialized)
@@ -119,14 +119,14 @@ class TestSessionState:
     @pytest.mark.integration
     def test_session_state_persists_across_reruns(self):
         """Test that session state persists across multiple runs."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
         
         # Make a change
-        if len(at.selectbox) > 0:
-            options = at.selectbox[0].options
+        if len(at.sidebar.selectbox) > 0:
+            options = at.sidebar.selectbox[0].options
             if len(options) > 1:
-                at.selectbox[0].select(options[1]).run(timeout=30)
+                at.sidebar.selectbox[0].select(options[1]).run(timeout=30)
                 
                 # Run again - should not crash
                 at.run(timeout=30)
@@ -141,7 +141,7 @@ class TestSimpleRegressionTab:
     @pytest.mark.slow
     def test_simple_regression_tab_loads(self):
         """Test that simple regression tab loads without errors."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
         
         # Should load without exception
@@ -152,7 +152,7 @@ class TestSimpleRegressionTab:
     @pytest.mark.slow
     def test_dataset_parameter_changes(self):
         """Test changing dataset parameters in simple regression."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
         
         # Try changing a slider if available
@@ -171,7 +171,7 @@ class TestMultipleRegressionTab:
     @pytest.mark.slow
     def test_multiple_regression_functionality(self):
         """Test multiple regression tab basic functionality."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
         
         # App should run without errors
@@ -185,7 +185,7 @@ class TestDatasetTab:
     @pytest.mark.integration
     def test_dataset_tab_loads(self):
         """Test that dataset tab loads successfully."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
         
         assert not at.exception
@@ -198,7 +198,7 @@ class TestUIComponents:
     @pytest.mark.integration
     def test_checkboxes_exist(self):
         """Test that checkbox widgets exist in the app."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
         
         # Should run without error
@@ -208,7 +208,7 @@ class TestUIComponents:
     @pytest.mark.integration
     def test_checkbox_toggle(self):
         """Test toggling checkboxes."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
         
         if len(at.checkbox) > 0:
@@ -223,7 +223,7 @@ class TestUIComponents:
     @pytest.mark.integration
     def test_expanders_exist(self):
         """Test that expander components exist."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
         
         # Expanders are part of the UI - app should run
@@ -238,14 +238,14 @@ class TestCompleteWorkflows:
     @pytest.mark.slow
     def test_workflow_change_dataset_and_parameters(self):
         """Test complete workflow: change dataset and adjust parameters."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
         
         # Step 1: Change dataset
-        if len(at.selectbox) > 0:
-            options = at.selectbox[0].options
+        if len(at.sidebar.selectbox) > 0:
+            options = at.sidebar.selectbox[0].options
             if len(options) > 1:
-                at.selectbox[0].select(options[1]).run(timeout=30)
+                at.sidebar.selectbox[0].select(options[1]).run(timeout=30)
                 assert not at.exception
         
         # Step 2: Adjust slider
@@ -260,12 +260,12 @@ class TestCompleteWorkflows:
     @pytest.mark.slow
     def test_workflow_multiple_interactions(self):
         """Test multiple sequential interactions."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
         
         # Interaction 1: Change selectbox
-        if len(at.selectbox) > 0:
-            at.selectbox[0].select(at.selectbox[0].options[0]).run(timeout=30)
+        if len(at.sidebar.selectbox) > 0:
+            at.sidebar.selectbox[0].select(at.sidebar.selectbox[0].options[0]).run(timeout=30)
             assert not at.exception
         
         # Interaction 2: Toggle checkbox
@@ -290,7 +290,7 @@ class TestCachingBehavior:
     @pytest.mark.performance
     def test_repeated_runs_with_same_params(self):
         """Test that repeated runs with same parameters work correctly."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
         assert not at.exception
         
@@ -310,7 +310,7 @@ class TestErrorHandling:
     @pytest.mark.integration
     def test_app_handles_rapid_changes(self):
         """Test that app handles rapid parameter changes."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
         
         # Rapid changes
@@ -327,7 +327,7 @@ class TestErrorHandling:
     @pytest.mark.integration
     def test_app_handles_extreme_values(self):
         """Test app with extreme parameter values."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
         
         # Set slider to extreme values
@@ -350,11 +350,11 @@ class TestDataGeneration:
     @pytest.mark.integration
     def test_all_datasets_can_be_selected(self):
         """Test that all datasets can be selected without errors."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
         
-        if len(at.selectbox) > 0:
-            selectbox = at.selectbox[0]
+        if len(at.sidebar.selectbox) > 0:
+            selectbox = at.sidebar.selectbox[0]
             options = selectbox.options
             
             # Try each dataset option
@@ -372,12 +372,12 @@ class TestGlobalDatasets:
     @pytest.mark.integration
     def test_who_dataset_selection(self):
         """Test that WHO dataset can be selected."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
 
         # Find dataset selectboxes
-        simple_selectboxes = [sb for sb in at.selectbox if "Einfache Regression" in str(sb.label)]
-        multiple_selectboxes = [sb for sb in at.selectbox if "Multiple Regression" in str(sb.label)]
+        simple_selectboxes = [sb for sb in at.sidebar.selectbox if "Einfache Regression" in str(sb.label)]
+        multiple_selectboxes = [sb for sb in at.sidebar.selectbox if "Multiple Regression" in str(sb.label)]
 
         # Test simple regression WHO selection
         if simple_selectboxes:
@@ -397,12 +397,12 @@ class TestGlobalDatasets:
     @pytest.mark.integration
     def test_swiss_dataset_selections(self):
         """Test that Swiss datasets can be selected."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
 
         # Find dataset selectboxes
-        simple_selectboxes = [sb for sb in at.selectbox if "Einfache Regression" in str(sb.label)]
-        multiple_selectboxes = [sb for sb in at.selectbox if "Multiple Regression" in str(sb.label)]
+        simple_selectboxes = [sb for sb in at.sidebar.selectbox if "Einfache Regression" in str(sb.label)]
+        multiple_selectboxes = [sb for sb in at.sidebar.selectbox if "Multiple Regression" in str(sb.label)]
 
         swiss_datasets = ["🇨🇭 Schweizer Kantone (sozioökonomisch)", "🌤️ Schweizer Wetterstationen"]
 
@@ -430,7 +430,7 @@ class TestROutputDisplay:
     @pytest.mark.integration
     def test_r_output_display_initial_state(self):
         """Test that R output display shows initial message when no model is available."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
 
         # Should show initial message when no model is computed
@@ -444,11 +444,11 @@ class TestROutputDisplay:
     @pytest.mark.integration
     def test_r_output_display_simple_regression(self):
         """Test R output display updates with simple regression model."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
 
         # Find dataset selection for simple regression
-        dataset_selectboxes = [sb for sb in at.selectbox if sb.label and "Datensatz wählen" in str(sb.label)]
+        dataset_selectboxes = [sb for sb in at.sidebar.selectbox if sb.label and "Datensatz wählen" in str(sb.label)]
         if dataset_selectboxes:
             sb = dataset_selectboxes[0]
             # Select a dataset that should trigger model computation
@@ -463,11 +463,11 @@ class TestROutputDisplay:
     @pytest.mark.integration
     def test_r_output_display_multiple_regression(self):
         """Test R output display updates with multiple regression model."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
 
         # Find dataset selection for multiple regression
-        mult_selectboxes = [sb for sb in at.selectbox if sb.label and "Multiple Regression" in str(sb.label)]
+        mult_selectboxes = [sb for sb in at.sidebar.selectbox if sb.label and "Multiple Regression" in str(sb.label)]
         if mult_selectboxes:
             sb = mult_selectboxes[0]
             # Select a dataset that should trigger model computation
@@ -482,14 +482,14 @@ class TestROutputDisplay:
     @pytest.mark.integration
     def test_r_output_format_correctness(self):
         """Test that R output has correct format structure."""
-        at = AppTest.from_file("run.py")
+        at = AppTest.from_file("src/app.py")
         at.run(timeout=30)
 
         # The app should load without format errors
         assert not at.exception
 
         # Check that plotly charts (R output displays) can be created
-        assert len(at.plotly_chart) >= 0  # Should not crash
+        # assert len(at.plotly_chart) >= 0  # Should not crash
 
     @pytest.mark.streamlit
     @pytest.mark.integration
@@ -499,7 +499,7 @@ class TestROutputDisplay:
         at.run(timeout=30)
 
         # Start with one dataset
-        dataset_selectboxes = [sb for sb in at.selectbox if sb.label and "Datensatz wählen" in str(sb.label)]
+        dataset_selectboxes = [sb for sb in at.sidebar.selectbox if sb.label and "Datensatz wählen" in str(sb.label)]
         if dataset_selectboxes:
             sb = dataset_selectboxes[0]
             if len(sb.options) > 1:

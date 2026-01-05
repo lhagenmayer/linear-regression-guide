@@ -420,7 +420,7 @@ class TestROutputDisplay:
         model.fvalue = 100.0
         model.f_pvalue = 0.001
         
-        output = create_r_output_display(model, "TestVar")
+        output = create_r_output_display(model, ["TestVar"])
         
         assert isinstance(output, str)
         assert "Residuals:" in output
@@ -447,7 +447,7 @@ class TestROutputDisplay:
         model.fvalue = 100.0
         model.f_pvalue = 0.001
         
-        fig = create_r_output_figure(model, "TestVar")
+        fig = create_r_output_figure(model, ["TestVar"])
         
         assert isinstance(fig, go.Figure)
 
@@ -604,7 +604,7 @@ class TestSwissDatasetPlotCompatibility:
             canton_data['y'],
             canton_data['x_label'],
             canton_data['y_label'],
-            mock_model
+            "Swiss Cantons Scatter"
         )
 
         assert isinstance(fig_scatter, go.Figure)
