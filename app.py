@@ -137,7 +137,7 @@ with st.sidebar.expander("🎛️ Daten-Parameter (Multiple Regression)", expand
         st.markdown("**Zufallskomponente:**")
         noise_mult_level = st.slider("Rauschen (σ)", min_value=CITIES_DATASET["noise_min"], max_value=CITIES_DATASET["noise_max"], value=CITIES_DATASET["noise_std"], step=CITIES_DATASET["noise_step"],
                                        help="Standardabweichung der Störgrösse", key="noise_mult_staedte")
-            seed_mult = st.number_input("Random Seed", min_value=SEED_MIN, max_value=SEED_MAX, value=DEFAULT_SEED,
+        seed_mult = st.number_input("Random Seed", min_value=SEED_MIN, max_value=SEED_MAX, value=DEFAULT_SEED,
                                       help="Zufallsseed für Reproduzierbarkeit", key="seed_mult_staedte")
     
     elif dataset_choice_mult == "🏠 Häuserpreise mit Pool (1000 Häuser)":
