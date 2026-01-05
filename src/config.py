@@ -196,3 +196,26 @@ UI_DEFAULTS = {
     "plot_height": 500,              # Default plotly figure height
     "animation_duration": 500,       # Animation duration in ms
 }
+
+# ============================================================================
+# COMPATIBILITY CONSTANTS
+# ============================================================================
+
+# Legacy compatibility constants
+DEFAULT_N_OBSERVATIONS = SIMPLE_REGRESSION["n_default"]
+
+
+def get_default_plot_config():
+    """
+    Get default plot configuration dictionary.
+
+    Returns:
+        dict: Default plot configuration with colors, fonts, and UI settings
+    """
+    return {
+        "colors": COLORS,
+        "font_sizes": FONT_SIZES,
+        "ui_defaults": UI_DEFAULTS,
+        "camera_presets": CAMERA_PRESETS,
+        "css_styles": CSS_STYLES,
+    }
