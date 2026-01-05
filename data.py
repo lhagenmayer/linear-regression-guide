@@ -365,6 +365,50 @@ def generate_multiple_regression_data(
 
         x1_name, x2_name, y_name = "Preis (CHF)", "Werbung (CHF1000)", "Umsatz (1000 CHF)"
 
+    elif dataset_choice_mult == "🇨🇭 Schweizer Kantone (sozioökonomisch)":
+        # Use the canton data generation function
+        canton_data = generate_swiss_canton_regression_data()
+        x_population_density = canton_data["x_population_density"][:n_mult]  # Limit to requested n
+        x_foreign_pct = canton_data["x_foreign_pct"][:n_mult]
+        x_unemployment = canton_data["x_unemployment"][:n_mult]
+        y_gdp_per_capita = canton_data["y_gdp_per_capita"][:n_mult]
+
+        # Return in the expected format for multiple regression
+        return {
+            "x_population_density": x_population_density,
+            "x_foreign_pct": x_foreign_pct,
+            "x_unemployment": x_unemployment,
+            "y_gdp_per_capita": y_gdp_per_capita,
+            "x1_name": canton_data["x1_name"],
+            "x2_name": canton_data["x2_name"],
+            "x3_name": canton_data["x3_name"],
+            "y_name": canton_data["y_name"],
+            "data_source": canton_data["data_source"],
+            "description": canton_data["description"]
+        }
+
+    elif dataset_choice_mult == "🌤️ Schweizer Wetterstationen":
+        # Use the weather data generation function
+        weather_data = generate_swiss_weather_regression_data()
+        x_altitude = weather_data["x_altitude"][:n_mult]  # Limit to requested n
+        x_sunshine = weather_data["x_sunshine"][:n_mult]
+        x_humidity = weather_data["x_humidity"][:n_mult]
+        y_temperature = weather_data["y_temperature"][:n_mult]
+
+        # Return in the expected format for multiple regression
+        return {
+            "x_altitude": x_altitude,
+            "x_sunshine": x_sunshine,
+            "x_humidity": x_humidity,
+            "y_temperature": y_temperature,
+            "x1_name": weather_data["x1_name"],
+            "x2_name": weather_data["x2_name"],
+            "x3_name": weather_data["x3_name"],
+            "y_name": weather_data["y_name"],
+            "data_source": weather_data["data_source"],
+            "description": weather_data["description"]
+        }
+
     elif dataset_choice_mult == "🏠 Häuserpreise mit Pool (1000 Häuser)":
         x2_wohnflaeche = np.random.normal(HOUSES_DATASET["area_mean"], HOUSES_DATASET["area_std"], n_mult)
         x2_wohnflaeche = np.clip(x2_wohnflaeche, HOUSES_DATASET["area_min"], HOUSES_DATASET["area_max"])
