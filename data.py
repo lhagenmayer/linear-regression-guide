@@ -213,6 +213,7 @@ def generate_swiss_weather_regression_data() -> Dict[str, Any]:
     }
 
 
+@st.cache_data(ttl=3600)  # Cache for 1 hour
 def get_available_swiss_datasets() -> Dict[str, Dict[str, Any]]:
     """
     Return information about all available Swiss datasets for regression.
@@ -228,7 +229,9 @@ def get_available_swiss_datasets() -> Dict[str, Dict[str, Any]]:
             "n_observations": 26,
             "source": "BFS (simplified)",
             "ideal_for": "Multiple regression, socioeconomic analysis",
-            "api_available": False  # Would be True when BFS API is fully implemented
+            "api_available": False,  # Would be True when BFS API is fully implemented
+            "python_package": "pxwebpy",
+            "api_docs": "https://www.pxweb.bfs.admin.ch/api/v1/"
         },
         "swiss_weather": {
             "name": "Swiss Weather Stations",
@@ -237,7 +240,8 @@ def get_available_swiss_datasets() -> Dict[str, Dict[str, Any]]:
             "n_observations": 7,
             "source": "MeteoSwiss (simplified)",
             "ideal_for": "Simple and multiple regression, environmental analysis",
-            "api_available": False  # Would be True in 2026
+            "api_available": False,  # Would be True in 2026
+            "api_docs": "https://opendata.meteoswiss.ch/"
         },
         "cross_border_commuters": {
             "name": "Cross-border Commuters",
@@ -247,7 +251,8 @@ def get_available_swiss_datasets() -> Dict[str, Dict[str, Any]]:
             "source": "BFS PX-Web API",
             "api_endpoint": "https://www.pxweb.bfs.admin.ch/pxweb/en/px-x-0302010000_105/",
             "ideal_for": "Time series regression, labor market analysis",
-            "api_available": True
+            "api_available": True,
+            "python_package": "pxwebpy"
         },
         "dwelling_structure": {
             "name": "Swiss Housing Market",
@@ -257,7 +262,112 @@ def get_available_swiss_datasets() -> Dict[str, Dict[str, Any]]:
             "source": "BFS PX-Web API",
             "api_endpoint": "https://www.pxweb.bfs.admin.ch/pxweb/en/px-x-0903020000_111/",
             "ideal_for": "Housing market regression, socioeconomic analysis",
-            "api_available": True
+            "api_available": True,
+            "python_package": "pxwebpy"
+        }
+    }
+
+
+@st.cache_data(ttl=3600)  # Cache for 1 hour
+def get_global_regression_datasets() -> Dict[str, Dict[str, Any]]:
+    """
+    Return information about excellent global datasets from free APIs for regression analysis.
+
+    Returns:
+        Dictionary with dataset metadata for global APIs
+    """
+    return {
+        "world_bank_indicators": {
+            "name": "World Bank Development Indicators",
+            "description": "Global economic, social, and environmental indicators for countries worldwide",
+            "variables": ["gdp_per_capita", "population", "life_expectancy", "unemployment", "inflation", "trade_balance"],
+            "n_observations": "200+ countries × 50+ years",
+            "source": "World Bank API",
+            "api_endpoint": "https://api.worldbank.org/v2/",
+            "python_package": "wbgapi",
+            "ideal_for": "Cross-country regression, development economics, time series analysis",
+            "api_available": True,
+            "api_docs": "https://datahelpdesk.worldbank.org/knowledgebase/topics/125589-developer-information",
+            "example_query": "GDP per capita vs. life expectancy across countries",
+            "data_frequency": "Annual",
+            "geographic_coverage": "Global (200+ countries)"
+        },
+        "fred_economic_data": {
+            "name": "Federal Reserve Economic Data (FRED)",
+            "description": "Comprehensive US economic time series from Federal Reserve Bank of St. Louis",
+            "variables": ["gdp", "unemployment_rate", "inflation", "interest_rates", "housing_prices", "consumer_spending"],
+            "n_observations": "800,000+ time series",
+            "source": "Federal Reserve Bank of St. Louis",
+            "api_endpoint": "https://fred.stlouisfed.org/docs/api/fred/",
+            "python_package": "fredapi",
+            "ideal_for": "US macroeconomic analysis, time series regression, business cycles",
+            "api_available": True,
+            "requires_api_key": True,
+            "api_docs": "https://fred.stlouisfed.org/docs/api/fred/",
+            "example_query": "Unemployment rate vs. GDP growth (Phillips curve)",
+            "data_frequency": "Daily/Monthly/Quarterly",
+            "geographic_coverage": "United States"
+        },
+        "who_health_indicators": {
+            "name": "World Health Organization Indicators",
+            "description": "Global health statistics and indicators from WHO",
+            "variables": ["life_expectancy", "mortality_rates", "disease_incidence", "health_expenditure", "immunization_rates"],
+            "n_observations": "200+ countries × 20+ years",
+            "source": "World Health Organization",
+            "api_endpoint": "https://ghoapi.azureedge.net/api/",
+            "python_package": "apidatawho",
+            "ideal_for": "Health economics, epidemiology, global health disparities",
+            "api_available": True,
+            "api_docs": "https://www.who.int/data/gho/info/gho-odata-api",
+            "example_query": "GDP per capita vs. life expectancy (Preston curve)",
+            "data_frequency": "Annual",
+            "geographic_coverage": "Global"
+        },
+        "eurostat_european_data": {
+            "name": "Eurostat European Statistics",
+            "description": "Comprehensive socioeconomic statistics for European countries",
+            "variables": ["gdp", "employment", "education", "poverty_rates", "migration", "energy_consumption"],
+            "n_observations": "30+ countries × 20+ years",
+            "source": "European Commission (Eurostat)",
+            "api_endpoint": "https://ec.europa.eu/eurostat/web/json-and-unicode-web-services",
+            "python_package": "eurostat",
+            "ideal_for": "European integration studies, comparative economics, policy analysis",
+            "api_available": True,
+            "api_docs": "https://ec.europa.eu/eurostat/web/json-and-unicode-web-services",
+            "example_query": "Education spending vs. economic growth across EU countries",
+            "data_frequency": "Annual/Quarterly",
+            "geographic_coverage": "European Union + EFTA countries"
+        },
+        "open_weather_historical": {
+            "name": "OpenWeather Historical Weather",
+            "description": "Historical weather data for cities worldwide",
+            "variables": ["temperature", "humidity", "pressure", "wind_speed", "precipitation"],
+            "n_observations": "200,000+ cities × historical data",
+            "source": "OpenWeather",
+            "api_endpoint": "https://openweathermap.org/api/one-call-3",
+            "python_package": "pyowm",
+            "ideal_for": "Environmental regression, climate impact studies, urban planning",
+            "api_available": True,
+            "requires_api_key": True,
+            "api_docs": "https://openweathermap.org/api/one-call-3",
+            "example_query": "Temperature vs. economic productivity by city",
+            "data_frequency": "Hourly/Daily",
+            "geographic_coverage": "Global cities"
+        },
+        "nasa_power_earth_science": {
+            "name": "NASA POWER Earth Science Data",
+            "description": "Global meteorological and solar irradiance data from NASA satellites",
+            "variables": ["temperature", "humidity", "solar_radiation", "wind_speed", "precipitation"],
+            "n_observations": "Global grid × 40+ years",
+            "source": "NASA Prediction Of Worldwide Energy Resources",
+            "api_endpoint": "https://power.larc.nasa.gov/api/temporal/",
+            "python_package": "nasapy",
+            "ideal_for": "Climate science, renewable energy analysis, agricultural studies",
+            "api_available": True,
+            "api_docs": "https://power.larc.nasa.gov/docs/services/api/temporal/",
+            "example_query": "Solar irradiance vs. GDP by country (renewable energy potential)",
+            "data_frequency": "Daily/Monthly",
+            "geographic_coverage": "Global (1° × 1° grid)"
         }
     }
 
