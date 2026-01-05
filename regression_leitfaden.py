@@ -3085,162 +3085,72 @@ elif regression_type == "📈 Einfache Regression":
     col_r2_1, col_r2_2 = st.columns([2, 1])
 
     with col_r2_1:
-        show_3d_var = st.toggle("📈 3D-Ansicht aktivieren (Varianz)", value=False, key="toggle_3d_var")
+        # 3D Visualisierung: Würfel für SST, SSR, SSE using plotly
+        from plotly.subplots import make_subplots
+        
+        fig_var = make_subplots(
+            rows=1, cols=3,
+            specs=[[{'type': 'scatter3d'}, {'type': 'scatter3d'}, {'type': 'scatter3d'}]],
+            subplot_titles=(
+                f'SST = {sst:.2f}<br>(Gesamte Variation)',
+                f'SSR = {ssr:.2f}<br>(Durch Modell erklärt)',
+                f'SSE = {sse:.2f}<br>(Unerklärt/Residuen)'
+            )
+        )
     
-        if show_3d_var:
-            # 3D Visualisierung: Würfel für SST, SSR, SSE using plotly
-            from plotly.subplots import make_subplots
+        # Normalisierung für Visualisierung
+        sst_norm = sst
+        ssr_norm = ssr / sst_norm
+        sse_norm = sse / sst_norm
+    
+        # Helper function to create cube mesh
+        def create_cube(height, color, row, col):
+            # Cube vertices
+            x = [0, 1, 1, 0, 0, 1, 1, 0]
+            y = [0, 0, 1, 1, 0, 0, 1, 1]
+            z = [0, 0, 0, 0, height, height, height, height]
             
-            fig_var = make_subplots(
-                rows=1, cols=3,
-                specs=[[{'type': 'scatter3d'}, {'type': 'scatter3d'}, {'type': 'scatter3d'}]],
-                subplot_titles=(
-                    f'SST = {sst:.2f}<br>(Gesamte Variation)',
-                    f'SSR = {ssr:.2f}<br>(Durch Modell erklärt)',
-                    f'SSE = {sse:.2f}<br>(Unerklärt/Residuen)'
-                )
-            )
-        
-            # Normalisierung für Visualisierung
-            sst_norm = sst
-            ssr_norm = ssr / sst_norm
-            sse_norm = sse / sst_norm
-        
-            # Helper function to create cube mesh
-            def create_cube(height, color, row, col):
-                # Cube vertices
-                x = [0, 1, 1, 0, 0, 1, 1, 0]
-                y = [0, 0, 1, 1, 0, 0, 1, 1]
-                z = [0, 0, 0, 0, height, height, height, height]
-                
-                # Cube faces (triangles)
-                i = [7, 0, 0, 0, 4, 4, 6, 6, 4, 0, 3, 2]
-                j = [3, 4, 1, 2, 5, 6, 5, 2, 0, 1, 6, 3]
-                k = [0, 7, 2, 3, 6, 7, 1, 1, 5, 5, 7, 6]
-                
-                fig_var.add_trace(
-                    go.Mesh3d(x=x, y=y, z=z, i=i, j=j, k=k,
-                            color=color, opacity=0.3, flatshading=True,
-                            showscale=False, showlegend=False),
-                    row=row, col=col
-                )
+            # Cube faces (triangles)
+            i = [7, 0, 0, 0, 4, 4, 6, 6, 4, 0, 3, 2]
+            j = [3, 4, 1, 2, 5, 6, 5, 2, 0, 1, 6, 3]
+            k = [0, 7, 2, 3, 6, 7, 1, 1, 5, 5, 7, 6]
             
-            # 1. SST (full cube)
-            create_cube(1.0, 'orange', 1, 1)
-            
-            # 2. SSR (cube with ssr_norm height)
-            create_cube(ssr_norm, 'green', 1, 2)
-            
-            # 3. SSE (cube with sse_norm height)
-            create_cube(sse_norm, 'red', 1, 3)
-        
-            # Update layout
-            fig_var.update_layout(
-                title_text=f'3D Varianzzerlegung: SST = SSR + SSE → R² = {model.rsquared:.1%}',
-                title_font_size=14,
-                height=500,
-                showlegend=False
-            )
-            
-            # Update all 3D scenes
-            for i in range(1, 4):
-                fig_var.update_scenes(
-                    {f'scene{i}': dict(
-                        xaxis=dict(title='X', range=[0, 1]),
-                        yaxis=dict(title='Y', range=[0, 1]),
-                        zaxis=dict(title='Varianz', range=[0, 1]),
-                        camera=dict(eye=dict(x=1.5, y=1.5, z=1.2))
-                    )}
-                )
-        
-            st.plotly_chart(fig_var, use_container_width=True)
-        else:
-            # 2D Original: 3 Subplots nebeneinander
-            fig_var = make_subplots(
-                rows=1, cols=3,
-                subplot_titles=(
-                    f'SST = {sst:.2f}<br>(Gesamte Variation)',
-                    f'SSR = {ssr:.2f}<br>(Durch Modell erklärt)',
-                    f'SSE = {sse:.2f}<br>(Unerklärt/Residuen)'
-                )
-            )
-        
-            # SST
             fig_var.add_trace(
-                go.Scatter(x=x, y=y, mode='markers',
-                          marker=dict(size=8, color='gray', opacity=0.6),
-                          showlegend=False),
-                row=1, col=1
-            )
-            fig_var.add_hline(y=y_mean_val, line_color='orange', line_width=3,
-                            annotation_text=f'ȳ = {y_mean_val:.2f}',
-                            annotation_position="right", row=1, col=1)
-            for i in range(len(x)):
-                fig_var.add_trace(
-                    go.Scatter(x=[x[i], x[i]], y=[y[i], y_mean_val],
-                              mode='lines', line=dict(color='orange', width=2),
-                              opacity=0.5, showlegend=False),
-                    row=1, col=1
-                )
-        
-            # SSR
-            fig_var.add_trace(
-                go.Scatter(x=x, y=y, mode='markers',
-                          marker=dict(size=8, color='gray', opacity=0.3),
-                          showlegend=False),
-                row=1, col=2
-            )
-            fig_var.add_hline(y=y_mean_val, line_color='orange', line_width=2,
-                            line_dash='dash', opacity=0.5, row=1, col=2)
-            fig_var.add_trace(
-                go.Scatter(x=x, y=y_pred, mode='lines',
-                          line=dict(color='blue', width=3),
-                          showlegend=False),
-                row=1, col=2
-            )
-            for i in range(len(x)):
-                fig_var.add_trace(
-                    go.Scatter(x=[x[i], x[i]], y=[y_pred[i], y_mean_val],
-                              mode='lines', line=dict(color='green', width=2),
-                              opacity=0.6, showlegend=False),
-                    row=1, col=2
-                )
-        
-            # SSE
-            fig_var.add_trace(
-                go.Scatter(x=x, y=y, mode='markers',
-                          marker=dict(size=8, color='gray', opacity=0.6),
-                          showlegend=False),
-                row=1, col=3
-            )
-            fig_var.add_trace(
-                go.Scatter(x=x, y=y_pred, mode='lines',
-                          line=dict(color='blue', width=3),
-                          showlegend=False),
-                row=1, col=3
-            )
-            for i in range(len(x)):
-                fig_var.add_trace(
-                    go.Scatter(x=[x[i], x[i]], y=[y[i], y_pred[i]],
-                              mode='lines', line=dict(color='red', width=2),
-                              opacity=0.6, showlegend=False),
-                    row=1, col=3
-                )
-        
-            # Update layout
-            fig_var.update_xaxes(title_text="X", showgrid=True, gridcolor='lightgray')
-            fig_var.update_yaxes(title_text="Y", row=1, col=1, showgrid=True, gridcolor='lightgray')
-            fig_var.update_yaxes(showgrid=True, gridcolor='lightgray', row=1, col=2)
-            fig_var.update_yaxes(showgrid=True, gridcolor='lightgray', row=1, col=3)
-            
-            fig_var.update_layout(
-                title_text='Die Zerlegung der Varianz: SST = SSR + SSE',
-                title_font_size=14,
-                height=400,
-                showlegend=False
+                go.Mesh3d(x=x, y=y, z=z, i=i, j=j, k=k,
+                        color=color, opacity=0.3, flatshading=True,
+                        showscale=False, showlegend=False),
+                row=row, col=col
             )
         
-            st.plotly_chart(fig_var, use_container_width=True)
+        # 1. SST (full cube)
+        create_cube(1.0, 'orange', 1, 1)
+        
+        # 2. SSR (cube with ssr_norm height)
+        create_cube(ssr_norm, 'green', 1, 2)
+        
+        # 3. SSE (cube with sse_norm height)
+        create_cube(sse_norm, 'red', 1, 3)
+    
+        # Update layout
+        fig_var.update_layout(
+            title_text=f'3D Varianzzerlegung: SST = SSR + SSE → R² = {model.rsquared:.1%}',
+            title_font_size=14,
+            height=500,
+            showlegend=False
+        )
+        
+        # Update all 3D scenes
+        for i in range(1, 4):
+            fig_var.update_scenes(
+                {f'scene{i}': dict(
+                    xaxis=dict(title='X', range=[0, 1]),
+                    yaxis=dict(title='Y', range=[0, 1]),
+                    zaxis=dict(title='Varianz', range=[0, 1]),
+                    camera=dict(eye=dict(x=1.5, y=1.5, z=1.2))
+                )}
+            )
+    
+        st.plotly_chart(fig_var, use_container_width=True)
             
     with col_r2_2:
         if show_formulas:
@@ -3804,181 +3714,95 @@ elif regression_type == "📈 Einfache Regression":
     col_anova1, col_anova2 = st.columns([2, 1])
 
     with col_anova1:
-        show_3d_anova = st.toggle("🏔️ 3D-Ansicht aktivieren (ANOVA Landscape)", value=False, key="toggle_3d_anova")
+        # 3D Landscape Visualisierung: Berglandschaft für jede Gruppe
+        from scipy.stats import norm
     
-        if show_3d_anova:
-            # 3D Landscape Visualisierung: Berglandschaft für jede Gruppe
-            from scipy.stats import norm
+        fig_anova_viz = make_subplots(
+            rows=1, cols=2,
+            specs=[[{'type': 'scatter3d'}, {'type': 'bar'}]],
+            subplot_titles=('3D Landscape: Gruppen als Verteilungshuegel',
+                          f'SST = SSTR + SSE = {sst_anova:.2f}')
+        )
+    
+        # 1. 3D Surface für Gruppen-Verteilungen
+        regions = ['Nord', 'Mitte', 'Süd']
+        colors_list = ['#3498db', '#2ecc71', '#e74c3c']
+    
+        # X-Achse: Umsatz-Werte
+        x_vals = np.linspace(
+            min(df_anova['Umsatz']) - 1,
+            max(df_anova['Umsatz']) + 1,
+            100
+        )
+    
+        for i, (region, color) in enumerate(zip(regions, colors_list)):
+            data = df_anova[df_anova['Region'] == region]['Umsatz']
+            mu = data.mean()
+            sigma = data.std()
         
-            fig_anova_viz = make_subplots(
-                rows=1, cols=2,
-                specs=[[{'type': 'scatter3d'}, {'type': 'bar'}]],
-                subplot_titles=('3D Landscape: Gruppen als Verteilungshuegel',
-                              f'SST = SSTR + SSE = {sst_anova:.2f}')
-            )
+            # Normalverteilung für jede Gruppe
+            y_vals = norm.pdf(x_vals, mu, sigma)
         
-            # 1. 3D Surface für Gruppen-Verteilungen
-            regions = ['Nord', 'Mitte', 'Süd']
-            colors_list = ['#3498db', '#2ecc71', '#e74c3c']
-        
-            # X-Achse: Umsatz-Werte
-            x_vals = np.linspace(
-                min(df_anova['Umsatz']) - 1,
-                max(df_anova['Umsatz']) + 1,
-                100
-            )
-        
-            for i, (region, color) in enumerate(zip(regions, colors_list)):
-                data = df_anova[df_anova['Region'] == region]['Umsatz']
-                mu = data.mean()
-                sigma = data.std()
-            
-                # Normalverteilung für jede Gruppe
-                y_vals = norm.pdf(x_vals, mu, sigma)
-            
-                # 3D Plot: x-Achse = Umsatz, y-Achse = Region (i), z-Achse = Dichte
-                fig_anova_viz.add_trace(
-                    go.Scatter3d(x=x_vals, y=np.full_like(x_vals, i), z=y_vals,
-                               mode='lines', line=dict(color=color, width=4),
-                               name=f'{region}'),
-                    row=1, col=1
-                )
-            
-                # Bars under curve (simplified as vertical lines)
-                for j in range(0, len(x_vals), 10):
-                    fig_anova_viz.add_trace(
-                        go.Scatter3d(x=[x_vals[j], x_vals[j]], y=[i, i], z=[0, y_vals[j]],
-                                   mode='lines', line=dict(color=color, width=2),
-                                   opacity=0.3, showlegend=False),
-                        row=1, col=1
-                    )
-        
-            # Gesamtmittelwert als Linie
-            y_overall = norm.pdf(x_vals, grand_mean_anova, df_anova['Umsatz'].std())
+            # 3D Plot: x-Achse = Umsatz, y-Achse = Region (i), z-Achse = Dichte
             fig_anova_viz.add_trace(
-                go.Scatter3d(x=x_vals, y=np.full_like(x_vals, -0.5), z=y_overall,
-                           mode='lines', line=dict(color='black', width=3, dash='dash'),
-                           name='Gesamtverteilung'),
+                go.Scatter3d(x=x_vals, y=np.full_like(x_vals, i), z=y_vals,
+                           mode='lines', line=dict(color=color, width=4),
+                           name=f'{region}'),
                 row=1, col=1
             )
         
-            # 2. Varianzzerlegung
-            fig_anova_viz.add_trace(
-                go.Bar(y=['Varianzzerlegung'], x=[sstr_anova],
-                      orientation='h', marker_color='green', opacity=0.7,
-                      name=f'SSTR (Zwischen) = {sstr_anova:.2f}',
-                      text=f'{sstr_anova/sst_anova*100:.1f}%',
-                      textposition='inside', textfont=dict(color='white', size=12)),
-                row=1, col=2
-            )
-            fig_anova_viz.add_trace(
-                go.Bar(y=['Varianzzerlegung'], x=[sse_anova],
-                      orientation='h', marker_color='red', opacity=0.7,
-                      name=f'SSE (Innerhalb) = {sse_anova:.2f}',
-                      text=f'{sse_anova/sst_anova*100:.1f}%',
-                      textposition='inside', textfont=dict(color='white', size=12)),
-                row=1, col=2
-            )
-        
-            # Update layout
-            fig_anova_viz.update_layout(
-                height=500,
-                barmode='stack',
-                showlegend=True,
-                scene=dict(
-                    xaxis_title=y_label,
-                    yaxis_title='Gruppen',
-                    zaxis_title='Dichte',
-                    yaxis=dict(tickvals=[0, 1, 2], ticktext=regions),
-                    camera=dict(eye=dict(x=1.5, y=-1.5, z=1.2))
-                )
-            )
-            fig_anova_viz.update_xaxes(title_text='Quadratsumme', row=1, col=2)
-        
-            st.plotly_chart(fig_anova_viz, use_container_width=True)
-        else:
-            # 2D Original: Boxplot + Varianzzerlegung
-            fig_anova_viz = make_subplots(
-                rows=1, cols=2,
-                subplot_titles=('Gruppenvergleich: Streuung innerhalb (SSE) vs. zwischen (SSTR)',
-                              f'SST = SSTR + SSE = {sst_anova:.2f}')
-            )
-        
-            # 1. Boxplot mit Punkten
-            regions = ['Nord', 'Mitte', 'Süd']
-            colors_list = ['#3498db', '#2ecc71', '#e74c3c']
-        
-            for i, (region, color) in enumerate(zip(regions, colors_list)):
-                data = df_anova[df_anova['Region'] == region]['Umsatz']
-            
-                # Jittered Scatter
-                np.random.seed(42 + i)
-                jitter = np.random.normal(0, 0.08, len(data))
+            # Bars under curve (simplified as vertical lines)
+            for j in range(0, len(x_vals), 10):
                 fig_anova_viz.add_trace(
-                    go.Scatter(x=np.full(len(data), i) + jitter, y=data,
-                              mode='markers',
-                              marker=dict(size=10, color=color, opacity=0.6,
-                                        line=dict(color='white', width=1)),
-                              name=region, showlegend=False),
+                    go.Scatter3d(x=[x_vals[j], x_vals[j]], y=[i, i], z=[0, y_vals[j]],
+                               mode='lines', line=dict(color=color, width=2),
+                               opacity=0.3, showlegend=False),
                     row=1, col=1
                 )
-            
-                # Gruppenmittelwert horizontal line
-                group_mean = data.mean()
-                fig_anova_viz.add_shape(
-                    type='line',
-                    x0=i-0.3, x1=i+0.3, y0=group_mean, y1=group_mean,
-                    line=dict(color=color, width=4),
-                    row=1, col=1
-                )
-            
-                # Linien zu Gruppenmittelwert (SSE) - nur ein paar zeigen
-                for j in range(min(5, len(data))):
-                    fig_anova_viz.add_trace(
-                        go.Scatter(x=[i + jitter[j], i + jitter[j]],
-                                  y=[data.iloc[j], group_mean],
-                                  mode='lines', line=dict(color=color, width=1),
-                                  opacity=0.2, showlegend=False),
-                        row=1, col=1
-                    )
-        
-            # Gesamtmittelwert
-            fig_anova_viz.add_hline(y=grand_mean_anova, line_dash="dash", line_color="black",
-                                   line_width=2, annotation_text=f'Gesamtmittel: {grand_mean_anova:.2f}',
-                                   annotation_position="right", row=1, col=1)
-        
-            # 2. Varianzzerlegung als gestapelter Balken
-            fig_anova_viz.add_trace(
-                go.Bar(y=['Varianzzerlegung'], x=[sstr_anova],
-                      orientation='h', marker_color='green', opacity=0.7,
-                      name=f'SSTR (Zwischen) = {sstr_anova:.2f}',
-                      text=f'{sstr_anova/sst_anova*100:.1f}%',
-                      textposition='inside', textfont=dict(color='white', size=12)),
-                row=1, col=2
+    
+        # Gesamtmittelwert als Linie
+        y_overall = norm.pdf(x_vals, grand_mean_anova, df_anova['Umsatz'].std())
+        fig_anova_viz.add_trace(
+            go.Scatter3d(x=x_vals, y=np.full_like(x_vals, -0.5), z=y_overall,
+                       mode='lines', line=dict(color='black', width=3, dash='dash'),
+                       name='Gesamtverteilung'),
+            row=1, col=1
+        )
+    
+        # 2. Varianzzerlegung
+        fig_anova_viz.add_trace(
+            go.Bar(y=['Varianzzerlegung'], x=[sstr_anova],
+                  orientation='h', marker_color='green', opacity=0.7,
+                  name=f'SSTR (Zwischen) = {sstr_anova:.2f}',
+                  text=f'{sstr_anova/sst_anova*100:.1f}%',
+                  textposition='inside', textfont=dict(color='white', size=12)),
+            row=1, col=2
+        )
+        fig_anova_viz.add_trace(
+            go.Bar(y=['Varianzzerlegung'], x=[sse_anova],
+                  orientation='h', marker_color='red', opacity=0.7,
+                  name=f'SSE (Innerhalb) = {sse_anova:.2f}',
+                  text=f'{sse_anova/sst_anova*100:.1f}%',
+                  textposition='inside', textfont=dict(color='white', size=12)),
+            row=1, col=2
+        )
+    
+        # Update layout
+        fig_anova_viz.update_layout(
+            height=500,
+            barmode='stack',
+            showlegend=True,
+            scene=dict(
+                xaxis_title=y_label,
+                yaxis_title='Gruppen',
+                zaxis_title='Dichte',
+                yaxis=dict(tickvals=[0, 1, 2], ticktext=regions),
+                camera=dict(eye=dict(x=1.5, y=-1.5, z=1.2))
             )
-            fig_anova_viz.add_trace(
-                go.Bar(y=['Varianzzerlegung'], x=[sse_anova],
-                      orientation='h', marker_color='red', opacity=0.7,
-                      name=f'SSE (Innerhalb) = {sse_anova:.2f}',
-                      text=f'{sse_anova/sst_anova*100:.1f}%',
-                      textposition='inside', textfont=dict(color='white', size=12)),
-                row=1, col=2
-            )
-        
-            # Update layout
-            fig_anova_viz.update_xaxes(title_text='Region', tickvals=[0, 1, 2],
-                                      ticktext=regions, row=1, col=1)
-            fig_anova_viz.update_yaxes(title_text=y_label, showgrid=True,
-                                      gridcolor='lightgray', row=1, col=1)
-            fig_anova_viz.update_xaxes(title_text='Quadratsumme', row=1, col=2)
-            
-            fig_anova_viz.update_layout(
-                height=500,
-                barmode='stack',
-                showlegend=True
-            )
-        
-            st.plotly_chart(fig_anova_viz, use_container_width=True)
+        )
+        fig_anova_viz.update_xaxes(title_text='Quadratsumme', row=1, col=2)
+    
+        st.plotly_chart(fig_anova_viz, use_container_width=True)
             
     with col_anova2:
         if show_formulas:
