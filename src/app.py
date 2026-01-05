@@ -45,6 +45,7 @@ from .data import (  # noqa: F401
 )
 from .statistics import (  # noqa: F401
     fit_ols_model,
+    fit_multiple_ols_model,
     compute_regression_statistics,
     compute_simple_regression_stats,
     compute_multiple_regression_stats,
@@ -1703,8 +1704,8 @@ with col_m1_1:
     qq_data = normality_tests["qq_data"]
     fig_diag.add_trace(
         go.Scatter(
-            x=qq[0][0],
-            y=qq[0][1],
+            x=qq_data[0],
+            y=qq_data[1],
             mode="markers",
             marker=dict(size=6, opacity=0.6),
             showlegend=False,
@@ -1713,10 +1714,13 @@ with col_m1_1:
         col=2,
     )
     # Add reference line
+    # Calculate reference line from qq data
+    from scipy import stats as scipy_stats
+    slope, intercept, _, _, _ = scipy_stats.linregress(qq_data[0], qq_data[1])
     fig_diag.add_trace(
         go.Scatter(
-            x=qq[0][0],
-            y=qq[1][1] + qq[1][0] * qq[0][0],
+            x=qq_data[0],
+            y=intercept + slope * qq_data[0],
             mode="lines",
             line=dict(color="red", dash="dash"),
             showlegend=False,
