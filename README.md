@@ -3,8 +3,8 @@
 [![Python Version](https://img.shields.io/badge/python-3.9%20to%203.12-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.28+-red.svg)](https://streamlit.io)
-[![CI/CD](https://img.shields.io/badge/CI/CD-GitHub%20Actions-blue.svg)](https://github.com/lhagenmayer/linear-regression-guide/actions)
-[![Coverage](https://img.shields.io/badge/Coverage-Codecov-orange.svg)](https://codecov.io/gh/lhagenmayer/linear-regression-guide)
+[![CI/CD](https://github.com/lhagenmayer/linear-regression-guide/workflows/CI/badge.svg)](https://github.com/lhagenmayer/linear-regression-guide/actions)
+[![Coverage](https://codecov.io/gh/lhagenmayer/linear-regression-guide/branch/master/graph/badge.svg)](https://codecov.io/gh/lhagenmayer/linear-regression-guide)
 
 Eine interaktive Web-App zum Erlernen linearer Regression mit Streamlit, plotly und statsmodels.
 
