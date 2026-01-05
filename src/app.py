@@ -602,20 +602,41 @@ with st.sidebar.expander("🎛️ Daten-Parameter (Einfache Regression)", expand
 
     # Datensatz-spezifische Generierung
     if dataset_choice != "🏪 Elektronikmarkt (simuliert)" and x_variable:
-        with st.spinner("🔄 Lade Datensatz..."):
-            simple_data = generate_simple_regression_data(dataset_choice, x_variable, n, seed=42)
-        x = simple_data["x"]
-        y = simple_data["y"]
-        x_label = simple_data["x_label"]
-        y_label = simple_data["y_label"]
-        x_unit = simple_data["x_unit"]
-        y_unit = simple_data["y_unit"]
-        context_title = simple_data["context_title"]
-        context_description = simple_data["context_description"]
-        has_true_line = False
-        true_intercept = 0
-        true_beta = 0
-        seed = 42
+        try:
+            with st.spinner("🔄 Lade Datensatz..."):
+                simple_data = generate_simple_regression_data(dataset_choice, x_variable, n, seed=42)
+            x = simple_data["x"]
+            y = simple_data["y"]
+            x_label = simple_data["x_label"]
+            y_label = simple_data["y_label"]
+            x_unit = simple_data["x_unit"]
+            y_unit = simple_data["y_unit"]
+            context_title = simple_data["context_title"]
+            context_description = simple_data["context_description"]
+            has_true_line = False
+            true_intercept = 0
+            true_beta = 0
+            seed = 42
+        except Exception as e:
+            logger.error(f"Error loading simple regression data: {e}")
+            st.error(f"❌ Fehler beim Laden des Datensatzes: {str(e)}")
+            st.info("💡 Verwenden Sie den Elektronikmarkt-Datensatz als Fallback.")
+            # Use fallback data
+            fallback_data = generate_electronics_market_data(12, 0.6, 0.52, 0.4, 42)
+            x = fallback_data["x"]
+            y = fallback_data["y"]
+            x_label = "Verkaufsfläche (100qm)"
+            y_label = "Umsatz (Mio. €)"
+            x_unit = "100 qm"
+            y_unit = "Mio. €"
+            context_title = "Elektronikfachmärkte (Fallback)"
+            context_description = "Fallback-Datensatz wegen Fehler beim Laden."
+            has_true_line = True
+            true_intercept = 0.6
+            true_beta = 0.52
+            n = 12
+            seed = 42
+            st.session_state.error_count += 1
 
     st.sidebar.markdown("---")
     with st.sidebar.expander("🔧 Anzeigeoptionen", expanded=False):
@@ -755,35 +776,44 @@ if needs_recompute:
         st.session_state.current_feature_names = [x_label]
 else:
     # Use cached model results
-    cached = st.session_state.simple_model_cache
-    df = cached["df"]
-    X = cached["X"]
-    model = cached["model"]
-    y_pred = cached["y_pred"]
-    y_mean = cached["y_mean"]
-    b0 = cached["b0"]
-    b1 = cached["b1"]
-    sse = cached["sse"]
-    sst = cached["sst"]
-    ssr = cached["ssr"]
-    mse = cached["mse"]
-    msr = cached["msr"]
-    se_regression = cached["se_regression"]
-    sb1 = cached["sb1"]
-    sb0 = cached["sb0"]
-    t_val = cached["t_val"]
-    f_val = cached["f_val"]
-    df_resid = cached["df_resid"]
-    x_mean = cached["x_mean"]
-    y_mean_val = cached["y_mean_val"]
-    cov_xy = cached["cov_xy"]
-    var_x = cached["var_x"]
-    var_y = cached["var_y"]
-    corr_xy = cached["corr_xy"]
+    try:
+        cached = st.session_state.simple_model_cache
+        df = cached["df"]
+        X = cached["X"]
+        model = cached["model"]
+        y_pred = cached["y_pred"]
+        y_mean = cached["y_mean"]
+        b0 = cached["b0"]
+        b1 = cached["b1"]
+        sse = cached["sse"]
+        sst = cached["sst"]
+        ssr = cached["ssr"]
+        mse = cached["mse"]
+        msr = cached["msr"]
+        se_regression = cached["se_regression"]
+        sb1 = cached["sb1"]
+        sb0 = cached["sb0"]
+        t_val = cached["t_val"]
+        f_val = cached["f_val"]
+        df_resid = cached["df_resid"]
+        x_mean = cached["x_mean"]
+        y_mean_val = cached["y_mean_val"]
+        cov_xy = cached["cov_xy"]
+        var_x = cached["var_x"]
+        var_y = cached["var_y"]
+        corr_xy = cached["corr_xy"]
 
-    # Store current model and feature names for R output display
-    st.session_state.current_model = model
-    st.session_state.current_feature_names = [x_label]
+        # Store current model and feature names for R output display
+        st.session_state.current_model = model
+        st.session_state.current_feature_names = [x_label]
+    except Exception as e:
+        logger.error(f"Error loading cached simple regression model: {e}")
+        st.error(f"❌ Fehler beim Laden der Cache-Daten: {str(e)}")
+        st.info("💡 Die Daten werden neu berechnet...")
+        # Clear cache to force regeneration
+        st.session_state.simple_model_cache = None
+        st.session_state.error_count += 1
+        st.rerun()
 # =========================================================
 
 # =========================================================
@@ -794,11 +824,17 @@ else:
 # R OUTPUT DISPLAY - Always visible above tabs
 # =========================================================
 # Use the centralized R output rendering function which includes interpretation
-render_r_output_section(
-    model=st.session_state.get("current_model"),
-    feature_names=st.session_state.get("current_feature_names"),
-    figsize=(18, 13)
-)
+try:
+    render_r_output_section(
+        model=st.session_state.get("current_model"),
+        feature_names=st.session_state.get("current_feature_names"),
+        figsize=(18, 13)
+    )
+except Exception as e:
+    logger.error(f"Error rendering R output: {e}")
+    st.warning("⚠️ R-Ausgabe konnte nicht dargestellt werden.")
+    st.info("Die Regression wurde trotzdem berechnet und kann in den Tabs eingesehen werden.")
+
 
 # Create three tabs
 tab1, tab2, tab3 = st.tabs(["📈 Einfache Regression", "📊 Multiple Regression", "📚 Datensätze"])
