@@ -861,6 +861,16 @@ def generate_multiple_regression_data(
     Returns:
         Dictionary with x2_preis, x3_werbung, y_mult, x1_name, x2_name, y_name
     """
+    # Validate inputs
+    if not isinstance(n_mult, int) or n_mult <= 0:
+        raise ValueError(f"Sample size n_mult must be a positive integer, got {n_mult}")
+
+    if not isinstance(seed_mult, int):
+        raise ValueError(f"Seed seed_mult must be an integer, got {seed_mult}")
+
+    if not isinstance(noise_mult_level, (int, float)) or noise_mult_level < 0:
+        raise ValueError(f"Noise level noise_mult_level must be a non-negative number, got {noise_mult_level}")
+
     logger.info(
         f"Generating multiple regression data: dataset={dataset_choice_mult}, n={n_mult}, noise={noise_mult_level}, seed={seed_mult}"
     )
@@ -1011,6 +1021,13 @@ def generate_simple_regression_data(
     Returns:
         Dictionary with x, y, x_label, y_label, x_unit, y_unit, context_title, context_description
     """
+    # Validate inputs
+    if not isinstance(n, int) or n <= 0:
+        raise ValueError(f"Sample size n must be a positive integer, got {n}")
+
+    if not isinstance(seed, int):
+        raise ValueError(f"Seed must be an integer, got {seed}")
+
     np.random.seed(seed)
 
     if dataset_choice == "🏙️ Städte-Umsatzstudie (75 Städte)":
