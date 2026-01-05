@@ -99,6 +99,10 @@ if "last_simple_params" not in st.session_state:
     st.session_state.last_simple_params = None
 if "mult_model_cache" not in st.session_state:
     st.session_state.mult_model_cache = None
+if "current_model" not in st.session_state:
+    st.session_state.current_model = None
+if "current_feature_names" not in st.session_state:
+    st.session_state.current_feature_names = None
 if "simple_model_cache" not in st.session_state:
     st.session_state.simple_model_cache = None
 
@@ -320,6 +324,10 @@ if st.session_state.last_mult_params != mult_params or st.session_state.mult_mod
             "y_pred_mult": y_pred_mult,
         }
         st.session_state.last_mult_params = mult_params
+
+        # Store current model and feature names for R output display
+        st.session_state.current_model = model_mult
+        st.session_state.current_feature_names = ["hp", "drat", "wt"]
 else:
     # Use cached data
     cached = st.session_state.mult_model_cache
@@ -332,6 +340,10 @@ else:
     X_mult = cached["X_mult"]
     model_mult = cached["model_mult"]
     y_pred_mult = cached["y_pred_mult"]
+
+    # Store current model and feature names for R output display
+    st.session_state.current_model = model_mult
+    st.session_state.current_feature_names = ["hp", "drat", "wt"]
 
     st.sidebar.markdown("---")
     with st.sidebar.expander("🔧 Anzeigeoptionen", expanded=False):
@@ -611,6 +623,10 @@ if needs_recompute:
             "x": x,
             "y": y,
         }
+
+        # Store current model and feature names for R output display
+        st.session_state.current_model = model
+        st.session_state.current_feature_names = [x_label]
 else:
     # Use cached model results
     cached = st.session_state.simple_model_cache
@@ -638,11 +654,39 @@ else:
     var_x = cached["var_x"]
     var_y = cached["var_y"]
     corr_xy = cached["corr_xy"]
+
+    # Store current model and feature names for R output display
+    st.session_state.current_model = model
+    st.session_state.current_feature_names = [x_label]
 # =========================================================
 
 # =========================================================
 # HAUPTINHALT - Tab-basierte Navigation
 # =========================================================
+
+# =========================================================
+# R OUTPUT DISPLAY - Always visible above tabs
+# =========================================================
+st.markdown("---")
+st.markdown("### 📊 R Output (Automatisch aktualisiert)")
+
+# Display R output based on current session state
+try:
+    if 'current_model' in st.session_state and 'current_feature_names' in st.session_state:
+        model = st.session_state.current_model
+        feature_names = st.session_state.current_feature_names
+
+        if model is not None:
+            fig_r = create_r_output_figure(model, feature_names=feature_names, figsize=(18, 13))
+            st.plotly_chart(fig_r, use_container_width=True)
+        else:
+            st.info("ℹ️ Wählen Sie einen Datensatz und Parameter aus, um das R Output zu sehen.")
+    else:
+        st.info("ℹ️ Wählen Sie einen Datensatz und Parameter aus, um das R Output zu sehen.")
+except Exception as e:
+    st.warning(f"R Output konnte nicht geladen werden: {str(e)}")
+
+st.markdown("---")
 
 # Create three tabs
 tab1, tab2, tab3 = st.tabs(["📈 Einfache Regression", "📊 Multiple Regression", "📚 Datensätze"])
