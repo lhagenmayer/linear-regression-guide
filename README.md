@@ -28,11 +28,11 @@ Regression ist ein wichtiges statistisches Werkzeug, aber die Theorie kann über
 - Modellinterpretation und Diagnostik
 - Statistische Tests und Hypothesen
 
-**Benutzerfreundlich:**
-- Einfache Navigation mit Tabs
-- Anpassbare Parameter (Stichprobengröße, Rauschen, Seeds)
-- Klare Erklärungen statt komplizierter Formeln
-- Performance-optimiert für flüssige Bedienung
+**Einfach zu bedienen:**
+- Navigation mit Tabs
+- Anpassbare Parameter
+- Klare Erklärungen
+- Reagiert schnell
 
 ## Los geht's
 
@@ -61,90 +61,44 @@ Die App öffnet sich automatisch im Browser. Wenn nicht, gehe zu `http://localho
 3. Beobachte, wie sich die Plots ändern
 4. Lies die Erklärungen zu den statistischen Konzepten
 
-## Für Entwickler
+## Entwicklung
 
-Das Projekt legt Wert auf Code-Qualität. Wir verwenden moderne Tools, um den Code konsistent und wartbar zu halten.
-
-### Setup
+Falls du den Code ändern möchtest:
 
 ```bash
-# Zusätzliche Tools für Entwicklung installieren
+# Zusätzliche Tools installieren
 pip install -r requirements-dev.txt
 
-# Git Hooks einrichten (automatische Code-Qualität)
+# Automatische Code-Prüfung einrichten
 pre-commit install
-```
 
-### Code-Qualität
-
-**Automatische Formatierung:**
-```bash
-# Code automatisch formatieren
+# Code formatieren
 black *.py tests/*.py
-```
 
-**Qualitätsprüfung:**
-```bash
-# Style und Fehler prüfen
-flake8 *.py tests/*.py
-
-# Type-Checking (optional, aber empfohlen)
-mypy app.py config.py data.py plots.py
-```
-
-**Git Hooks:**
-Die pre-commit Hooks laufen automatisch bei jedem Commit und prüfen:
-- Entfernung von Leerzeichen am Zeilenende
-- Korrekte Dateienden
-- Code-Formatierung mit Black
-- Style-Regeln mit Flake8
-
-Manuell ausführen:
-```bash
-pre-commit run --all-files
+# Tests laufen lassen
+pytest tests/
 ```
 
 ## Tests
 
-Das Projekt hat eine umfassende Test-Suite, um sicherzustellen, dass alles funktioniert.
-
-**Verfügbare Tests:**
-- Unit-Tests für Datenfunktionen und Plots
-- Integration-Tests für die Streamlit-App
-- Performance-Tests mit Caching-Validierung
-- Automatische Tests bei jedem Push (GitHub Actions)
+Es gibt Tests, um sicherzustellen, dass alles funktioniert.
 
 ```bash
-# Alle Tests laufen lassen
+# Tests laufen lassen
 pytest tests/
-
-# Mit Coverage-Report (zeigt, wie viel Code getestet ist)
-pytest --cov --cov-report=html
-
-# Nur schnelle Tests (ohne Performance-Tests)
-pytest tests/ -m "not slow"
 ```
 
-Für detaillierte Informationen zu den Tests siehe [TESTING.md](TESTING.md).
+Mehr Details in [TESTING.md](TESTING.md).
 
-## Projekt-Struktur
+## Dateien
 
-| Datei/Ordner | Was ist da drin? |
-|-------------|------------------|
-| `app.py` | Die Haupt-Streamlit-App mit Tabs und Navigation |
-| `data.py` | Funktionen zur Datengenerierung und -verarbeitung |
-| `plots.py` | Alle Plotly-Visualisierungen und Charts |
-| `config.py` | Konfiguration, Konstanten und Einstellungen |
-| `content.py` | Texte, Formeln und Beschreibungen für die UI |
-| `requirements.txt` | Python-Pakete für den Betrieb |
-| `requirements-dev.txt` | Zusätzliche Tools für Entwicklung |
-| `tests/` | Automatisierte Tests für alles |
-| `pyproject.toml` | Konfiguration für Black und Tests |
-| `.flake8` | Style-Regeln für Python-Code |
-| `mypy.ini` | Type-Checking Konfiguration |
-| `.pre-commit-config.yaml` | Automatische Code-Qualitäts-Checks |
-| `DEVELOPMENT.md` | Detaillierte Anleitung für Entwickler |
-| `TESTING.md` | Alles über Tests und Qualitätssicherung |
+- `app.py` - Haupt-App
+- `data.py` - Datenfunktionen
+- `plots.py` - Diagramme
+- `content.py` - Texte und Formeln
+- `config.py` - Einstellungen
+- `tests/` - Tests
+- `requirements.txt` - Abhängigkeiten
 
 ## Wie benutzt man die App?
 
@@ -155,36 +109,17 @@ Für detaillierte Informationen zu den Tests siehe [TESTING.md](TESTING.md).
 
 **Tipp:** Verwende verschiedene Seeds, um zu sehen, wie zufällige Variationen die Ergebnisse beeinflussen.
 
-## Technische Details
+## Technisches
 
-**Performance:**
-- Smart Caching für schnelle Reaktionen
-- Session State für nahtlose Interaktionen
-- Lazy Loading für effiziente Ressourcennutzung
-- Optimiert für Desktop und Mobile
+Die App nutzt:
+- Streamlit für die Web-Oberfläche
+- Plotly für Diagramme
+- Statsmodels für statistische Berechnungen
+- Caching für bessere Performance
 
-**Qualität:**
-- Automatische Code-Formatierung und Tests
-- Professionelle Entwicklungsumgebung
-- Umfassende Dokumentation
+## Änderungen
 
-## Mitmachen
-
-Beiträge sind willkommen! Das Projekt legt Wert auf Qualität und Benutzerfreundlichkeit.
-
-**Bevor du beiträgst:**
-1. Installiere die Entwicklungs-Tools: `pip install -r requirements-dev.txt`
-2. Richte pre-commit Hooks ein: `pre-commit install`
-3. Führe Tests aus: `pytest tests/`
-4. Stelle sicher, dass alles formatiert ist: `black *.py tests/*.py`
-
-**Code-Qualität:**
-- Verwende beschreibende Variablennamen
-- Schreibe Tests für neue Funktionen
-- Halte die Dokumentation aktuell
-- Folge dem bestehenden Stil
-
-Für detaillierte Anleitungen siehe [DEVELOPMENT.md](DEVELOPMENT.md).
+Falls du etwas ändern möchtest, schau dir [DEVELOPMENT.md](DEVELOPMENT.md) an.
 
 ## Lizenz
 
