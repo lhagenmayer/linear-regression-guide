@@ -17,5 +17,8 @@ pre-commit>=3.6.0,<4.0.0          # Git hooks for code quality
 types-requests>=2.31.0,<3.0.0     # Type stubs for requests library
 pandas-stubs>=2.0.0,<3.0.0        # Type stubs for pandas library
 
+# Property-based testing
+hypothesis>=6.80.0,<7.0.0          # Property-based testing framework
+
 # Security scanning (for CI/CD and development)
 safety>=3.0.0,<4.0.0              # Check for known security vulnerabilities

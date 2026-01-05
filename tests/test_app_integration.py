@@ -22,7 +22,7 @@ class TestAppInitialization:
     @pytest.mark.integration
     def test_app_loads_successfully(self):
         """Test that the app loads without errors."""
-        at = AppTest.from_file("app.py")
+        at = AppTest.from_file("run.py")
         at.run(timeout=30)
         assert not at.exception
     
@@ -30,9 +30,9 @@ class TestAppInitialization:
     @pytest.mark.integration
     def test_app_has_tabs(self):
         """Test that app has all three tabs."""
-        at = AppTest.from_file("app.py")
+        at = AppTest.from_file("run.py")
         at.run(timeout=30)
-        
+
         # Check for tabs - Streamlit creates tabs with specific structure
         # The tabs should be present in the app
         assert not at.exception
@@ -41,9 +41,9 @@ class TestAppInitialization:
     @pytest.mark.integration
     def test_page_config_set(self):
         """Test that page configuration is set correctly."""
-        at = AppTest.from_file("app.py")
+        at = AppTest.from_file("run.py")
         at.run(timeout=30)
-        
+
         # App should run without error
         assert not at.exception
 
@@ -55,7 +55,7 @@ class TestSidebarWidgets:
     @pytest.mark.integration
     def test_dataset_selectbox_exists(self):
         """Test that dataset selection widget exists."""
-        at = AppTest.from_file("app.py")
+        at = AppTest.from_file("run.py")
         at.run(timeout=30)
         
         # Check for selectbox widgets in sidebar
@@ -65,7 +65,7 @@ class TestSidebarWidgets:
     @pytest.mark.integration
     def test_dataset_selection_changes(self):
         """Test changing dataset selection."""
-        at = AppTest.from_file("app.py")
+        at = AppTest.from_file("run.py")
         at.run(timeout=30)
         
         # Find the first selectbox (dataset choice)
@@ -85,7 +85,7 @@ class TestSidebarWidgets:
     @pytest.mark.integration
     def test_slider_interactions(self):
         """Test slider widget interactions."""
-        at = AppTest.from_file("app.py")
+        at = AppTest.from_file("run.py")
         at.run(timeout=30)
         
         # Should have sliders for parameters
@@ -109,7 +109,7 @@ class TestSessionState:
     @pytest.mark.integration
     def test_session_state_initialized(self):
         """Test that session state is properly initialized."""
-        at = AppTest.from_file("app.py")
+        at = AppTest.from_file("run.py")
         at.run(timeout=30)
         
         # Check that app runs without error (session state should be initialized)
@@ -119,7 +119,7 @@ class TestSessionState:
     @pytest.mark.integration
     def test_session_state_persists_across_reruns(self):
         """Test that session state persists across multiple runs."""
-        at = AppTest.from_file("app.py")
+        at = AppTest.from_file("run.py")
         at.run(timeout=30)
         
         # Make a change
@@ -141,7 +141,7 @@ class TestSimpleRegressionTab:
     @pytest.mark.slow
     def test_simple_regression_tab_loads(self):
         """Test that simple regression tab loads without errors."""
-        at = AppTest.from_file("app.py")
+        at = AppTest.from_file("run.py")
         at.run(timeout=30)
         
         # Should load without exception
@@ -152,7 +152,7 @@ class TestSimpleRegressionTab:
     @pytest.mark.slow
     def test_dataset_parameter_changes(self):
         """Test changing dataset parameters in simple regression."""
-        at = AppTest.from_file("app.py")
+        at = AppTest.from_file("run.py")
         at.run(timeout=30)
         
         # Try changing a slider if available
@@ -171,7 +171,7 @@ class TestMultipleRegressionTab:
     @pytest.mark.slow
     def test_multiple_regression_functionality(self):
         """Test multiple regression tab basic functionality."""
-        at = AppTest.from_file("app.py")
+        at = AppTest.from_file("run.py")
         at.run(timeout=30)
         
         # App should run without errors
@@ -185,7 +185,7 @@ class TestDatasetTab:
     @pytest.mark.integration
     def test_dataset_tab_loads(self):
         """Test that dataset tab loads successfully."""
-        at = AppTest.from_file("app.py")
+        at = AppTest.from_file("run.py")
         at.run(timeout=30)
         
         assert not at.exception
@@ -198,7 +198,7 @@ class TestUIComponents:
     @pytest.mark.integration
     def test_checkboxes_exist(self):
         """Test that checkbox widgets exist in the app."""
-        at = AppTest.from_file("app.py")
+        at = AppTest.from_file("run.py")
         at.run(timeout=30)
         
         # Should run without error
@@ -208,7 +208,7 @@ class TestUIComponents:
     @pytest.mark.integration
     def test_checkbox_toggle(self):
         """Test toggling checkboxes."""
-        at = AppTest.from_file("app.py")
+        at = AppTest.from_file("run.py")
         at.run(timeout=30)
         
         if len(at.checkbox) > 0:
@@ -223,7 +223,7 @@ class TestUIComponents:
     @pytest.mark.integration
     def test_expanders_exist(self):
         """Test that expander components exist."""
-        at = AppTest.from_file("app.py")
+        at = AppTest.from_file("run.py")
         at.run(timeout=30)
         
         # Expanders are part of the UI - app should run
@@ -238,7 +238,7 @@ class TestCompleteWorkflows:
     @pytest.mark.slow
     def test_workflow_change_dataset_and_parameters(self):
         """Test complete workflow: change dataset and adjust parameters."""
-        at = AppTest.from_file("app.py")
+        at = AppTest.from_file("run.py")
         at.run(timeout=30)
         
         # Step 1: Change dataset
@@ -260,7 +260,7 @@ class TestCompleteWorkflows:
     @pytest.mark.slow
     def test_workflow_multiple_interactions(self):
         """Test multiple sequential interactions."""
-        at = AppTest.from_file("app.py")
+        at = AppTest.from_file("run.py")
         at.run(timeout=30)
         
         # Interaction 1: Change selectbox
@@ -290,7 +290,7 @@ class TestCachingBehavior:
     @pytest.mark.performance
     def test_repeated_runs_with_same_params(self):
         """Test that repeated runs with same parameters work correctly."""
-        at = AppTest.from_file("app.py")
+        at = AppTest.from_file("run.py")
         at.run(timeout=30)
         assert not at.exception
         
@@ -310,7 +310,7 @@ class TestErrorHandling:
     @pytest.mark.integration
     def test_app_handles_rapid_changes(self):
         """Test that app handles rapid parameter changes."""
-        at = AppTest.from_file("app.py")
+        at = AppTest.from_file("run.py")
         at.run(timeout=30)
         
         # Rapid changes
@@ -327,7 +327,7 @@ class TestErrorHandling:
     @pytest.mark.integration
     def test_app_handles_extreme_values(self):
         """Test app with extreme parameter values."""
-        at = AppTest.from_file("app.py")
+        at = AppTest.from_file("run.py")
         at.run(timeout=30)
         
         # Set slider to extreme values
@@ -350,7 +350,7 @@ class TestDataGeneration:
     @pytest.mark.integration
     def test_all_datasets_can_be_selected(self):
         """Test that all datasets can be selected without errors."""
-        at = AppTest.from_file("app.py")
+        at = AppTest.from_file("run.py")
         at.run(timeout=30)
         
         if len(at.selectbox) > 0:
@@ -372,7 +372,7 @@ class TestGlobalDatasets:
     @pytest.mark.integration
     def test_who_dataset_selection(self):
         """Test that WHO dataset can be selected."""
-        at = AppTest.from_file("app.py")
+        at = AppTest.from_file("run.py")
         at.run(timeout=30)
 
         # Find dataset selectboxes
@@ -397,7 +397,7 @@ class TestGlobalDatasets:
     @pytest.mark.integration
     def test_swiss_dataset_selections(self):
         """Test that Swiss datasets can be selected."""
-        at = AppTest.from_file("app.py")
+        at = AppTest.from_file("run.py")
         at.run(timeout=30)
 
         # Find dataset selectboxes
