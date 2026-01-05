@@ -21,17 +21,12 @@ __pycache__/
 .pytest_cache/
 .coverage
 htmlcov/
-.coverage*
-coverage.xml
-*.coverage
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
 
-# Temporary files
-*.tmp
-*.bak
-*~
+# Linting and formatting
+.ruff_cache/
+.black/
