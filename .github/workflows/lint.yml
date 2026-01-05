@@ -2,9 +2,9 @@ name: Code Quality Checks
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ master, main, develop ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ master, main, develop ]
   workflow_dispatch:
 
 permissions:
@@ -35,14 +35,14 @@ jobs:
 
     - name: Check code formatting with Black
       run: |
-        python -m black --check --diff *.py tests/*.py
+        python -m black --check --diff src/*.py tests/*.py run.py scripts/*.sh
 
     - name: Lint with Flake8
       run: |
-        python -m flake8 *.py tests/*.py --statistics
+        python -m flake8 src/*.py tests/*.py run.py --statistics
 
     - name: Type check with MyPy
       # MyPy is run but doesn't fail the build
       continue-on-error: true
       run: |
-        python -m mypy app.py config.py data.py plots.py
+        python -m mypy src/app.py src/config.py src/data.py src/plots.py src/content.py src/logger.py src/accessibility.py

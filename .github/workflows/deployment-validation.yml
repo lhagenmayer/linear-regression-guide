@@ -2,9 +2,9 @@ name: Deployment Validation
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ master, main, develop ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ master, main, develop ]
   workflow_dispatch:
 
 jobs:
@@ -31,18 +31,19 @@ jobs:
     - name: Verify deployment structure
       run: |
         echo "Checking required files..."
-        test -f app.py && echo "✅ app.py exists" || (echo "❌ app.py missing" && exit 1)
+        test -f run.py && echo "✅ run.py exists" || (echo "❌ run.py missing" && exit 1)
+        test -f src/app.py && echo "✅ src/app.py exists" || (echo "❌ src/app.py missing" && exit 1)
         test -f requirements.txt && echo "✅ requirements.txt exists" || (echo "❌ requirements.txt missing" && exit 1)
         test -f .streamlit/config.toml && echo "✅ .streamlit/config.toml exists" || (echo "❌ .streamlit/config.toml missing" && exit 1)
-        test -f DEPLOYMENT.md && echo "✅ DEPLOYMENT.md exists" || (echo "❌ DEPLOYMENT.md missing" && exit 1)
+        test -f docs/DEVELOPMENT.md && echo "✅ docs/DEVELOPMENT.md exists" || (echo "❌ docs/DEVELOPMENT.md missing" && exit 1)
 
     - name: Verify Python modules import
       run: |
         echo "Testing module imports..."
-        python -c "import config; print('✅ config.py imports successfully')"
-        python -c "import data; print('✅ data.py imports successfully')"
-        python -c "import plots; print('✅ plots.py imports successfully')"
-        python -c "import content; print('✅ content.py imports successfully')"
+        python -c "import sys; sys.path.insert(0, 'src'); import config; print('✅ config.py imports successfully')"
+        python -c "import sys; sys.path.insert(0, 'src'); import data; print('✅ data.py imports successfully')"
+        python -c "import sys; sys.path.insert(0, 'src'); import plots; print('✅ plots.py imports successfully')"
+        python -c "import sys; sys.path.insert(0, 'src'); import content; print('✅ content.py imports successfully')"
 
     - name: Run deployment validation script
       run: |
@@ -51,11 +52,12 @@ jobs:
     - name: Check Streamlit syntax
       run: |
         echo "Checking Streamlit app syntax..."
-        python -m py_compile app.py
-        python -m py_compile config.py
-        python -m py_compile data.py
-        python -m py_compile plots.py
-        python -m py_compile content.py
+        python -m py_compile run.py
+        python -m py_compile src/app.py
+        python -m py_compile src/config.py
+        python -m py_compile src/data.py
+        python -m py_compile src/plots.py
+        python -m py_compile src/content.py
         echo "✅ All Python files compile successfully"
 
     - name: Verify requirements
