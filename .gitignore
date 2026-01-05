@@ -30,3 +30,7 @@ dmypy.json
 # Linting and formatting
 .ruff_cache/
 .black/
+
+# Logs
+logs/
+*.log
