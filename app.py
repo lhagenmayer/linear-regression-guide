@@ -23,7 +23,8 @@ from plots import (
     create_regression_mesh, get_3d_layout_config, create_zero_plane,
     create_plotly_scatter, create_plotly_scatter_with_line, create_plotly_3d_scatter,
     create_plotly_3d_surface, create_plotly_residual_plot, create_plotly_bar,
-    create_plotly_distribution, create_r_output_display, create_r_output_figure
+    create_plotly_distribution, create_r_output_display, create_r_output_figure,
+    get_signif_stars, get_signif_color
 )
 
 # ---------------------------------------------------------
@@ -111,26 +112,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# HELPER FUNCTIONS
-# ---------------------------------------------------------
-def get_signif_stars(p):
-    """Signifikanz-Codes wie in R"""
-    if p < 0.001: return '***'
-    if p < 0.01:  return '**'
-    if p < 0.05:  return '*'
-    if p < 0.1:   return '.'
-    return ' '
-
-def get_signif_color(p):
-    """Farbe basierend auf Signifikanz"""
-    if p < 0.001: return '#006400'
-    if p < 0.01:  return '#228B22'
-    if p < 0.05:  return '#32CD32'
-    if p < 0.1:   return '#FFA500'
-    return '#DC143C'
-
-
-# ---------------------------------------------------------
 # SIDEBAR - INTERAKTIVE PARAMETER
 # ---------------------------------------------------------
 st.sidebar.markdown("# 🎛️ Parameter")
@@ -204,9 +185,9 @@ with st.spinner("Lade Datensatz..."):
 
     st.sidebar.markdown("---")
     with st.sidebar.expander("🔧 Anzeigeoptionen", expanded=False):
-    show_formulas = st.checkbox("Formeln anzeigen", value=True,
-                                help="Zeige mathematische Formeln in der Anleitung")
-    show_true_line = False
+        show_formulas = st.checkbox("Formeln anzeigen", value=True,
+                                    help="Zeige mathematische Formeln in der Anleitung")
+        show_true_line = False
 
 # === GEMEINSAME PARAMETER-SEKTION ===
 has_true_line = False
@@ -404,13 +385,13 @@ with col_m1_1:
     Die **multiple Regression** erweitert die einfache Regression, um diese Komplexität zu modellieren.
     """)
         
-        st.info("""
-        **🔑 Der zentrale Unterschied:**
-        
-        | Aspekt | Einfache Regression | Multiple Regression |
-        |--------|---------------------|---------------------|
-        | **Prädiktoren** | 1 Variable (X) | K Variablen (X₁, X₂, ..., Xₖ) |
-        | **Geometrie** | Gerade in 2D | Ebene/Hyperebene in (K+1)D |
+    st.info("""
+    **🔑 Der zentrale Unterschied:**
+    
+    | Aspekt | Einfache Regression | Multiple Regression |
+    |--------|---------------------|---------------------|
+    | **Prädiktoren** | 1 Variable (X) | K Variablen (X₁, X₂, ..., Xₖ) |
+    | **Geometrie** | Gerade in 2D | Ebene/Hyperebene in (K+1)D |
         | **Gleichung** | ŷ = b₀ + b₁x | ŷ = b₀ + b₁x₁ + b₂x₂ + ... + bₖxₖ |
         | **Interpretation** | "Pro Einheit X" | "Bei Konstanthaltung der anderen" |
         """)

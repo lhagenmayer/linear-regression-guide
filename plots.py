@@ -18,6 +18,24 @@ def _safe_scalar(val):
     return float(val)
 
 
+def get_signif_stars(p):
+    """Signifikanz-Codes wie in R"""
+    if p < 0.001: return '***'
+    if p < 0.01:  return '**'
+    if p < 0.05:  return '*'
+    if p < 0.1:   return '.'
+    return ' '
+
+
+def get_signif_color(p):
+    """Farbe basierend auf Signifikanz"""
+    if p < 0.001: return '#006400'
+    if p < 0.01:  return '#228B22'
+    if p < 0.05:  return '#32CD32'
+    if p < 0.1:   return '#FFA500'
+    return '#DC143C'
+
+
 # ---------------------------------------------------------
 # 3D VISUALIZATION HELPER FUNCTIONS
 # ---------------------------------------------------------

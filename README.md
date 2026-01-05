@@ -26,7 +26,9 @@ Interaktiver Leitfaden zur linearen Regression mit Streamlit. Gedacht für alle,
 
 | Datei | Beschreibung |
 |-------|--------------|
-| app.py | Haupt-App mit allen Kapiteln |
+| app.py | Haupt-App mit Streamlit UI und Tab-Navigation |
+| data.py | Datengenerie functions und data handling |
+| plots.py | Plotting functions (plotly visualizations) |
 | requirements.txt | Laufzeitabhängigkeiten |
 | README.md | Projektüberblick |
 
