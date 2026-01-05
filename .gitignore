@@ -21,3 +21,12 @@ __pycache__/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Linting and formatting
+.ruff_cache/
+.black/
