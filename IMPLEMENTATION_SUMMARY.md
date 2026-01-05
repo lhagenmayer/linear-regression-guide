@@ -11,7 +11,7 @@ All requested Streamlit performance optimizations have been successfully impleme
 
 Added caching decorators to all expensive data generation functions:
 - `generate_dataset()` in data.py
-- `generate_multiple_regression_data()` in data.py  
+- `generate_multiple_regression_data()` in data.py
 - `generate_simple_regression_data()` in data.py
 
 **Impact:** 50-90% reduction in data generation time for cached calls.

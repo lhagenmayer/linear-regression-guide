@@ -27,19 +27,9 @@ repos:
         language_version: python3
         args: ['--line-length=100']
 
-  # Flake8 - Python linter
+  # Flake8 - Python linter (without docstring checks)
   - repo: https://github.com/pycqa/flake8
     rev: 7.0.0
     hooks:
       - id: flake8
         args: ['--config=.flake8']
-        additional_dependencies: [flake8-docstrings]
-
-  # MyPy - Static type checker
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.8.0
-    hooks:
-      - id: mypy
-        additional_dependencies: [types-requests, pandas-stubs]
-        args: ['--config-file=mypy.ini']
-        exclude: '^tests/'

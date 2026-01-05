@@ -187,13 +187,13 @@ from module_to_test import function_to_test
 
 class TestFeatureName:
     """Test a specific feature or function."""
-    
+
     @pytest.mark.unit
     def test_basic_functionality(self):
         """Test the basic use case."""
         result = function_to_test(input_data)
         assert result == expected_output
-    
+
     @pytest.mark.unit
     def test_edge_case(self):
         """Test edge case behavior."""
@@ -216,11 +216,11 @@ class TestFeatureName:
 def test_new_dataset_generation(self):
     """Test generation of new dataset type."""
     result = generate_new_dataset(n=100, seed=42)
-    
+
     assert "x" in result
     assert "y" in result
     assert len(result["x"]) == 100
-    
+
     # Test reproducibility
     result2 = generate_new_dataset(n=100, seed=42)
     np.testing.assert_array_equal(result["x"], result2["x"])
@@ -235,7 +235,7 @@ def test_new_widget_interaction(self):
     """Test interaction with new widget."""
     at = AppTest.from_file("app.py")
     at.run(timeout=30)
-    
+
     # Interact with widget
     if len(at.slider) > 0:
         at.slider[0].set_value(50).run(timeout=30)

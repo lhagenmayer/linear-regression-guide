@@ -52,7 +52,7 @@ st.session_state.active_tab
 st.session_state.mult_model_cache
 st.session_state.last_mult_params
 
-# Cache simple regression model and results  
+# Cache simple regression model and results
 st.session_state.simple_model_cache
 st.session_state.last_simple_params
 ```
@@ -89,10 +89,10 @@ Spinners are added for all expensive operations:
 ```python
 with st.spinner("🔄 Lade Datensatz für Multiple Regression..."):
     mult_data = generate_multiple_regression_data(...)
-    
+
 with st.spinner("📊 Berechne Regressionsmodell..."):
     model = sm.OLS(y, X).fit()
-    
+
 with st.spinner("🎨 Erstelle 3D-Visualisierung..."):
     fig = create_plotly_3d_surface(...)
 ```

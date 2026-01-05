@@ -23,6 +23,55 @@ Interaktiver Leitfaden zur linearen Regression mit Streamlit. Gedacht für alle,
    ```
    Browser öffnet automatisch oder manuell `http://localhost:8501` aufrufen.
 
+### Development
+
+#### Code Quality Standards
+
+Das Projekt verwendet moderne Code-Quality-Tools für konsistente Formatierung und Qualität:
+
+- **Black**: Automatische Code-Formatierung (Zeilenlänge: 100)
+- **Flake8**: Style-Guide-Enforcement und Error-Checking
+- **MyPy**: Statische Type-Checking (optional)
+- **Pre-commit Hooks**: Automatische Checks vor jedem Commit
+
+#### Setup für Entwicklung
+
+```bash
+# Entwicklungs-Abhängigkeiten installieren
+pip install -r requirements-dev.txt
+
+# Pre-commit Hooks einrichten
+pre-commit install
+
+# Code formatieren
+black *.py tests/*.py
+
+# Linting überprüfen
+flake8 *.py tests/*.py
+
+# Type-Checking (optional)
+mypy app.py config.py data.py plots.py
+```
+
+#### Pre-commit Hooks
+
+Pre-commit Hooks führen automatisch Code-Formatierung und Checks durch:
+
+```bash
+# Manuell ausführen
+pre-commit run --all-files
+
+# Hooks werden automatisch bei 'git commit' ausgeführt
+git commit -m "Your message"
+```
+
+Die Hooks prüfen:
+- Trailing Whitespace
+- End-of-File Fixer
+- YAML/JSON/TOML Syntax
+- Code-Formatierung (Black)
+- Linting (Flake8)
+
 ### Testing
 
 Umfassende Test-Suite mit:
@@ -53,6 +102,10 @@ Siehe [TESTING.md](TESTING.md) für Details zur Test-Infrastruktur.
 | requirements.txt | Laufzeitabhängigkeiten |
 | requirements-dev.txt | Entwicklungs- und Test-Abhängigkeiten |
 | tests/ | Comprehensive test suite |
+| pyproject.toml | Black und Pytest Konfiguration |
+| .flake8 | Flake8 Konfiguration |
+| mypy.ini | MyPy Konfiguration |
+| .pre-commit-config.yaml | Pre-commit Hooks Konfiguration |
 | TESTING.md | Testing documentation |
 | PERFORMANCE_OPTIMIZATIONS.md | Performance optimization details |
 | README.md | Projektüberblick |

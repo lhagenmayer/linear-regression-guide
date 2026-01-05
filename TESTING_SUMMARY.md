@@ -120,7 +120,7 @@ Comprehensive edge case testing across all test files:
 
 ### Performance Benchmarks
 - **Cache effectiveness**: 50x-100x speedup for cached calls
-- **Data generation**: 
+- **Data generation**:
   - First call (n=75): ~0.5-1.0s
   - Cached call: <0.01s
 - **Test execution**:
