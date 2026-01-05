@@ -6,6 +6,7 @@ to get LLM-based interpretations of statistical model results.
 """
 
 import os
+import numpy as np
 from typing import Dict, Any, Optional
 from openai import OpenAI
 
@@ -89,11 +90,11 @@ def extract_model_statistics(model: Any, feature_names: list) -> Dict[str, Any]:
         # Residual summary statistics
         residuals = model.resid
         stats["residuals"] = {
-            "min": float(residuals.min()),
-            "q1": float(residuals.quantile(0.25)),
-            "median": float(residuals.median()),
-            "q3": float(residuals.quantile(0.75)),
-            "max": float(residuals.max())
+            "min": float(np.min(residuals)),
+            "q1": float(np.percentile(residuals, 25)),
+            "median": float(np.median(residuals)),
+            "q3": float(np.percentile(residuals, 75)),
+            "max": float(np.max(residuals))
         }
         
         return stats

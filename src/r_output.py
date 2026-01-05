@@ -153,12 +153,25 @@ def _render_interpretation_section(model: Any, feature_names: List[str]) -> None
         st.session_state.interpretation_result = None
     if "interpretation_loading" not in st.session_state:
         st.session_state.interpretation_loading = False
+    if "interpretation_prompt_data" not in st.session_state:
+        st.session_state.interpretation_prompt_data = None
     
     # Button to trigger interpretation
     if st.button("🔍 Interpretation generieren", type="primary", use_container_width=True):
         st.session_state.interpretation_loading = True
         
         with st.spinner("🤔 Analysiere Modell mit Perplexity AI..."):
+            # Extract statistics first
+            from .perplexity_api import extract_model_statistics, create_interpretation_prompt
+            stats = extract_model_statistics(model, feature_names)
+            prompt = create_interpretation_prompt(stats)
+            
+            # Store the prompt data for clipboard copy
+            st.session_state.interpretation_prompt_data = {
+                "statistics": stats,
+                "prompt": prompt
+            }
+            
             result = interpret_model(model, feature_names)
             st.session_state.interpretation_result = result
             st.session_state.interpretation_loading = False
@@ -174,9 +187,40 @@ def _render_interpretation_section(model: Any, feature_names: List[str]) -> None
             # Add a small note about the source
             st.caption("_Generiert von Perplexity AI_")
             
+            # Show the data sent to AI with copy option
+            if st.session_state.interpretation_prompt_data is not None:
+                with st.expander("📋 An AI gesendete Daten anzeigen"):
+                    prompt_data = st.session_state.interpretation_prompt_data.get("prompt", "")
+                    
+                    st.markdown("**Dieser Prompt wurde an die Perplexity API gesendet:**")
+                    
+                    # Provide download button and text area for copying
+                    col1, col2 = st.columns([1, 1])
+                    with col1:
+                        st.download_button(
+                            label="💾 Als Datei herunterladen",
+                            data=prompt_data,
+                            file_name="perplexity_prompt.txt",
+                            mime="text/plain",
+                            use_container_width=True
+                        )
+                    with col2:
+                        st.info("💡 Tipp: Text unten auswählen & kopieren (Strg+C / Cmd+C)")
+                    
+                    # Show in scrollable text area for easy selection and copying
+                    st.text_area(
+                        "Prompt-Text",
+                        value=prompt_data,
+                        height=300,
+                        key="prompt_display",
+                        label_visibility="collapsed",
+                        help="Wählen Sie den Text aus und drücken Sie Strg+C (oder Cmd+C auf Mac) zum Kopieren"
+                    )
+            
             # Option to clear interpretation
             if st.button("🔄 Neue Interpretation", use_container_width=True):
                 st.session_state.interpretation_result = None
+                st.session_state.interpretation_prompt_data = None
                 st.rerun()
         else:
             st.error(f"❌ {result.get('error', 'Unbekannter Fehler')}")
@@ -184,4 +228,5 @@ def _render_interpretation_section(model: Any, feature_names: List[str]) -> None
             # Option to retry
             if st.button("🔄 Erneut versuchen", use_container_width=True):
                 st.session_state.interpretation_result = None
+                st.session_state.interpretation_prompt_data = None
                 st.rerun()
