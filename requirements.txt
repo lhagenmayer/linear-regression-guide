@@ -1,6 +1,19 @@
-streamlit>=1.28.0
-numpy>=1.24.0
-pandas>=2.0.0
-plotly>=5.14.0
-statsmodels>=0.14.0
-scipy>=1.11.0
+# Production Dependencies
+# Linear Regression Guide - Streamlit Application
+
+# Core web framework for interactive data apps
+streamlit>=1.28.0,<2.0.0
+
+# Data manipulation and numerical computing
+numpy>=1.24.0,<2.0.0
+pandas>=2.0.0,<3.0.0
+
+# Interactive visualizations
+plotly>=5.14.0,<6.0.0
+
+# Statistical modeling
+statsmodels>=0.14.0,<1.0.0
+scipy>=1.11.0,<2.0.0
+
+# HTTP requests for external data (Swiss Open Government Data API)
+requests>=2.31.0,<3.0.0
