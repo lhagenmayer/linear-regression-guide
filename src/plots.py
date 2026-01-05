@@ -438,9 +438,9 @@ def create_r_output_display(model: Any, feature_names: List[str] = None) -> str:
             p_str = f"{p_val:.6f}"
 
         if i == 0:  # Intercept
-            coef_lines.append(f"(Intercept) {param:11.6f} {std_err:10.6f} {t_val:7.3f} {p_str:>9}{stars}")
+            coef_lines.append(f"(Intercept) {param:11.6f} {std_err:10.6f} {t_val:7.3f} {p_str:>10}{stars}")
         else:  # Other parameters
-            coef_lines.append(f"{name:<11} {param:11.6f} {std_err:10.6f} {t_val:7.3f} {p_str:>9}{stars}")
+            coef_lines.append(f"{name:<11} {param:11.6f} {std_err:10.6f} {t_val:7.3f} {p_str:>10}{stars}")
 
     coef_table = "\n".join(coef_lines)
 

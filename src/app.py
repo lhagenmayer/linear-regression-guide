@@ -1812,6 +1812,7 @@ with col_m1_1:
 
     # R-Style Output Display
     st.markdown("#### 📊 R-Style Output")
+    # Use the specification example variable names for consistency
     fig_r_mult = create_r_output_figure(model_mult, feature_names=["hp", "drat", "wt"], figsize=(18, 13))
     st.plotly_chart(fig_r_mult, use_container_width=True)
 
