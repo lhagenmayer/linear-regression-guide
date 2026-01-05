@@ -656,6 +656,16 @@ with st.sidebar.expander("🎛️ Daten-Parameter (Einfache Regression)", expand
             else False
         )
 
+    # App Status Indicator
+    st.sidebar.markdown("---")
+    error_count = st.session_state.get("error_count", 0)
+    if error_count == 0:
+        st.sidebar.success("✅ App läuft stabil")
+    elif error_count <= 2:
+        st.sidebar.info(f"ℹ️ {error_count} kleine Fehler aufgetreten")
+    else:
+        st.sidebar.warning(f"⚠️ {error_count} Fehler - erwägen Sie Neuladen")
+
     # Ensure all required variables are defined (fallback initialization)
     if "x_label" not in locals() or "y_label" not in locals():
         x_label = "X"
