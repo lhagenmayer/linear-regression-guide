@@ -2,6 +2,22 @@
 
 Interaktiver Leitfaden zur linearen Regression mit Streamlit. Gedacht für alle, die Regression visuell und nachvollziehbar lernen wollen.
 
+<!-- Deployment badge placeholder - uncomment and update URL after deployment -->
+<!-- [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://your-app-url.streamlit.app) -->
+
+### 🚀 Live Demo
+
+The app is ready for deployment to Streamlit Cloud. Once deployed, the live demo will be available here.
+
+**To deploy your own instance:**
+1. Fork this repository
+2. Visit [share.streamlit.io](https://share.streamlit.io)
+3. Connect your GitHub account and select this repository
+4. Set main file path to `app.py`
+5. Deploy!
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions.
+
 ### Funktionsumfang
 
 * Interaktive Plots (plotly, statsmodels)
@@ -102,12 +118,14 @@ Siehe [TESTING.md](TESTING.md) für Details zur Test-Infrastruktur.
 | requirements.txt | Laufzeitabhängigkeiten |
 | requirements-dev.txt | Entwicklungs- und Test-Abhängigkeiten |
 | tests/ | Comprehensive test suite |
+| .streamlit/config.toml | Streamlit Cloud configuration |
 | pyproject.toml | Black und Pytest Konfiguration |
 | .flake8 | Flake8 Konfiguration |
 | mypy.ini | MyPy Konfiguration |
 | .pre-commit-config.yaml | Pre-commit Hooks Konfiguration |
+| DEPLOYMENT.md | Streamlit Cloud deployment guide |
 | TESTING.md | Testing documentation |
-| PERFORMANCE_OPTIMIZATIONS.md | Performance optimization details |
+| DEVELOPMENT.md | Development guide |
 | README.md | Projektüberblick |
 
 ### Nutzung

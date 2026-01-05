@@ -309,3 +309,100 @@ pytest tests/ --pdb
 - [MyPy Documentation](https://mypy.readthedocs.io/)
 - [Pre-commit Documentation](https://pre-commit.com/)
 - [Python Style Guide (PEP 8)](https://pep8.org/)
+
+## Deployment
+
+### Streamlit Cloud Deployment
+
+This application is configured for easy deployment to Streamlit Cloud.
+
+#### Quick Deployment
+
+1. Push your changes to GitHub
+2. Visit [share.streamlit.io](https://share.streamlit.io)
+3. Connect your GitHub repository
+4. Set `app.py` as the main file
+5. Deploy!
+
+#### Configuration Files
+
+- **`.streamlit/config.toml`**: Streamlit configuration (theme, server settings)
+- **`requirements.txt`**: Python dependencies for deployment
+- **No secrets required**: All data is simulated/offline
+
+#### Local Testing Before Deployment
+
+```bash
+# Test the app locally exactly as it will run in production
+streamlit run app.py
+
+# Open browser to http://localhost:8501
+# Test all features to ensure they work correctly
+```
+
+#### Deployment Checklist
+
+Before deploying, verify:
+
+- [ ] All tests pass: `pytest tests/`
+- [ ] Code is formatted: `black --check *.py tests/*.py`
+- [ ] No linting errors: `flake8 *.py tests/*.py`
+- [ ] App runs locally: `streamlit run app.py`
+- [ ] All features work without errors
+- [ ] Performance is acceptable (check with different dataset sizes)
+
+#### Post-Deployment
+
+After deploying to Streamlit Cloud:
+
+1. **Test thoroughly**: Go through all tabs and features
+2. **Check logs**: Monitor Streamlit Cloud logs for errors
+3. **Verify performance**: Ensure acceptable load times
+4. **Test on mobile**: Check mobile responsiveness
+5. **Update README**: Add live demo URL
+
+#### Detailed Deployment Guide
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for comprehensive deployment instructions, including:
+
+- Step-by-step deployment process
+- Configuration options
+- Troubleshooting guide
+- Performance optimization tips
+- Monitoring and maintenance
+- Custom domain setup
+
+#### Automatic Redeployment
+
+Streamlit Cloud automatically redeploys when you push to your configured branch:
+
+```bash
+# Make changes
+git add .
+git commit -m "Update feature X"
+git push origin main
+
+# Streamlit Cloud detects the push and redeploys automatically
+# Redeployment typically takes 2-5 minutes
+```
+
+#### Environment Differences
+
+**Local vs. Cloud:**
+
+| Aspect | Local | Streamlit Cloud |
+|--------|-------|-----------------|
+| Python Version | Your local version | 3.9-3.12 (configurable) |
+| Resources | Your machine | Shared (free tier) |
+| URL | localhost:8501 | your-app.streamlit.app |
+| HTTPS | No | Yes |
+| Authentication | None | Optional (Pro tier) |
+
+**Note**: The app is designed to work identically in both environments.
+
+#### Deployment Resources
+
+- **Streamlit Cloud Docs**: [docs.streamlit.io/streamlit-community-cloud](https://docs.streamlit.io/streamlit-community-cloud)
+- **Community Forum**: [discuss.streamlit.io](https://discuss.streamlit.io)
+- **Deployment Guide**: See [DEPLOYMENT.md](DEPLOYMENT.md) in this repository
+
