@@ -1050,71 +1050,68 @@ if regression_type == "📊 Multiple Regression":
         - p-Wert (F-Test) = {model_mult.f_pvalue:.4g}
         """)
     
-    # 3D Residual Visualization Toggle
-    show_3d_resid_m3 = st.checkbox("🎲 3D-Residuen visualisieren (Abstände zur Ebene)", value=False)
+    # 3D Residual Visualization
+    st.markdown("### 🎲 3D-Visualisierung: Residuen als Abstände zur Regressions-Ebene")
     
-    if show_3d_resid_m3:
-        st.markdown("### 🎲 3D-Visualisierung: Residuen als Abstände zur Regressions-Ebene")
-        
-        # Create 3D residual plot with plotly
-        x1_range = np.linspace(x2_preis.min(), x2_preis.max(), 20)
-        x2_range = np.linspace(x3_werbung.min(), x3_werbung.max(), 20)
-        X1_mesh, X2_mesh = np.meshgrid(x1_range, x2_range)
-        Y_mesh = model_mult.params[0] + model_mult.params[1]*X1_mesh + model_mult.params[2]*X2_mesh
-        
-        fig_3d_resid = go.Figure()
-        
-        # Add regression surface
-        fig_3d_resid.add_trace(go.Surface(
-            x=X1_mesh, y=X2_mesh, z=Y_mesh,
-            colorscale='Viridis',
-            opacity=0.7,
-            name='Regression Plane',
-            showscale=False
-        ))
-        
-        # Add data points
+    # Create 3D residual plot with plotly
+    x1_range = np.linspace(x2_preis.min(), x2_preis.max(), 20)
+    x2_range = np.linspace(x3_werbung.min(), x3_werbung.max(), 20)
+    X1_mesh, X2_mesh = np.meshgrid(x1_range, x2_range)
+    Y_mesh = model_mult.params[0] + model_mult.params[1]*X1_mesh + model_mult.params[2]*X2_mesh
+    
+    fig_3d_resid = go.Figure()
+    
+    # Add regression surface
+    fig_3d_resid.add_trace(go.Surface(
+        x=X1_mesh, y=X2_mesh, z=Y_mesh,
+        colorscale='Viridis',
+        opacity=0.7,
+        name='Regression Plane',
+        showscale=False
+    ))
+    
+    # Add data points
+    fig_3d_resid.add_trace(go.Scatter3d(
+        x=x2_preis, y=x3_werbung, z=y_mult,
+        mode='markers',
+        marker=dict(size=5, color='red', opacity=0.8),
+        name='Datenpunkte'
+    ))
+    
+    # Add residual lines
+    for i in range(len(x2_preis)):
         fig_3d_resid.add_trace(go.Scatter3d(
-            x=x2_preis, y=x3_werbung, z=y_mult,
-            mode='markers',
-            marker=dict(size=5, color='red', opacity=0.8),
-            name='Datenpunkte'
+            x=[x2_preis[i], x2_preis[i]],
+            y=[x3_werbung[i], x3_werbung[i]],
+            z=[y_pred_mult[i], y_mult[i]],
+            mode='lines',
+            line=dict(color='black', width=2),
+            opacity=0.3,
+            showlegend=False
         ))
-        
-        # Add residual lines
-        for i in range(len(x2_preis)):
-            fig_3d_resid.add_trace(go.Scatter3d(
-                x=[x2_preis[i], x2_preis[i]],
-                y=[x3_werbung[i], x3_werbung[i]],
-                z=[y_pred_mult[i], y_mult[i]],
-                mode='lines',
-                line=dict(color='black', width=2),
-                opacity=0.3,
-                showlegend=False
-            ))
-        
-        fig_3d_resid.update_layout(
-            title='OLS: Minimierung der Residuen-Quadratsumme<br>(Vertikale Abstände zur Ebene)',
-            scene=dict(
-                xaxis_title=x1_name,
-                yaxis_title=x2_name,
-                zaxis_title=y_name,
-                camera=dict(eye=dict(x=1.5, y=-1.5, z=1.2))
-            ),
-            template='plotly_white',
-            height=600
-        )
-        
-        st.plotly_chart(fig_3d_resid, use_container_width=True)
-                
-        st.info("""
-        **💡 3D-Interpretation:**
-        
-        - **Schwarze Linien** = Residuen (Abstände der roten Punkte zur Ebene)
-        - **OLS minimiert** die Summe der quadrierten Längen dieser Linien
-        - Je kleiner die Linien, desto besser passt die Ebene zu den Daten
-        - **BLUE-Eigenschaft**: Diese Methode liefert die beste lineare unverzerrte Schätzung!
-        """)
+    
+    fig_3d_resid.update_layout(
+        title='OLS: Minimierung der Residuen-Quadratsumme<br>(Vertikale Abstände zur Ebene)',
+        scene=dict(
+            xaxis_title=x1_name,
+            yaxis_title=x2_name,
+            zaxis_title=y_name,
+            camera=dict(eye=dict(x=1.5, y=-1.5, z=1.2))
+        ),
+        template='plotly_white',
+        height=600
+    )
+    
+    st.plotly_chart(fig_3d_resid, use_container_width=True)
+            
+    st.info("""
+    **💡 3D-Interpretation:**
+    
+    - **Schwarze Linien** = Residuen (Abstände der roten Punkte zur Ebene)
+    - **OLS minimiert** die Summe der quadrierten Längen dieser Linien
+    - Je kleiner die Linien, desto besser passt die Ebene zu den Daten
+    - **BLUE-Eigenschaft**: Diese Methode liefert die beste lineare unverzerrte Schätzung!
+    """)
 
     # =========================================================
     # M4: MODELLVALIDIERUNG
@@ -1192,99 +1189,96 @@ if regression_type == "📊 Multiple Regression":
         | Differenz | {(model_mult.rsquared - model_mult.rsquared_adj):.4f} | Sehr klein → gut! |
         """)
     
-    # 3D Variance Decomposition Toggle
-    show_3d_var_m4 = st.checkbox("🎲 3D-Varianzzerlegung visualisieren", value=False)
+    # 3D Variance Decomposition
+    st.markdown("### 🎲 3D-Visualisierung: Varianzzerlegung im Prädiktorraum")
     
-    if show_3d_var_m4:
-        st.markdown("### 🎲 3D-Visualisierung: Varianzzerlegung im Prädiktorraum")
-        
-        # Create side-by-side 3D plots using plotly subplots
-        from plotly.subplots import make_subplots
-        
-        fig_3d_var = make_subplots(
-            rows=1, cols=2,
-            specs=[[{'type': 'scatter3d'}, {'type': 'scatter3d'}]],
-            subplot_titles=(f'SSR (Erklärt): {ssr_mult:.1f}<br>Varianz durch Modell',
-                          f'SSE (Unerklärt): {sse_mult:.1f}<br>Nicht erfasste Varianz')
-        )
-        
-        # Left: Explained variance (SSR)
-        fig_3d_var.add_trace(
-            go.Scatter3d(
-                x=x2_preis, y=x3_werbung, z=y_pred_mult,
-                mode='markers',
-                marker=dict(
-                    size=5,
-                    color=y_pred_mult,
-                    colorscale='Greens',
-                    opacity=0.7,
-                    showscale=True,
-                    colorbar=dict(x=0.45, len=0.5)
-                ),
-                name='Predicted'
+    # Create side-by-side 3D plots using plotly subplots
+    from plotly.subplots import make_subplots
+    
+    fig_3d_var = make_subplots(
+        rows=1, cols=2,
+        specs=[[{'type': 'scatter3d'}, {'type': 'scatter3d'}]],
+        subplot_titles=(f'SSR (Erklärt): {ssr_mult:.1f}<br>Varianz durch Modell',
+                      f'SSE (Unerklärt): {sse_mult:.1f}<br>Nicht erfasste Varianz')
+    )
+    
+    # Left: Explained variance (SSR)
+    fig_3d_var.add_trace(
+        go.Scatter3d(
+            x=x2_preis, y=x3_werbung, z=y_pred_mult,
+            mode='markers',
+            marker=dict(
+                size=5,
+                color=y_pred_mult,
+                colorscale='Greens',
+                opacity=0.7,
+                showscale=True,
+                colorbar=dict(x=0.45, len=0.5)
             ),
-            row=1, col=1
-        )
-        
-        # Right: Unexplained variance (SSE)
-        residual_sizes = 3 + np.abs(model_mult.resid) * 5  # Scale for visibility
-        fig_3d_var.add_trace(
-            go.Scatter3d(
-                x=x2_preis, y=x3_werbung, z=model_mult.resid,
-                mode='markers',
-                marker=dict(
-                    size=residual_sizes,
-                    color=model_mult.resid,
-                    colorscale='Reds',
-                    opacity=0.7,
-                    showscale=True,
-                    colorbar=dict(x=1.05, len=0.5)
-                ),
-                name='Residuals'
+            name='Predicted'
+        ),
+        row=1, col=1
+    )
+    
+    # Right: Unexplained variance (SSE)
+    residual_sizes = 3 + np.abs(model_mult.resid) * 5  # Scale for visibility
+    fig_3d_var.add_trace(
+        go.Scatter3d(
+            x=x2_preis, y=x3_werbung, z=model_mult.resid,
+            mode='markers',
+            marker=dict(
+                size=residual_sizes,
+                color=model_mult.resid,
+                colorscale='Reds',
+                opacity=0.7,
+                showscale=True,
+                colorbar=dict(x=1.05, len=0.5)
             ),
-            row=1, col=2
+            name='Residuals'
+        ),
+        row=1, col=2
+    )
+    
+    # Add zero plane for residuals
+    x_range = [x2_preis.min(), x2_preis.max()]
+    y_range = [x3_werbung.min(), x3_werbung.max()]
+    xx, yy = np.meshgrid(x_range, y_range)
+    zz = np.zeros_like(xx)
+    
+    fig_3d_var.add_trace(
+        go.Surface(x=xx, y=yy, z=zz, opacity=0.2,
+                  colorscale=[[0, 'gray'], [1, 'gray']],
+                  showscale=False),
+        row=1, col=2
+    )
+    
+    fig_3d_var.update_layout(
+        height=600,
+        template='plotly_white',
+        scene=dict(
+            xaxis_title=x1_name,
+            yaxis_title=x2_name,
+            zaxis_title=y_name,
+            camera=dict(eye=dict(x=1.5, y=-1.5, z=1.2))
+        ),
+        scene2=dict(
+            xaxis_title=x1_name,
+            yaxis_title=x2_name,
+            zaxis_title='Residuen',
+            camera=dict(eye=dict(x=1.5, y=-1.5, z=1.2))
         )
-        
-        # Add zero plane for residuals
-        x_range = [x2_preis.min(), x2_preis.max()]
-        y_range = [x3_werbung.min(), x3_werbung.max()]
-        xx, yy = np.meshgrid(x_range, y_range)
-        zz = np.zeros_like(xx)
-        
-        fig_3d_var.add_trace(
-            go.Surface(x=xx, y=yy, z=zz, opacity=0.2,
-                      colorscale=[[0, 'gray'], [1, 'gray']],
-                      showscale=False),
-            row=1, col=2
-        )
-        
-        fig_3d_var.update_layout(
-            height=600,
-            template='plotly_white',
-            scene=dict(
-                xaxis_title=x1_name,
-                yaxis_title=x2_name,
-                zaxis_title=y_name,
-                camera=dict(eye=dict(x=1.5, y=-1.5, z=1.2))
-            ),
-            scene2=dict(
-                xaxis_title=x1_name,
-                yaxis_title=x2_name,
-                zaxis_title='Residuen',
-                camera=dict(eye=dict(x=1.5, y=-1.5, z=1.2))
-            )
-        )
-        
-        st.plotly_chart(fig_3d_var, use_container_width=True)
-                
-        st.info(f"""
-        **💡 3D-Interpretation:**
-        
-        - **Links (grün)**: Vorhergesagte Werte ŷ → zeigt die **Systematik** die unser Modell erfasst
-        - **Rechts (rot)**: Residuen e → zeigt die **Abweichungen** die unser Modell nicht erklärt
-        - **R² = {model_mult.rsquared:.4f}** bedeutet: {model_mult.rsquared*100:.1f}% der Varianz ist "grün" (erklärt)
-        - Grössere rote Punkte = grössere Residuen = schlechtere Vorhersage an dieser Stelle
-        """)
+    )
+    
+    st.plotly_chart(fig_3d_var, use_container_width=True)
+            
+    st.info(f"""
+    **💡 3D-Interpretation:**
+    
+    - **Links (grün)**: Vorhergesagte Werte ŷ → zeigt die **Systematik** die unser Modell erfasst
+    - **Rechts (rot)**: Residuen e → zeigt die **Abweichungen** die unser Modell nicht erklärt
+    - **R² = {model_mult.rsquared:.4f}** bedeutet: {model_mult.rsquared*100:.1f}% der Varianz ist "grün" (erklärt)
+    - Grössere rote Punkte = grössere Residuen = schlechtere Vorhersage an dieser Stelle
+    """)
 
     # =========================================================
     # M5: ANWENDUNGSBEISPIEL
@@ -1486,116 +1480,64 @@ if regression_type == "📊 Multiple Regression":
     Das ist ein **Problem**, weil es schwer wird, die individuellen Effekte zu trennen!
     """)
     
-    # Add 3D toggle
-    show_3d_m7 = st.checkbox("🎲 3D-Ansicht aktivieren (Multikollinearität)", value=False, help="Zeigt die Beziehung zwischen beiden Prädiktoren und der Zielvariable in 3D - Multikollinearität wird durch die Ausrichtung der Punktwolke sichtbar")
-    
     col_m7_1, col_m7_2 = st.columns([1.2, 1])
     
     with col_m7_1:
-        st.markdown("### 🔍 Diagnose")
+        st.markdown("### 🔍 Diagnose (3D Visualisierung)")
         
-        if show_3d_m7:
-            # 3D Scatter: Zeigt wie Prädiktoren zusammen die Zielvariable beeinflussen
-            x1_range = np.linspace(x2_preis.min(), x2_preis.max(), 20)
-            x2_range = np.linspace(x3_werbung.min(), x3_werbung.max(), 20)
-            X1_mesh, X2_mesh = np.meshgrid(x1_range, x2_range)
-            Y_mesh = model_mult.params[0] + model_mult.params[1]*X1_mesh + model_mult.params[2]*X2_mesh
-            
-            fig_3d_m7 = go.Figure()
-            
-            # Add regression surface
-            fig_3d_m7.add_trace(go.Surface(
-                x=X1_mesh, y=X2_mesh, z=Y_mesh,
-                colorscale='RdBu',
-                opacity=0.6,
-                showscale=False,
-                name='Regression Plane'
-            ))
-            
-            # Add scatter plot of data points
-            fig_3d_m7.add_trace(go.Scatter3d(
-                x=x2_preis, y=x3_werbung, z=y_mult,
-                mode='markers',
-                marker=dict(
-                    size=5,
-                    color=y_mult,
-                    colorscale='Viridis',
-                    opacity=0.7,
-                    showscale=True,
-                    colorbar=dict(title=y_name)
-                ),
-                name='Data Points'
-            ))
-            
-            fig_3d_m7.update_layout(
-                title='3D: Multikollinearität Visualisierung<br>(Korrelation zwischen Prädiktoren sichtbar in Punktverteilung)',
-                scene=dict(
-                    xaxis_title=x1_name,
-                    yaxis_title=x2_name,
-                    zaxis_title=y_name,
-                    camera=dict(eye=dict(x=1.5, y=-1.5, z=1.3))
-                ),
-                template='plotly_white',
-                height=600
-            )
-            
-            st.plotly_chart(fig_3d_m7, use_container_width=True)
-                        
-            st.info("""
-            **💡 3D-Interpretation:**
-            
-            - Wenn Prädiktoren **unkorreliert** sind: Punkte bilden eine "Wolke" über die gesamte x-y-Ebene
-            - Wenn Prädiktoren **korreliert** sind: Punkte liegen entlang einer Diagonale/Linie in der x-y-Ebene
-            - **Problem:** Korrelierte Prädiktoren → schwer zu trennen, welcher Prädiktor welchen Effekt hat!
-            """)
-        else:
-            # Original 2D Correlation Matrix
-            # Korrelationsmatrix
-            corr_matrix = np.corrcoef(x2_preis, x3_werbung)
-            
-            # Use dynamic names
-            var1_short = x1_name.split('(')[0].strip()
-            var2_short = x2_name.split('(')[0].strip()
-            
-            # Create plotly heatmap
-            fig_corr = go.Figure(data=go.Heatmap(
-                z=corr_matrix,
-                x=[var1_short, var2_short],
-                y=[var1_short, var2_short],
-                colorscale='RdBu_r',
-                zmid=0,
-                zmin=-1,
-                zmax=1,
-                text=[[f'{corr_matrix[i, j]:.3f}' for j in range(2)] for i in range(2)],
-                texttemplate='%{text}',
-                textfont={"size": 16, "color": "black"},
+        # 3D Scatter: Zeigt wie Prädiktoren zusammen die Zielvariable beeinflussen
+        x1_range = np.linspace(x2_preis.min(), x2_preis.max(), 20)
+        x2_range = np.linspace(x3_werbung.min(), x3_werbung.max(), 20)
+        X1_mesh, X2_mesh = np.meshgrid(x1_range, x2_range)
+        Y_mesh = model_mult.params[0] + model_mult.params[1]*X1_mesh + model_mult.params[2]*X2_mesh
+        
+        fig_3d_m7 = go.Figure()
+        
+        # Add regression surface
+        fig_3d_m7.add_trace(go.Surface(
+            x=X1_mesh, y=X2_mesh, z=Y_mesh,
+            colorscale='RdBu',
+            opacity=0.6,
+            showscale=False,
+            name='Regression Plane'
+        ))
+        
+        # Add scatter plot of data points
+        fig_3d_m7.add_trace(go.Scatter3d(
+            x=x2_preis, y=x3_werbung, z=y_mult,
+            mode='markers',
+            marker=dict(
+                size=5,
+                color=y_mult,
+                colorscale='Viridis',
+                opacity=0.7,
                 showscale=True,
-                colorbar=dict(title="Korrelation")
-            ))
-            
-            fig_corr.update_layout(
-                title='Korrelationsmatrix der Prädiktoren',
-                template='plotly_white',
-                xaxis=dict(side='bottom'),
-                height=500
-            )
-            
-            st.plotly_chart(fig_corr, use_container_width=True)
-                        
-            st.info(f"""
-            **Korrelation(Preis, Werbung) = {corr_matrix[0,1]:.3f}**
-            
-            Interpretation:
-            - |r| < 0.3: Schwach → kein Problem
-            - 0.3 < |r| < 0.7: Moderat → akzeptabel
-            - |r| > 0.7: Stark → **Multikollinearität!**
-            
-            **Unser Fall:** {
-                "Schwach - kein Problem ✅" if abs(corr_matrix[0,1]) < 0.3 else
-                "Moderat - akzeptabel ⚠️" if abs(corr_matrix[0,1]) < 0.7 else
-                "Stark - Multikollinearität! ❌"
-            }
-            """)
+                colorbar=dict(title=y_name)
+            ),
+            name='Data Points'
+        ))
+        
+        fig_3d_m7.update_layout(
+            title='3D: Multikollinearität Visualisierung<br>(Korrelation zwischen Prädiktoren sichtbar in Punktverteilung)',
+            scene=dict(
+                xaxis_title=x1_name,
+                yaxis_title=x2_name,
+                zaxis_title=y_name,
+                camera=dict(eye=dict(x=1.5, y=-1.5, z=1.3))
+            ),
+            template='plotly_white',
+            height=600
+        )
+        
+        st.plotly_chart(fig_3d_m7, use_container_width=True)
+                    
+        st.info("""
+        **💡 3D-Interpretation:**
+        
+        - Wenn Prädiktoren **unkorreliert** sind: Punkte bilden eine "Wolke" über die gesamte x-y-Ebene
+        - Wenn Prädiktoren **korreliert** sind: Punkte liegen entlang einer Diagonale/Linie in der x-y-Ebene
+        - **Problem:** Korrelierte Prädiktoren → schwer zu trennen, welcher Prädiktor welchen Effekt hat!
+        """)
     
     with col_m7_2:
         st.markdown("### 📊 VIF (Variance Inflation Factor)")
@@ -1775,69 +1717,66 @@ if regression_type == "📊 Multiple Regression":
         - {'✅ H₀ nicht verwerfen → Homoskedastizität OK' if bp_pval > 0.05 else '❌ H₀ verwerfen → Heteroskedastizität'}
         """)
     
-    # 3D Residual Diagnostics Toggle
-    show_3d_resid_m8 = st.checkbox("🎲 3D-Residuen über Prädiktorraum", value=False)
+    # 3D Residual Diagnostics
+    st.markdown("### 🎲 3D-Visualisierung: Residuen im Prädiktorraum")
     
-    if show_3d_resid_m8:
-        st.markdown("### 🎲 3D-Visualisierung: Residuen im Prädiktorraum")
-        
-        # Create 3D residual plot with plotly
-        x1_range = np.linspace(x2_preis.min(), x2_preis.max(), 10)
-        x2_range = np.linspace(x3_werbung.min(), x3_werbung.max(), 10)
-        X1_mesh, X2_mesh = np.meshgrid(x1_range, x2_range)
-        Z_zero = np.zeros_like(X1_mesh)
-        
-        fig_3d_resid_m8 = go.Figure()
-        
-        # Add zero plane
-        fig_3d_resid_m8.add_trace(go.Surface(
-            x=X1_mesh, y=X2_mesh, z=Z_zero,
-            colorscale=[[0, 'gray'], [1, 'gray']],
-            opacity=0.3,
-            showscale=False,
-            name='Zero Plane'
-        ))
-        
-        # Add scatter plot with residuals colored
-        fig_3d_resid_m8.add_trace(go.Scatter3d(
-            x=x2_preis, y=x3_werbung, z=model_mult.resid,
-            mode='markers',
-            marker=dict(
-                size=7,
-                color=model_mult.resid,
-                colorscale='RdBu_r',
-                opacity=0.8,
-                showscale=True,
-                colorbar=dict(title='Residuengrösse'),
-                line=dict(width=1, color='black')
-            ),
-            name='Residuals'
-        ))
-        
-        fig_3d_resid_m8.update_layout(
-            title='Residuen über Prädiktorraum<br>(Muster → Modellverletzungen)',
-            scene=dict(
-                xaxis_title=x1_name,
-                yaxis_title=x2_name,
-                zaxis_title='Residuen',
-                camera=dict(eye=dict(x=1.5, y=-1.5, z=1.2))
-            ),
-            template='plotly_white',
-            height=600
-        )
-        
-        st.plotly_chart(fig_3d_resid_m8, use_container_width=True)
-                
-        st.info("""
-        **💡 3D-Interpretation:**
-        
-        - **Graue Ebene** = Null-Linie (perfekte Vorhersage)
-        - **Rote Punkte** = Positive Residuen (Modell unterschätzt)
-        - **Blaue Punkte** = Negative Residuen (Modell überschätzt)
-        - **Zufällige Verteilung** = Gutes Modell ✅
-        - **Systematische Muster** = Modellprobleme (Nonlinearität, fehlende Variablen) ❌
-        - **Cluster in Bereichen** = Heteroskedastizität ⚠️
-        """)
+    # Create 3D residual plot with plotly
+    x1_range = np.linspace(x2_preis.min(), x2_preis.max(), 10)
+    x2_range = np.linspace(x3_werbung.min(), x3_werbung.max(), 10)
+    X1_mesh, X2_mesh = np.meshgrid(x1_range, x2_range)
+    Z_zero = np.zeros_like(X1_mesh)
+    
+    fig_3d_resid_m8 = go.Figure()
+    
+    # Add zero plane
+    fig_3d_resid_m8.add_trace(go.Surface(
+        x=X1_mesh, y=X2_mesh, z=Z_zero,
+        colorscale=[[0, 'gray'], [1, 'gray']],
+        opacity=0.3,
+        showscale=False,
+        name='Zero Plane'
+    ))
+    
+    # Add scatter plot with residuals colored
+    fig_3d_resid_m8.add_trace(go.Scatter3d(
+        x=x2_preis, y=x3_werbung, z=model_mult.resid,
+        mode='markers',
+        marker=dict(
+            size=7,
+            color=model_mult.resid,
+            colorscale='RdBu_r',
+            opacity=0.8,
+            showscale=True,
+            colorbar=dict(title='Residuengrösse'),
+            line=dict(width=1, color='black')
+        ),
+        name='Residuals'
+    ))
+    
+    fig_3d_resid_m8.update_layout(
+        title='Residuen über Prädiktorraum<br>(Muster → Modellverletzungen)',
+        scene=dict(
+            xaxis_title=x1_name,
+            yaxis_title=x2_name,
+            zaxis_title='Residuen',
+            camera=dict(eye=dict(x=1.5, y=-1.5, z=1.2))
+        ),
+        template='plotly_white',
+        height=600
+    )
+    
+    st.plotly_chart(fig_3d_resid_m8, use_container_width=True)
+            
+    st.info("""
+    **💡 3D-Interpretation:**
+    
+    - **Graue Ebene** = Null-Linie (perfekte Vorhersage)
+    - **Rote Punkte** = Positive Residuen (Modell unterschätzt)
+    - **Blaue Punkte** = Negative Residuen (Modell überschätzt)
+    - **Zufällige Verteilung** = Gutes Modell ✅
+    - **Systematische Muster** = Modellprobleme (Nonlinearität, fehlende Variablen) ❌
+    - **Cluster in Bereichen** = Heteroskedastizität ⚠️
+    """)
 
     # =========================================================
     # M9: ZUSAMMENFASSUNG
