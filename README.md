@@ -4,7 +4,7 @@ Interaktiver Leitfaden zur einfachen und multiplen linearen Regression mit Strea
 
 ### Funktionsumfang
 
-* Interaktive Plots (matplotlib, statsmodels)
+* Interaktive Plots (plotly, statsmodels)
 * Zwei Datensätze: simuliert und echte Stadtdaten
 * Kapitelweise Navigation von Grundlagen bis ANOVA
 * R-ähnliche Ausgabeformate mit Erklärungen
