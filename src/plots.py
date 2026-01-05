@@ -8,7 +8,7 @@ from typing import Optional, Union, List, Callable, Tuple, Any
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-from logger import get_logger
+from .logger import get_logger
 
 # Initialize logger for this module
 logger = get_logger(__name__)

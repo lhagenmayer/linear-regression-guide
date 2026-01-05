@@ -10,8 +10,8 @@ import time
 import numpy as np
 import pandas as pd
 import streamlit as st
-from config import CITIES_DATASET, HOUSES_DATASET
-from logger import get_logger, log_function_call, log_error_with_context
+from .config import CITIES_DATASET, HOUSES_DATASET
+from .logger import get_logger, log_function_call, log_error_with_context
 
 # Initialize logger for this module
 logger = get_logger(__name__)
