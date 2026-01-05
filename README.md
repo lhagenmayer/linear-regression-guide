@@ -1,6 +1,6 @@
-## Regression Streamlit Guide
+## Linear Regression Guide
 
-Interaktiver Leitfaden zur einfachen und multiplen linearen Regression mit Streamlit. Gedacht für alle, die Regression visuell und nachvollziehbar lernen wollen.
+Interaktiver Leitfaden zur linearen Regression mit Streamlit. Gedacht für alle, die Regression visuell und nachvollziehbar lernen wollen.
 
 ### Funktionsumfang
 
