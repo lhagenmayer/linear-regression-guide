@@ -6,6 +6,25 @@
 
 Eine interaktive Web-App zum Erlernen linearer Regression. Gebaut mit Streamlit, plotly und statsmodels - für alle, die Regression verstehen wollen, ohne sich durch Formeln zu kämpfen.
 
+<!-- Deployment badge - uncomment and update URL after deployment -->
+<!-- [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://your-app-url.streamlit.app) -->
+
+### 🚀 Live Demo
+
+The app is ready for deployment to Streamlit Cloud. Once deployed, the live demo will be available here.
+
+**To deploy your own instance:**
+1. Fork this repository
+2. Visit [share.streamlit.io](https://share.streamlit.io)
+3. Connect your GitHub account and select this repository
+4. Set main file path to `app.py`
+5. Deploy!
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions or [QUICKSTART_DEPLOYMENT.md](QUICKSTART_DEPLOYMENT.md) for a 5-minute quick start guide.
+
+### Funktionsumfang
+>>>>>>> origin/copilot/setup-streamlit-cloud-deployment
+
 **Warum diese App?**
 Regression ist ein wichtiges statistisches Werkzeug, aber die Theorie kann überwältigend sein. Diese App macht Regression greifbar: Spiele mit Daten herum, sieh live, wie Modelle funktionieren, und verstehe die Konzepte visuell. Perfekt für Studierende, Datenanalysten und alle, die Regression anwenden wollen.
 
@@ -83,10 +102,35 @@ pytest tests/
 
 Es gibt Tests, um sicherzustellen, dass alles funktioniert.
 
+<<<<<<< HEAD
 ```bash
 # Tests laufen lassen
 pytest tests/
 ```
+=======
+| Datei | Beschreibung |
+|-------|--------------|
+| app.py | Haupt-App mit Streamlit UI und Tab-Navigation |
+| data.py | Datengenerie functions und data handling |
+| plots.py | Plotting functions (plotly visualizations) |
+| config.py | Configuration constants |
+| content.py | Content and text for the app |
+| requirements.txt | Laufzeitabhängigkeiten |
+| requirements-dev.txt | Entwicklungs- und Test-Abhängigkeiten |
+| tests/ | Comprehensive test suite |
+| .streamlit/config.toml | Streamlit Cloud configuration |
+| .github/workflows/ | GitHub Actions CI/CD workflows |
+| validate_deployment.py | Deployment validation script |
+| pyproject.toml | Black und Pytest Konfiguration |
+| .flake8 | Flake8 Konfiguration |
+| mypy.ini | MyPy Konfiguration |
+| .pre-commit-config.yaml | Pre-commit Hooks Konfiguration |
+| DEPLOYMENT.md | Comprehensive Streamlit Cloud deployment guide |
+| QUICKSTART_DEPLOYMENT.md | 5-minute deployment quick start |
+| TESTING.md | Testing documentation |
+| DEVELOPMENT.md | Development guide |
+| README.md | Projektüberblick |
+>>>>>>> origin/copilot/setup-streamlit-cloud-deployment
 
 Mehr Details in [TESTING.md](TESTING.md).
 
