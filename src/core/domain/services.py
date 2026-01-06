@@ -21,7 +21,7 @@ class RegressionAnalysisServiceProtocol(Protocol):
     Defines the contract for regression analysis business logic.
     """
 
-    def create_regression_model(
+    def create_model(
         self,
         dataset_id: str,
         target_variable: str,
@@ -29,7 +29,7 @@ class RegressionAnalysisServiceProtocol(Protocol):
         parameters: RegressionParameters
     ) -> RegressionModel: ...
 
-    def validate_model_quality(self, model: RegressionModel) -> Dict[str, Any]: ...
+    def analyze_model_quality(self, model: RegressionModel) -> Dict[str, Any]: ...
 
     def compare_models(self, model1: RegressionModel, model2: RegressionModel) -> Dict[str, Any]: ...
 
@@ -45,7 +45,7 @@ class RegressionAnalysisService:
     def __init__(self, dataset_repository: DatasetRepository):
         self.dataset_repository = dataset_repository
 
-    def create_regression_model(
+    def create_model(
         self,
         dataset_id: str,
         target_variable: str,
@@ -87,7 +87,7 @@ class RegressionAnalysisService:
 
         return model
 
-    def validate_model_quality(self, model: RegressionModel) -> Dict[str, Any]:
+    def analyze_model_quality(self, model: RegressionModel) -> Dict[str, Any]:
         """
         Validate model quality against business rules.
 

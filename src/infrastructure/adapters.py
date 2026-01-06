@@ -18,6 +18,8 @@ import numpy as np
 
 from ..core.domain.entities import Dataset, RegressionModel
 from ..core.domain.value_objects import DatasetConfig, RegressionParameters
+from ..core.application.commands import Command
+from ..core.application.queries import Query
 
 
 # Interface definitions (Ports)

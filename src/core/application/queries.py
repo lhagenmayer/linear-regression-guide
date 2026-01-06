@@ -10,26 +10,32 @@ from typing import List, Optional
 
 
 @dataclass(frozen=True)
-class GetDatasetByIdQuery:
+class Query:
+    """Base class for all queries."""
+    pass
+
+
+@dataclass(frozen=True)
+class GetDatasetByIdQuery(Query):
     """Query to get a dataset by ID."""
     dataset_id: str
 
 
 @dataclass(frozen=True)
-class ListDatasetsQuery:
+class ListDatasetsQuery(Query):
     """Query to list all datasets."""
     limit: Optional[int] = None
     offset: Optional[int] = 0
 
 
 @dataclass(frozen=True)
-class GetModelByIdQuery:
+class GetModelByIdQuery(Query):
     """Query to get a model by ID."""
     model_id: str
 
 
 @dataclass(frozen=True)
-class ListModelsQuery:
+class ListModelsQuery(Query):
     """Query to list all models."""
     dataset_id: Optional[str] = None  # Filter by dataset
     limit: Optional[int] = None
@@ -37,25 +43,25 @@ class ListModelsQuery:
 
 
 @dataclass(frozen=True)
-class GetDatasetStatisticsQuery:
+class GetDatasetStatisticsQuery(Query):
     """Query to get dataset statistics."""
     dataset_id: str
 
 
 @dataclass(frozen=True)
-class GetModelDiagnosticsQuery:
+class GetModelDiagnosticsQuery(Query):
     """Query to get model diagnostics."""
     model_id: str
 
 
 @dataclass(frozen=True)
-class CompareModelsQuery:
+class CompareModelsQuery(Query):
     """Query to compare two models."""
     model1_id: str
     model2_id: str
 
 
 @dataclass(frozen=True)
-class GetAvailableDataSourcesQuery:
+class GetAvailableDataSourcesQuery(Query):
     """Query to get available data sources."""
     pass

@@ -12,13 +12,19 @@ from ..domain.value_objects import DatasetConfig, RegressionParameters
 
 
 @dataclass(frozen=True)
-class CreateDatasetCommand:
+class Command:
+    """Base class for all commands."""
+    pass
+
+
+@dataclass(frozen=True)
+class CreateDatasetCommand(Command):
     """Command to create a new dataset."""
     config: DatasetConfig
 
 
 @dataclass(frozen=True)
-class UpdateDatasetCommand:
+class UpdateDatasetCommand(Command):
     """Command to update an existing dataset."""
     dataset_id: str
     name: Optional[str] = None
@@ -26,13 +32,13 @@ class UpdateDatasetCommand:
 
 
 @dataclass(frozen=True)
-class DeleteDatasetCommand:
+class DeleteDatasetCommand(Command):
     """Command to delete a dataset."""
     dataset_id: str
 
 
 @dataclass(frozen=True)
-class CreateRegressionModelCommand:
+class CreateRegressionModelCommand(Command):
     """Command to create a regression model."""
     dataset_id: str
     target_variable: str
@@ -41,20 +47,20 @@ class CreateRegressionModelCommand:
 
 
 @dataclass(frozen=True)
-class UpdateModelParametersCommand:
+class UpdateModelParametersCommand(Command):
     """Command to update model parameters."""
     model_id: str
     parameters: RegressionParameters
 
 
 @dataclass(frozen=True)
-class DeleteModelCommand:
+class DeleteModelCommand(Command):
     """Command to delete a model."""
     model_id: str
 
 
 @dataclass(frozen=True)
-class GenerateSyntheticDataCommand:
+class GenerateSyntheticDataCommand(Command):
     """Command to generate synthetic data."""
     config: DatasetConfig
     n_observations: int
