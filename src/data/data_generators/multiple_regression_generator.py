@@ -139,8 +139,9 @@ def generate_multiple_regression_data(
     else:
         raise ValueError(f"Unknown dataset choice: {dataset_choice_mult}")
 
-    end_time = __import__('time').time()
-    logger.info(".2f")
+    import time
+    end_time = time.time()
+    logger.info(f"Generated {n_mult} observations in {end_time - start_time:.4f}s")
 
     return result
 

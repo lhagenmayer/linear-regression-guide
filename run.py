@@ -78,22 +78,22 @@ from src.ui import (
 # Initialize logger
 logger = get_logger(__name__)
 
-# Initialize session state
-initialize_session_state()
-
-# Inject accessibility styles
-inject_accessibility_styles()
-
 # Main application
 def main():
     try:
-        # Set page config
+        # Set page config - MUST BE THE FIRST STREAMLIT COMMAND
         st.set_page_config(
             page_title="🎓 Linear Regression Guide",
             page_icon="📊",
             layout="wide",
             initial_sidebar_state=UI_DEFAULTS["sidebar_expanded"]
         )
+
+        # Initialize session state
+        initialize_session_state()
+
+        # Inject accessibility styles
+        inject_accessibility_styles()
 
         logger.info("Application starting...")
 
@@ -146,6 +146,24 @@ def main():
             st.error(f"❌ Fehler beim Laden der Daten: {e}")
             logger.error(f"Data loading error: {e}")
             return
+
+        # Update current model for R output section
+        try:
+            from src.utils import update_current_model
+            # Default to simple regression model initially
+            update_current_model(
+                simple_data['model'], 
+                [simple_params.x_variable or "X"]
+            )
+        except Exception as e:
+            logger.warning(f"Could not set initial current model: {e}")
+
+        # Render R output section (global)
+        render_r_output_section(
+            model=st.session_state.get("current_model"),
+            feature_names=st.session_state.get("current_feature_names"),
+            figsize=(18, 13)
+        )
 
         # Create tabs
         tab1, tab2, tab3 = st.tabs(["📈 Einfache Regression", "📊 Multiple Regression", "📋 Datensätze"])

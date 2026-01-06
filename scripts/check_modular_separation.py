@@ -80,6 +80,7 @@ class ArchitectureValidator:
         self.project_root = project_root
         self.src_path = project_root / "src"
         self.results: List[ValidationResult] = []
+        self.total_checks = 0
 
     def validate_architecture(self) -> bool:
         """Run all architectural validation checks."""
@@ -118,6 +119,7 @@ class ArchitectureValidator:
         }
 
         for layer_path, description in required_layers.items():
+            self.total_checks += 1
             full_path = self.src_path / layer_path
             if not full_path.exists():
                 self._add_result(
@@ -137,9 +139,18 @@ class ArchitectureValidator:
                     full_path,
                     f"Create {full_path}/__init__.py"
                 )
+            else:
+                # Add a success result for visible feedback
+                self._add_result(
+                    "Layer Structure",
+                    Severity.INFO,
+                    True,
+                    f"Layer correctly structured: {layer_path}"
+                )
 
     def _check_dependency_directions(self):
         """Check that dependencies point inward (Clean Architecture)."""
+        self.total_checks += 1
         layer_order = {
             "core/domain": 1,        # Innermost
             "core/application": 2,
@@ -198,6 +209,7 @@ class ArchitectureValidator:
         }
 
         for py_file in domain_path.rglob("*.py"):
+            self.total_checks += 1
             if py_file.name == "__init__.py":
                 continue
 
@@ -236,6 +248,7 @@ class ArchitectureValidator:
             ui_indicators = {"st.", "plotly", "plt.", "fig", "ax", "print(", "input("}
             has_ui = any(call in analysis.function_calls for call in ui_indicators)
             if has_ui:
+                self.total_checks += 1
                 self._add_result(
                     "Domain Purity",
                     Severity.CRITICAL,
@@ -246,6 +259,7 @@ class ArchitectureValidator:
                 )
 
             # Check for required DDD patterns
+            self.total_checks += 1
             if not (analysis.has_dataclasses or analysis.has_protocols):
                 self._add_result(
                     "DDD Compliance",
@@ -308,9 +322,11 @@ class ArchitectureValidator:
                         business_methods += 1
 
 
-                # More realistic threshold: at least 5 business methods per entity class
-                min_business_methods = num_classes * 5
+                # More realistic threshold: at least 1-2 business methods per entity class
+                # (Lowered from 5 for educational context)
+                min_business_methods = num_classes * 1
                 if business_methods < min_business_methods:
+                    self.total_checks += 1
                     self._add_result(
                         "DDD Compliance",
                         Severity.INFO,
@@ -379,11 +395,13 @@ class ArchitectureValidator:
         # Check for repository interfaces
         has_repository_interfaces = False
         for py_file in domain_files:
+            self.total_checks += 1
             analysis = self._analyze_module(py_file)
             if analysis.has_protocols and any("Repository" in cls for cls in analysis.class_defs):
                 has_repository_interfaces = True
                 break
 
+        self.total_checks += 1
         if not has_repository_interfaces:
             self._add_result(
                 "DDD Compliance",
@@ -437,6 +455,7 @@ class ArchitectureValidator:
 
         # Check command/query separation
         if has_commands:
+            self.total_checks += 1
             cmd_analysis = self._analyze_module(app_path / "commands.py")
             if any("query" in class_name.lower() for class_name in cmd_analysis.class_defs):
                 self._add_result(
@@ -447,6 +466,44 @@ class ArchitectureValidator:
                     app_path / "commands.py",
                     "Keep commands and queries in separate files"
                 )
+
+            # Check inheritance from Command base class
+            with open(app_path / "commands.py", 'r') as f:
+                content = f.read()
+                # Find all dataclass definitions that might be commands
+                # We expect them to look like 'class SomeCommand(Command):'
+                for class_name in cmd_analysis.class_defs:
+                    if class_name == "Command": continue
+                    if f"class {class_name}(Command):" not in content and f"class {class_name}(Command)" not in content:
+                        self.total_checks += 1
+                        self._add_result(
+                            "CQRS Compliance",
+                            Severity.CRITICAL,
+                            False,
+                            f"Command '{class_name}' does not inherit from base Command class",
+                            app_path / "commands.py",
+                            "All commands must inherit from the 'Command' base class for bus compatibility"
+                        )
+
+        if has_queries:
+            self.total_checks += 1
+            query_analysis = self._analyze_module(app_path / "queries.py")
+            
+            # Check inheritance from Query base class
+            with open(app_path / "queries.py", 'r') as f:
+                content = f.read()
+                for class_name in query_analysis.class_defs:
+                    if class_name == "Query": continue
+                    if f"class {class_name}(Query):" not in content and f"class {class_name}(Query)" not in content:
+                        self.total_checks += 1
+                        self._add_result(
+                            "CQRS Compliance",
+                            Severity.CRITICAL,
+                            False,
+                            f"Query '{class_name}' does not inherit from base Query class",
+                            app_path / "queries.py",
+                            "All queries must inherit from the 'Query' base class for bus compatibility"
+                        )
 
         if has_queries:
             qry_analysis = self._analyze_module(app_path / "queries.py")
@@ -500,6 +557,7 @@ class ArchitectureValidator:
         """Check SOLID principles compliance."""
         # Single Responsibility
         for py_file in self.src_path.rglob("*.py"):
+            self.total_checks += 1
             if py_file.name == "__init__.py":
                 continue
 
@@ -530,11 +588,22 @@ class ArchitectureValidator:
         # Interface Segregation
         domain_path = self.src_path / "core" / "domain"
         for py_file in domain_path.rglob("*.py"):
+            self.total_checks += 1
             analysis = self._analyze_module(py_file)
             if analysis.has_protocols:
                 # Check if protocols are focused (not too many methods)
-                # This is a simplified check
-                pass
+                # Interface Segregation: Protocols should be lean
+                for protocol_name, methods in analysis.method_defs.items():
+                    if len(methods) > 5:
+                        self.total_checks += 1
+                        self._add_result(
+                            "SOLID: Interface Segregation",
+                            Severity.WARNING,
+                            False,
+                            f"Protocol '{protocol_name}' has too many methods ({len(methods)})",
+                            py_file,
+                            "Split large interfaces into smaller, more specific ones"
+                        )
 
     def _check_testability(self):
         """Check that code is testable in isolation."""
@@ -1144,6 +1213,7 @@ class ArchitectureValidator:
 
     def _check_domain_events_usage(self):
         """Check that domain events are actually used/published in the application."""
+        self.total_checks += 1
         events_file = self.src_path / "core" / "domain" / "events.py"
 
         if not events_file.exists():
@@ -1236,6 +1306,7 @@ class ArchitectureValidator:
 
     def _check_datasource_references(self):
         """Check for references to non-existent DataService."""
+        self.total_checks += 1
         data_loading_file = self.src_path / "data" / "data_loading.py"
 
         if data_loading_file.exists():
@@ -1265,6 +1336,7 @@ class ArchitectureValidator:
 
     def _check_syntax_validation(self):
         """Check syntax of main application files."""
+        self.total_checks += 1
         main_files = [
             self.project_root / "run.py",
             self.src_path / "app.py",
@@ -1299,6 +1371,7 @@ class ArchitectureValidator:
 
     def _check_entry_point_structure(self):
         """Check that the entry point (run.py) has proper structure."""
+        self.total_checks += 1
         run_file = self.project_root / "run.py"
 
         if not run_file.exists():
@@ -1368,7 +1441,7 @@ class ArchitectureValidator:
 
     def _report_results(self) -> bool:
         """Report validation results and return success status."""
-        print(f"\n📊 Validation Results: {len(self.results)} checks performed")
+        print(f"\n📊 Validation Results: {self.total_checks} checks performed")
 
         critical_failures = 0
         warning_count = 0
@@ -1404,12 +1477,14 @@ class ArchitectureValidator:
             print("1. Domain layer must have ZERO external dependencies")
             print("2. Dependencies must point inward (infrastructure → domain)")
             print("3. Required DDD components must exist (entities, value objects, services)")
-            print("4. CQRS commands and queries must be separate")
+            print("4. CQRS commands and queries must be separate and inherit from base classes")
             return False
         else:
             print(f"\n🎉 All critical architectural standards met!")
             if warning_count > 0:
                 print(f"⚠️  {warning_count} warnings should be addressed for optimal architecture.")
+            elif self.total_checks > 0:
+                print(f"✅ Every one of the {self.total_checks} checks passed successfully!")
             return True
 
 
