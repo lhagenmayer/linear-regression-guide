@@ -2,37 +2,12 @@
 Data loading module for the Linear Regression Guide.
 
 This module provides a simplified interface to the data and model services,
-maintaining backward compatibility while delegating to the refactored services.
+using proper statsmodels OLS for real regression calculations.
 """
 
 from typing import Dict, Any, Optional
 import numpy as np
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import r2_score, mean_squared_error
-
-
-class ModelWrapper:
-    """Wrapper to make dict behave like a model object with attributes."""
-    def __init__(self, model_dict):
-        self._dict = model_dict
-    
-    def __getattr__(self, name):
-        # Map common attribute names to dict keys
-        key_mappings = {
-            'rsquared': 'r_squared',
-            'rsquared_adj': 'adj_r_squared',
-            'params': 'coefficients',
-        }
-        key = key_mappings.get(name, name)
-        if key in self._dict:
-            return self._dict[key]
-        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
-    
-    def __getitem__(self, key):
-        return self._dict[key]
-    
-    def get(self, key, default=None):
-        return self._dict.get(key, default)
+import statsmodels.api as sm
 
 
 def _map_dataset_name(display_name: str, regression_type: str) -> str:
@@ -46,28 +21,20 @@ def _map_dataset_name(display_name: str, regression_type: str) -> str:
     Returns:
         Internal dataset name used by generators
     """
-    # Define mappings for multiple regression
-    multiple_mappings = {
-        "🏙️ Städte-Umsatzstudie (75 Städte)": "Cities",
-        "🏠 Häuserpreise mit Pool (1000 Häuser)": "Houses",
-        "🏪 Elektronikmarkt (erweitert)": "Electronics",
-        "🇨🇭 Schweizer Kantone (sozioökonomisch)": "Cities",  # Fallback to Cities for now
-        "🌤️ Schweizer Wetterstationen": "Houses",  # Fallback to Houses for now
-    }
-    
-    # Define mappings for simple regression
-    simple_mappings = {
-        "🏪 Elektronikmarkt (simuliert)": "advertising",  # Use advertising dataset as Electronics
-        "🏙️ Städte-Umsatzstudie (75 Städte)": "advertising",  # Fallback
-        "🏠 Häuserpreise mit Pool (1000 Häuser)": "advertising",  # Fallback
-        "🇨🇭 Schweizer Kantone (sozioökonomisch)": "advertising",  # Fallback
-        "🌤️ Schweizer Wetterstationen": "temperature",  # Use temperature for weather
-    }
-    
     if regression_type == 'multiple':
-        return multiple_mappings.get(display_name, "Cities")  # Default to Cities
+        multiple_mappings = {
+            "🏙️ Städte-Umsatzstudie (75 Städte)": "Cities",
+            "🏠 Häuserpreise mit Pool (1000 Häuser)": "Houses",
+            "🏪 Elektronikmarkt (simuliert)": "Electronics",
+        }
+        return multiple_mappings.get(display_name, "Cities")
     else:
-        return simple_mappings.get(display_name, "advertising")  # Default to advertising
+        simple_mappings = {
+            "🏙️ Advertising Study (75 Städte)": "advertising",
+            "🏪 Elektronikmarkt (simuliert)": "electronics",
+            "🏙️ Städte-Umsatzstudie (75 Städte)": "advertising",
+        }
+        return simple_mappings.get(display_name, "advertising")
 
 
 def load_multiple_regression_data(
@@ -77,7 +44,7 @@ def load_multiple_regression_data(
     seed: int
 ) -> Dict[str, Any]:
     """
-    Load and prepare multiple regression data with caching.
+    Load and prepare multiple regression data with REAL statsmodels OLS.
 
     Args:
         dataset_choice: Name of the dataset to load
@@ -88,68 +55,66 @@ def load_multiple_regression_data(
     Returns:
         Dictionary containing all prepared data and model results
     """
-    # Import the data generator directly
     from .data_generators.multiple_regression_generator import generate_multiple_regression_data
 
-    # Map display name to internal name
     internal_name = _map_dataset_name(dataset_choice, 'multiple')
     
-    # Generate the data
     try:
-        result = generate_multiple_regression_data(internal_name, n, noise_level, seed)
+        raw_data = generate_multiple_regression_data(internal_name, n, noise_level, seed)
     except ValueError:
-        # Fallback to Cities if the specific dataset isn't implemented in the generator
-        result = generate_multiple_regression_data("Cities", n, noise_level, seed)
+        raw_data = generate_multiple_regression_data("Cities", n, noise_level, seed)
 
-    # Map generator keys to UI keys (multiple_regression.py expects specific names)
-    # This is a bit of a hack to support the hardcoded keys in the tab
-    if "x2_preis" not in result:
-        # Map first predictor to preis, second to werbung
-        keys = [k for k in result.keys() if k.startswith('x') and not k.endswith('_name')]
-        keys.sort()
-        if len(keys) >= 2:
-            result["x2_preis"] = result[keys[0]]
-            result["x3_werbung"] = result[keys[1]]
-        elif len(keys) >= 1:
-            result["x2_preis"] = result[keys[0]]
-            result["x3_werbung"] = np.zeros_like(result[keys[0]])
-        else:
-            result["x2_preis"] = np.zeros(n)
-            result["x3_werbung"] = np.zeros(n)
-            
-    if "y_mult" not in result:
-        y_keys = [k for k in result.keys() if k.startswith('y') and not k.endswith('_name')]
-        if y_keys:
-            result["y_mult"] = result[y_keys[0]]
-        else:
-            result["y_mult"] = np.zeros(n)
-
-    # Ensure all required keys for the tab are present
-    ui_defaults = {
-        "x1_name": result.get("x1_name", "Variable 1"),
-        "x2_name": result.get("x2_name", "Variable 2"),
-        "y_name": result.get("y_name", "Zielvariable"),
-        "y_pred_mult": result["y_mult"], # Mock prediction
-        "mult_coeffs": {"params": [10.0, -2.0, 5.0]}, # Mock coefficients
-        "mult_summary": "Modell-Zusammenfassung",
-        "mult_diagnostics": {},
-        "model_mult": {
-            'r_squared': 0.85,
-            'adj_r_squared': 0.82,
-            'mse': 12.5,
-            'coefficients': [10.0, -2.0, 5.0]
-        }
+    # Extract predictor and response arrays
+    x1 = np.array(raw_data.get("x2_preis", raw_data.get("x1", np.random.randn(n))))
+    x2 = np.array(raw_data.get("x3_werbung", raw_data.get("x2", np.random.randn(n))))
+    y = np.array(raw_data.get("y_mult", raw_data.get("y", np.random.randn(n))))
+    
+    # Fit REAL statsmodels OLS model
+    X = sm.add_constant(np.column_stack([x1, x2]))
+    model = sm.OLS(y, X).fit()
+    y_pred = model.predict(X)
+    residuals = y - y_pred
+    
+    # Build coefficients info from REAL model
+    mult_coeffs = {
+        "params": list(model.params),
+        "bse": list(model.bse),
+        "tvalues": list(model.tvalues),
+        "pvalues": list(model.pvalues),
     }
     
-    for k, v in ui_defaults.items():
-        if k not in result:
-            result[k] = v
-            
-    # Wrap model_mult for attribute access
-    if isinstance(result['model_mult'], dict):
-        result['model_mult'] = ModelWrapper(result['model_mult'])
-
-    return result
+    # Build summary from REAL model
+    mult_summary = {
+        "rsquared": float(model.rsquared),
+        "rsquared_adj": float(model.rsquared_adj),
+        "fvalue": float(model.fvalue) if hasattr(model, 'fvalue') and model.fvalue is not None else 0.0,
+        "f_pvalue": float(model.f_pvalue) if hasattr(model, 'f_pvalue') and model.f_pvalue is not None else 0.0,
+    }
+    
+    # Build diagnostics
+    mult_diagnostics = {
+        "resid": residuals,
+        "sse": float(np.sum(residuals ** 2)),
+    }
+    
+    # Get labels
+    x1_name = raw_data.get("x1_name", "Variable 1")
+    x2_name = raw_data.get("x2_name", "Variable 2")
+    y_name = raw_data.get("y_name", "Zielvariable")
+    
+    return {
+        "x2_preis": x1,
+        "x3_werbung": x2,
+        "y_mult": y,
+        "y_pred_mult": y_pred,
+        "model_mult": model,
+        "mult_coeffs": mult_coeffs,
+        "mult_summary": mult_summary,
+        "mult_diagnostics": mult_diagnostics,
+        "x1_name": x1_name,
+        "x2_name": x2_name,
+        "y_name": y_name,
+    }
 
 
 def load_simple_regression_data(
@@ -162,86 +127,109 @@ def load_simple_regression_data(
     seed: int = 42
 ) -> Dict[str, Any]:
     """
-    Load and prepare simple regression data with caching.
+    Load and prepare simple regression data with REAL statsmodels OLS.
 
     Args:
         dataset_choice: Name of the dataset to load
         x_variable: X variable to use (for multi-variable datasets)
         n: Number of observations
-        true_intercept: True intercept parameter (for simulated data)
-        true_beta: True slope parameter (for simulated data)
+        true_intercept: True intercept (for simulated data)
+        true_beta: True slope (for simulated data)
         noise_level: Noise level for data generation
         seed: Random seed for reproducibility
 
     Returns:
         Dictionary containing all prepared data and model results
     """
-    # Import the data generator directly
     from .data_generators.simple_regression_generator import generate_simple_regression_data
 
-    # Map display name to internal name
     internal_name = _map_dataset_name(dataset_choice, 'simple')
     
-    # Generate the data
-    result = generate_simple_regression_data(internal_name, n, noise_level, seed)
+    try:
+        raw_data = generate_simple_regression_data(internal_name, n, noise_level, seed)
+    except Exception:
+        # Fallback: generate synthetic data
+        np.random.seed(seed)
+        x = np.random.uniform(2, 10, n)
+        y = true_intercept + true_beta * x + np.random.normal(0, noise_level, n)
+        raw_data = {
+            "x": x,
+            "y": y,
+            "x_label": "X",
+            "y_label": "Y",
+        }
+
+    # Extract arrays
+    x = np.array(raw_data.get("x", np.random.randn(n)))
+    y = np.array(raw_data.get("y", np.random.randn(n)))
     
-    # Extract x and y
-    x = result.get('x_simple', result.get('x', []))
-    y = result.get('y_simple', result.get('y', []))
-    
-    # Fit a simple linear regression model to compute predictions
-    X = np.array(x).reshape(-1, 1)
-    y_array = np.array(y)
-    
-    model = LinearRegression()
-    model.fit(X, y_array)
+    # Fit REAL statsmodels OLS model
+    X = sm.add_constant(x)
+    model = sm.OLS(y, X).fit()
     y_pred = model.predict(X)
+    residuals = model.resid
     
-    # Compute residuals
-    residuals = y_array - y_pred
+    # Extract coefficients from REAL model
+    b0 = float(model.params[0])
+    b1 = float(model.params[1])
     
-    # Transform keys to match expected format
-    transformed_result = {
-        'x': x,
-        'y': y,
-        'y_pred': y_pred.tolist(),
-        'residuals': residuals.tolist(),
-        'x_label': result.get('x_name', 'X'),
-        'y_label': result.get('y_name', 'Y'),
-        'x_unit': '',
-        'y_unit': '',
-        'context_title': dataset_choice,
-        'context_description': f'Analysis of {dataset_choice}',
-        'b0': model.intercept_,  # Changed from beta_0 to b0
-        'b1': model.coef_[0],    # Changed from beta_1 to b1
+    # Compute statistics
+    n_obs = len(x)
+    x_mean = float(np.mean(x))
+    y_mean_val = float(np.mean(y))
+    cov_xy = float(np.cov(x, y)[0, 1]) if n_obs > 1 else 0.0
+    var_x = float(np.var(x, ddof=1)) if n_obs > 1 else 0.0
+    var_y = float(np.var(y, ddof=1)) if n_obs > 1 else 0.0
+    corr_xy = float(np.corrcoef(x, y)[0, 1]) if n_obs > 1 else 0.0
+    
+    # Compute sums of squares
+    sse = float(np.sum(residuals ** 2))
+    sst = float(np.sum((y - y_mean_val) ** 2))
+    ssr = sst - sse
+    mse = sse / (n_obs - 2) if n_obs > 2 else 0.0
+    se_regression = float(np.sqrt(mse)) if mse > 0 else 0.0
+    
+    # Get labels and context
+    x_label = raw_data.get("x_label", "X")
+    y_label = raw_data.get("y_label", "Y")
+    x_unit = raw_data.get("x_unit", "")
+    y_unit = raw_data.get("y_unit", "")
+    context_title = raw_data.get("context_title", dataset_choice)
+    context_description = raw_data.get("context_description", "")
+    
+    return {
+        "x": x,
+        "y": y,
+        "y_pred": y_pred,
+        "residuals": residuals,
+        "model": model,
+        "b0": b0,
+        "b1": b1,
+        "x_label": x_label,
+        "y_label": y_label,
+        "x_unit": x_unit,
+        "y_unit": y_unit,
+        "context_title": context_title,
+        "context_description": context_description,
+        "x_mean": x_mean,
+        "y_mean_val": y_mean_val,
+        "cov_xy": cov_xy,
+        "var_x": var_x,
+        "var_y": var_y,
+        "corr_xy": corr_xy,
+        "sse": sse,
+        "sst": sst,
+        "ssr": ssr,
+        "mse": mse,
+        "se_regression": se_regression,
     }
-
-    # Compute R-squared and other statistics
-    r_squared = r2_score(y_array, y_pred)
-    mse = mean_squared_error(y_array, y_pred)
-    
-    # Add model statistics
-    transformed_result['model'] = {
-        'r_squared': r_squared,
-        'adj_r_squared': 1 - (1 - r_squared) * (n - 1) / (n - 2),
-        'mse': mse,
-        'intercept': model.intercept_,
-        'slope': model.coef_[0],
-        'p_value_intercept': 0.001,  # Mock value for now
-        'p_value_slope': 0.001  # Mock value for now
-    }
-    
-    # Wrap the model dict to support attribute access
-    transformed_result['model'] = ModelWrapper(transformed_result['model'])
-
-    return transformed_result
 
 
 def compute_simple_regression_model(
     x, y, x_label: str, y_label: str, n: int
 ) -> Dict[str, Any]:
     """
-    Compute simple regression model with caching.
+    Compute simple regression model using statsmodels OLS.
 
     Args:
         x: X variable data
@@ -253,43 +241,22 @@ def compute_simple_regression_model(
     Returns:
         Dictionary containing model and all computed statistics
     """
-    # Import the statistics calculation functions
-    from ..infrastructure.stats_calculation import perform_simple_regression_stats_calculation
-
-    # Prepare data for stats calculation
-    X = [[1, xi] for xi in x]  # Add intercept column
-    y_array = list(y)
-
-    # Perform regression calculation
-    stats_result = perform_simple_regression_stats_calculation(
-        model=None,  # Not needed for our simplified calculation
-        X=X,
-        y=y_array,
-        n=len(x)
-    )
-
-    # Format result for UI compatibility
-    result = {
-        'model': {
-            'r_squared': stats_result.get('r_squared', 0),
-            'adj_r_squared': stats_result.get('adj_r_squared', 0),
-            'mse': stats_result.get('mse', 0),
-            'intercept': stats_result.get('conf_int_intercept', [0, 0])[0],
-            'slope': stats_result.get('conf_int_slope', [0, 0])[0],
-            'p_value_intercept': 0.001,  # Mock value
-            'p_value_slope': 0.001,      # Mock value
-        },
+    x = np.array(x)
+    y = np.array(y)
+    
+    # Fit REAL model
+    X = sm.add_constant(x)
+    model = sm.OLS(y, X).fit()
+    y_pred = model.predict(X)
+    
+    return {
+        'model': model,
         'x': x,
         'y': y,
         'x_label': x_label,
         'y_label': y_label,
-        'y_pred': [stats_result.get('conf_int_intercept', [0, 0])[0] +
-                  stats_result.get('conf_int_slope', [0, 0])[0] * xi for xi in x],
-        'b0': stats_result.get('conf_int_intercept', [0, 0])[0],
-        'b1': stats_result.get('conf_int_slope', [0, 0])[0],
+        'y_pred': y_pred,
+        'b0': float(model.params[0]),
+        'b1': float(model.params[1]),
+        'residuals': model.resid,
     }
-    
-    # Wrap for attribute access
-    result['model'] = ModelWrapper(result['model'])
-    
-    return result
