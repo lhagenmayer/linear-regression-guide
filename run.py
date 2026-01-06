@@ -154,8 +154,17 @@ def main():
         with tab1:
             render_simple_regression_tab(
                 model_data=simple_data,
-                dataset_choice=dataset_choice_simple,
+                x_label=simple_data.get('x_label', 'X'),
+                y_label=simple_data.get('y_label', 'Y'),
+                x_unit=simple_data.get('x_unit', ''),
+                y_unit=simple_data.get('y_unit', ''),
+                context_title=simple_data.get('context_title', ''),
+                context_description=simple_data.get('context_description', ''),
                 show_formulas=show_formulas_simple,
+                show_true_line=show_true_line,
+                has_true_line=has_true_line,
+                true_intercept=simple_params.true_intercept,
+                true_beta=simple_params.true_beta,
             )
 
         # TAB 2: MULTIPLE REGRESSION

@@ -8,6 +8,41 @@ maintaining backward compatibility while delegating to the refactored services.
 from typing import Dict, Any, Optional
 
 
+def _map_dataset_name(display_name: str, regression_type: str) -> str:
+    """
+    Map UI display names to internal dataset names.
+    
+    Args:
+        display_name: The display name with emojis from the UI
+        regression_type: Either 'simple' or 'multiple'
+    
+    Returns:
+        Internal dataset name used by generators
+    """
+    # Define mappings for multiple regression
+    multiple_mappings = {
+        "🏙️ Städte-Umsatzstudie (75 Städte)": "Cities",
+        "🏠 Häuserpreise mit Pool (1000 Häuser)": "Houses",
+        "🏪 Elektronikmarkt (erweitert)": "Electronics",
+        "🇨🇭 Schweizer Kantone (sozioökonomisch)": "Cities",  # Fallback to Cities for now
+        "🌤️ Schweizer Wetterstationen": "Houses",  # Fallback to Houses for now
+    }
+    
+    # Define mappings for simple regression
+    simple_mappings = {
+        "🏪 Elektronikmarkt (simuliert)": "advertising",  # Use advertising dataset as Electronics
+        "🏙️ Städte-Umsatzstudie (75 Städte)": "advertising",  # Fallback
+        "🏠 Häuserpreise mit Pool (1000 Häuser)": "advertising",  # Fallback
+        "🇨🇭 Schweizer Kantone (sozioökonomisch)": "advertising",  # Fallback
+        "🌤️ Schweizer Wetterstationen": "temperature",  # Use temperature for weather
+    }
+    
+    if regression_type == 'multiple':
+        return multiple_mappings.get(display_name, "Cities")  # Default to Cities
+    else:
+        return simple_mappings.get(display_name, "advertising")  # Default to advertising
+
+
 def load_multiple_regression_data(
     dataset_choice: str,
     n: int,
@@ -29,8 +64,11 @@ def load_multiple_regression_data(
     # Import the data generator directly
     from .data_generators.multiple_regression_generator import generate_multiple_regression_data
 
+    # Map display name to internal name
+    internal_name = _map_dataset_name(dataset_choice, 'multiple')
+    
     # Generate the data
-    result = generate_multiple_regression_data(dataset_choice, n, noise_level, seed)
+    result = generate_multiple_regression_data(internal_name, n, noise_level, seed)
 
     # For backward compatibility, add some default model results if needed
     if 'model' not in result:
@@ -69,26 +107,66 @@ def load_simple_regression_data(
     Returns:
         Dictionary containing all prepared data and model results
     """
+    import numpy as np
+    from sklearn.linear_model import LinearRegression
+    
     # Import the data generator directly
     from .data_generators.simple_regression_generator import generate_simple_regression_data
 
+    # Map display name to internal name
+    internal_name = _map_dataset_name(dataset_choice, 'simple')
+    
     # Generate the data
-    result = generate_simple_regression_data(dataset_choice, n, noise_level, seed)
+    result = generate_simple_regression_data(internal_name, n, noise_level, seed)
+    
+    # Extract x and y
+    x = result.get('x_simple', result.get('x', []))
+    y = result.get('y_simple', result.get('y', []))
+    
+    # Fit a simple linear regression model to compute predictions
+    X = np.array(x).reshape(-1, 1)
+    y_array = np.array(y)
+    
+    model = LinearRegression()
+    model.fit(X, y_array)
+    y_pred = model.predict(X)
+    
+    # Compute residuals
+    residuals = y_array - y_pred
+    
+    # Transform keys to match expected format
+    transformed_result = {
+        'x': x,
+        'y': y,
+        'y_pred': y_pred.tolist(),
+        'residuals': residuals.tolist(),
+        'x_label': result.get('x_name', 'X'),
+        'y_label': result.get('y_name', 'Y'),
+        'x_unit': '',
+        'y_unit': '',
+        'context_title': dataset_choice,
+        'context_description': f'Analysis of {dataset_choice}',
+        'beta_0': model.intercept_,
+        'beta_1': model.coef_[0],
+    }
 
-    # For backward compatibility, add some default model results if needed
-    if 'model' not in result:
-        # Create a simple mock model result for UI compatibility
-        result['model'] = {
-            'r_squared': 0.85,
-            'adj_r_squared': 0.82,
-            'mse': 0.05,
-            'intercept': true_intercept,
-            'slope': true_beta,
-            'p_value_intercept': 0.001,
-            'p_value_slope': 0.001
-        }
+    # Compute R-squared and other statistics
+    from sklearn.metrics import r2_score, mean_squared_error
+    r_squared = r2_score(y_array, y_pred)
+    mse = mean_squared_error(y_array, y_pred)
+    
+    # Add model statistics
+    transformed_result['model'] = {
+        'r_squared': r_squared,
+        'adj_r_squared': 1 - (1 - r_squared) * (n - 1) / (n - 2),
+        'mse': mse,
+        'intercept': model.intercept_,
+        'slope': model.coef_[0],
+        'p_value_intercept': 0.001,  # Mock value for now
+        'p_value_slope': 0.001  # Mock value for now
+    }
 
-    return result
+    return transformed_result
 
 
 def compute_simple_regression_model(
