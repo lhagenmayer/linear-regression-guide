@@ -193,7 +193,7 @@ CSS_STYLES = {
 
 UI_DEFAULTS = {
     "expander_expanded": False,      # Most expanders start collapsed
-    "sidebar_expanded": True,        # Sidebar sections usually expanded
+    "sidebar_expanded": "expanded",  # Sidebar initial state: "auto", "expanded", or "collapsed"
     "show_formulas": True,           # Formula display enabled by default
     "show_true_line": True,          # True regression line visible
     "plot_height": 500,              # Default plotly figure height
