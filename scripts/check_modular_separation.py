@@ -99,6 +99,9 @@ class ArchitectureValidator:
         self._check_infrastructure_ui_dependencies()
         self._check_generator_interfaces()
         self._check_domain_events_usage()
+        self._check_datasource_references()
+        self._check_syntax_validation()
+        self._check_entry_point_structure()
 
         # Report results
         return self._report_results()
@@ -1229,6 +1232,125 @@ class ArchitectureValidator:
                 "Domain events are used but no event handlers file exists",
                 application_path,
                 "Create event_handlers.py with EventBus and event handler implementations"
+            )
+
+    def _check_datasource_references(self):
+        """Check for references to non-existent DataService."""
+        data_loading_file = self.src_path / "data" / "data_loading.py"
+
+        if data_loading_file.exists():
+            try:
+                with open(data_loading_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+
+                # Check for DataService references
+                if "DataService" in content:
+                    self._add_result(
+                        "Data Services",
+                        Severity.CRITICAL,
+                        False,
+                        "References to non-existent DataService found",
+                        data_loading_file,
+                        "Replace DataService references with actual implementation or remove unused imports"
+                    )
+
+            except Exception as e:
+                self._add_result(
+                    "File Analysis",
+                    Severity.WARNING,
+                    False,
+                    f"Could not analyze data_loading.py: {e}",
+                    data_loading_file
+                )
+
+    def _check_syntax_validation(self):
+        """Check syntax of main application files."""
+        main_files = [
+            self.project_root / "run.py",
+            self.src_path / "app.py",
+            self.src_path / "main.py" if (self.src_path / "main.py").exists() else None
+        ]
+
+        for file_path in main_files:
+            if file_path and file_path.exists():
+                try:
+                    # Use Python's compile to check syntax
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        source = f.read()
+
+                    compile(source, str(file_path), 'exec')
+                except SyntaxError as e:
+                    self._add_result(
+                        "Syntax Validation",
+                        Severity.CRITICAL,
+                        False,
+                        f"Syntax error in {file_path.name}: {e.msg} at line {e.lineno}",
+                        file_path,
+                        f"Fix syntax error: {e.text.strip() if e.text else 'Check indentation and structure'}"
+                    )
+                except Exception as e:
+                    self._add_result(
+                        "Syntax Validation",
+                        Severity.WARNING,
+                        False,
+                        f"Could not validate syntax of {file_path.name}: {e}",
+                        file_path
+                    )
+
+    def _check_entry_point_structure(self):
+        """Check that the entry point (run.py) has proper structure."""
+        run_file = self.project_root / "run.py"
+
+        if not run_file.exists():
+            self._add_result(
+                "Entry Point",
+                Severity.CRITICAL,
+                False,
+                "run.py entry point not found",
+                self.project_root,
+                "Create run.py as the main entry point for the application"
+            )
+            return
+
+        try:
+            with open(run_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            issues = []
+
+            # Check for proper streamlit detection
+            if "streamlit" not in content.lower():
+                issues.append("No Streamlit execution detection")
+
+            # Check for error handling
+            if "try:" not in content or "except" not in content:
+                issues.append("Missing proper error handling")
+
+            # Check for main function
+            if "def main():" not in content:
+                issues.append("Missing main() function")
+
+            # Check for execution guard
+            if 'if __name__ == "__main__":' not in content:
+                issues.append("Missing execution guard")
+
+            if issues:
+                self._add_result(
+                    "Entry Point",
+                    Severity.WARNING,
+                    False,
+                    f"Entry point structure issues: {', '.join(issues)}",
+                    run_file,
+                    "Ensure run.py has proper Streamlit detection, error handling, main function, and execution guard"
+                )
+
+        except Exception as e:
+            self._add_result(
+                "Entry Point",
+                Severity.WARNING,
+                False,
+                f"Could not analyze entry point: {e}",
+                run_file
             )
 
     def _add_result(self, check_name: str, severity: Severity, passed: bool,
