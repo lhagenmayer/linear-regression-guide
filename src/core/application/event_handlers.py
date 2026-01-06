@@ -11,8 +11,8 @@ from abc import ABC, abstractmethod
 from ..domain.events import (
     DomainEvent,
     DatasetCreated,
-    DatasetUpdated,
-    DatasetDeleted,
+    # DatasetUpdated,  # Not yet implemented
+    # DatasetDeleted,  # Not yet implemented
     RegressionModelCreated,
     RegressionModelValidated,
     ModelsCompared
@@ -82,8 +82,8 @@ class DatasetEventHandler:
     def _register_handlers(self):
         """Register event handlers."""
         self.event_bus.subscribe(DatasetCreated, self._handle_dataset_created)
-        self.event_bus.subscribe(DatasetUpdated, self._handle_dataset_updated)
-        self.event_bus.subscribe(DatasetDeleted, self._handle_dataset_deleted)
+        # self.event_bus.subscribe(DatasetUpdated, self._handle_dataset_updated)  # Not yet implemented
+        # self.event_bus.subscribe(DatasetDeleted, self._handle_dataset_deleted)  # Not yet implemented
 
     def _handle_dataset_created(self, event: DatasetCreated) -> None:
         """Handle dataset creation events."""
@@ -93,20 +93,20 @@ class DatasetEventHandler:
         # - Cache invalidation
         # - Analytics tracking
 
-    def _handle_dataset_updated(self, event: DatasetUpdated) -> None:
-        """Handle dataset update events."""
-        logger.info(f"Dataset updated: {event.dataset.id}")
-        # Could trigger:
-        # - Dependent model retraining
-        # - Cache invalidation
+    # def _handle_dataset_updated(self, event: DatasetUpdated) -> None:
+    #     """Handle dataset update events."""
+    #     logger.info(f"Dataset updated: {event.dataset.id}")
+    #     # Could trigger:
+    #     # - Dependent model retraining
+    #     # - Cache invalidation
 
-    def _handle_dataset_deleted(self, event: DatasetDeleted) -> None:
-        """Handle dataset deletion events."""
-        logger.info(f"Dataset deleted: {event.dataset_id}")
-        # Could trigger:
-        # - Cleanup of dependent models
-        # - Cache invalidation
-        # - Audit logging
+    # def _handle_dataset_deleted(self, event: DatasetDeleted) -> None:
+    #     """Handle dataset deletion events."""
+    #     logger.info(f"Dataset deleted: {event.dataset_id}")
+    #     # Could trigger:
+    #     # - Cleanup of dependent models
+    #     # - Cache invalidation
+    #     # - Audit logging
 
 
 class RegressionModelEventHandler:

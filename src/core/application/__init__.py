@@ -20,14 +20,19 @@ from .use_cases import (
 )
 from .commands import (
     CreateRegressionModelCommand,
-    LoadDatasetCommand,
-    GenerateDataCommand
+    # LoadDatasetCommand,  # Not implemented
+    # GenerateDataCommand  # Not implemented
 )
 from .queries import (
-    GetModelQuery,
-    GetDatasetQuery,
+    # GetModelQuery,  # Not implemented
+    GetModelByIdQuery,
+    GetDatasetByIdQuery,
     ListModelsQuery,
-    GetModelComparisonQuery
+    ListDatasetsQuery,
+    GetDatasetStatisticsQuery,
+    GetModelDiagnosticsQuery,
+    CompareModelsQuery,
+    GetAvailableDataSourcesQuery
 )
 
 __all__ = [
@@ -40,10 +45,12 @@ __all__ = [
 
     # Commands & Queries
     'CreateRegressionModelCommand',
-    'LoadDatasetCommand',
-    'GenerateDataCommand',
-    'GetModelQuery',
-    'GetDatasetQuery',
+    'GetModelByIdQuery',
+    'GetDatasetByIdQuery',
     'ListModelsQuery',
-    'GetModelComparisonQuery'
+    'ListDatasetsQuery',
+    'GetDatasetStatisticsQuery',
+    'GetModelDiagnosticsQuery',
+    'CompareModelsQuery',
+    'GetAvailableDataSourcesQuery'
 ]

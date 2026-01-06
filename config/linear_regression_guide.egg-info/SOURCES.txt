@@ -1,0 +1,8 @@
+README.md
+pyproject.toml
+linear_regression_guide.egg-info/PKG-INFO
+linear_regression_guide.egg-info/SOURCES.txt
+linear_regression_guide.egg-info/dependency_links.txt
+linear_regression_guide.egg-info/entry_points.txt
+linear_regression_guide.egg-info/requires.txt
+linear_regression_guide.egg-info/top_level.txt

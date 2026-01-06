@@ -8,7 +8,7 @@ They are immutable data structures that express user intent.
 from dataclasses import dataclass
 from typing import List, Optional
 
-from ...domain.value_objects import DatasetConfig, RegressionParameters
+from ..domain.value_objects import DatasetConfig, RegressionParameters
 
 
 @dataclass(frozen=True)

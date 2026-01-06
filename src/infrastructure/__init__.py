@@ -16,12 +16,9 @@ but domain and application layers do not depend on infrastructure.
 
 from .dependency_container import DependencyContainer
 from .repositories import InMemoryDatasetRepository, InMemoryModelRepository
-from .adapters import StreamlitAdapter, APIClientAdapter
 
 __all__ = [
     'DependencyContainer',
     'InMemoryDatasetRepository',
-    'InMemoryModelRepository',
-    'StreamlitAdapter',
-    'APIClientAdapter'
+    'InMemoryModelRepository'
 ]

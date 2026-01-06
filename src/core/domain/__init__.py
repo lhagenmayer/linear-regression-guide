@@ -20,8 +20,8 @@ from .repositories import DatasetRepository, RegressionModelRepository
 from .events import (
     DomainEvent,
     DatasetCreated,
-    DatasetUpdated,
-    DatasetDeleted,
+    # DatasetUpdated,  # Commented out - not yet implemented
+    # DatasetDeleted,  # Commented out - not yet implemented
     RegressionModelCreated,
     RegressionModelValidated,
     ModelsCompared
@@ -44,8 +44,8 @@ __all__ = [
     # Events
     'DomainEvent',
     'DatasetCreated',
-    'DatasetUpdated',
-    'DatasetDeleted',
+    # 'DatasetUpdated',  # Commented out - not yet implemented
+    # 'DatasetDeleted',  # Commented out - not yet implemented
     'RegressionModelCreated',
     'RegressionModelValidated',
     'ModelsCompared',
