@@ -8,6 +8,30 @@ maintaining backward compatibility while delegating to the refactored services.
 from typing import Dict, Any, Optional
 
 
+class ModelWrapper:
+    """Wrapper to make dict behave like a model object with attributes."""
+    def __init__(self, model_dict):
+        self._dict = model_dict
+    
+    def __getattr__(self, name):
+        # Map common attribute names to dict keys
+        key_mappings = {
+            'rsquared': 'r_squared',
+            'rsquared_adj': 'adj_r_squared',
+            'params': 'coefficients',
+        }
+        key = key_mappings.get(name, name)
+        if key in self._dict:
+            return self._dict[key]
+        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+    
+    def __getitem__(self, key):
+        return self._dict[key]
+    
+    def get(self, key, default=None):
+        return self._dict.get(key, default)
+
+
 def _map_dataset_name(display_name: str, regression_type: str) -> str:
     """
     Map UI display names to internal dataset names.
@@ -146,8 +170,8 @@ def load_simple_regression_data(
         'y_unit': '',
         'context_title': dataset_choice,
         'context_description': f'Analysis of {dataset_choice}',
-        'beta_0': model.intercept_,
-        'beta_1': model.coef_[0],
+        'b0': model.intercept_,  # Changed from beta_0 to b0
+        'b1': model.coef_[0],    # Changed from beta_1 to b1
     }
 
     # Compute R-squared and other statistics
@@ -165,6 +189,9 @@ def load_simple_regression_data(
         'p_value_intercept': 0.001,  # Mock value for now
         'p_value_slope': 0.001  # Mock value for now
     }
+    
+    # Wrap the model dict to support attribute access
+    transformed_result['model'] = ModelWrapper(transformed_result['model'])
 
     return transformed_result
 
