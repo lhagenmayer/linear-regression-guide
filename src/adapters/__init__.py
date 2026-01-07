@@ -1,40 +1,39 @@
 """
-Framework Adapters - Frontend-agnostic rendering layer.
+Adapters Module - Framework-specific frontends.
 
-Structure:
-- base.py: Abstract renderer interface (RenderContext, BaseRenderer)
-- detector.py: Framework auto-detection
+This module provides the bridge between our framework-agnostic content
+and specific UI frameworks (Streamlit, Flask).
 
-- streamlit/: Streamlit-specific implementation
-  - app.py: StreamlitRenderer
-  - simple_regression_educational.py: Educational content with st.* components
-  - multiple_regression_educational.py: Educational content with st.* components
-
-- flask_app.py: Flask implementation
-- templates/: Flask HTML templates
-
-Auto-detection chooses the right framework at runtime.
+Architecture:
+    ContentBuilder (content/) → produces → EducationalContent (data)
+                                                  ↓
+                           ┌─────────────────────┴─────────────────────┐
+                           ↓                                           ↓
+                StreamlitContentRenderer                       HTMLContentRenderer
+                   (st.markdown, etc.)                        (HTML/Jinja2)
+                           ↓                                           ↓
+                    Streamlit App                                Flask App
 """
 
 from .detector import FrameworkDetector, Framework
 from .base import BaseRenderer, RenderContext
+
+# Lazy imports for framework-specific components
+def get_streamlit_app():
+    """Get Streamlit app function."""
+    from .streamlit.app import run_streamlit_app
+    return run_streamlit_app
+
+def get_flask_app():
+    """Get Flask app creator."""
+    from .flask_app import create_flask_app, run_flask
+    return create_flask_app, run_flask
 
 __all__ = [
     "FrameworkDetector",
     "Framework",
     "BaseRenderer",
     "RenderContext",
+    "get_streamlit_app",
+    "get_flask_app",
 ]
-
-
-# Lazy imports for framework-specific modules
-def get_streamlit_renderer():
-    """Get StreamlitRenderer (lazy import)."""
-    from .streamlit import StreamlitRenderer
-    return StreamlitRenderer
-
-
-def get_flask_renderer():
-    """Get FlaskRenderer (lazy import)."""
-    from .flask_app import FlaskRenderer
-    return FlaskRenderer

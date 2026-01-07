@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+            <div class="position-sticky pt-3">
+                <h5>⚙️ Einstellungen</h5>
+                
+                <form action="{{ '/simple' if analysis_type == 'simple' else '/multiple' }}" method="get">
+                    <div class="mb-3">
+                        <label for="dataset" class="form-label">📊 Datensatz</label>
+                        <select class="form-select" name="dataset" id="dataset">
+                            {% if analysis_type == 'simple' %}
+                            <option value="Bildung & Einkommen" {{ 'selected' if dataset == 'Bildung & Einkommen' }}>Bildung & Einkommen</option>
+                            <option value="Grösse & Gewicht" {{ 'selected' if dataset == 'Grösse & Gewicht' }}>Grösse & Gewicht</option>
+                            <option value="Temperatur & Eisverkauf" {{ 'selected' if dataset == 'Temperatur & Eisverkauf' }}>Temperatur & Eisverkauf</option>
+                            {% else %}
+                            <option value="Immobilienpreise" {{ 'selected' if dataset == 'Immobilienpreise' }}>Immobilienpreise</option>
+                            <option value="Autoverbrauch" {{ 'selected' if dataset == 'Autoverbrauch' }}>Autoverbrauch</option>
+                            <option value="Marketing-Mix" {{ 'selected' if dataset == 'Marketing-Mix' }}>Marketing-Mix</option>
+                            {% endif %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="n" class="form-label">📏 Datenpunkte: {{ n_points }}</label>
+                        <input type="range" class="form-range" name="n" id="n" 
+                               min="20" max="200" value="{{ n_points }}">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">Aktualisieren</button>
+                </form>
+                
+                <hr>
+                
+                <h6>📑 Kapitel</h6>
+                <nav class="nav flex-column">
+                    {% for chapter in chapters %}
+                    <a class="nav-link" href="#chapter-{{ chapter.number | replace('.', '-') }}">
+                        {{ chapter.icon }} {{ chapter.number }} {{ chapter.title[:20] }}...
+                    </a>
+                    {% endfor %}
+                </nav>
+                
+                <hr>
+                
+                <div class="d-grid gap-2">
+                    <a href="/simple" class="btn btn-outline-primary {{ 'active' if analysis_type == 'simple' }}">
+                        📈 Einfache Regression
+                    </a>
+                    <a href="/multiple" class="btn btn-outline-primary {{ 'active' if analysis_type == 'multiple' }}">
+                        📊 Multiple Regression
+                    </a>
+                    <a href="/" class="btn btn-outline-secondary">
+                        🏠 Startseite
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <!-- Educational Content -->
+            {{ content_html | safe }}
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-submit form when range changes
+document.getElementById('n').addEventListener('change', function() {
+    this.closest('form').submit();
+});
+</script>
+{% endblock %}

@@ -1,151 +1,220 @@
-# 📊 Linear Regression Guide
+# 📊 Regression Analysis Application
 
-Ein interaktives, didaktisches Tool für lineare Regressionsanalyse.
+**Truly Frontend-Agnostic Statistical Learning Platform**
 
-**Frontend-Agnostisch:** Läuft sowohl mit **Streamlit** als auch mit **Flask** - automatische Framework-Erkennung!
+Eine interaktive Lernplattform für Regressionsanalyse, die sowohl mit **Streamlit** als auch mit **Flask** läuft - mit **identischem** Educational Content.
 
-## 🎯 Architektur
+## 🏗️ Architektur: Option B - Content als Datenstruktur
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                 CORE PIPELINE (Framework-Agnostic)              │
-│  ┌─────────┐   ┌───────────┐   ┌──────────┐   ┌─────────────┐  │
-│  │   GET   │ → │ CALCULATE │ → │   PLOT   │ → │   DISPLAY   │  │
-│  │  Data   │   │   Stats   │   │  Plotly  │   │   Prepare   │  │
-│  └─────────┘   └───────────┘   └──────────┘   └─────────────┘  │
-├─────────────────────────────────────────────────────────────────┤
-│                    FRAMEWORK ADAPTERS                           │
-│  ┌────────────────────────┐    ┌────────────────────────┐      │
-│  │       STREAMLIT        │    │         FLASK          │      │
-│  │  ┌──────────────────┐  │    │  ┌──────────────────┐  │      │
-│  │  │ Educational Tabs │  │    │  │  HTML Templates  │  │      │
-│  │  │   (st.* calls)   │  │    │  │   (Jinja2)       │  │      │
-│  │  └──────────────────┘  │    │  └──────────────────┘  │      │
-│  └────────────────────────┘    └────────────────────────┘      │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                              run.py                                      │
+│                         (Auto-Detection)                                 │
+└────────────────────────────────┬────────────────────────────────────────┘
+                                 │
+                ┌────────────────┴────────────────┐
+                ↓                                 ↓
+    ┌───────────────────────┐         ┌───────────────────────┐
+    │   Streamlit Frontend  │         │    Flask Frontend     │
+    │   adapters/streamlit/ │         │  adapters/flask_app   │
+    └───────────────────────┘         └───────────────────────┘
+                │                                 │
+                └────────────────┬────────────────┘
+                                 ↓
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │                    ContentBuilder (content/)                         │
+    │        SimpleRegressionContent / MultipleRegressionContent           │
+    │                                                                      │
+    │   → Definiert Educational Content als DATENSTRUKTUREN               │
+    │   → KEINE UI-Imports, KEINE Framework-Abhängigkeiten                │
+    └────────────────────────────────┬────────────────────────────────────┘
+                                     │
+                    ┌────────────────┴────────────────┐
+                    ↓                                 ↓
+    ┌─────────────────────────────┐   ┌─────────────────────────────┐
+    │  StreamlitContentRenderer   │   │    HTMLContentRenderer      │
+    │   (interprets → st.*)       │   │   (interprets → HTML)       │
+    │   adapters/renderers/       │   │   adapters/renderers/       │
+    └─────────────────────────────┘   └─────────────────────────────┘
 ```
 
-## 🚀 Schnellstart
+### Warum Option B?
 
-### Option 1: Streamlit (Interaktiv)
-```bash
-pip install -r requirements.txt
-streamlit run run.py
-```
+**Option A (vorher):** UI-Code in separaten Dateien für jedes Framework
+- ❌ Code-Duplizierung
+- ❌ Änderungen müssen zweimal gemacht werden
+- ❌ Inhalt und Darstellung vermischt
 
-### Option 2: Flask (Traditionell)
-```bash
-pip install -r requirements.txt
-python run.py
-# oder: flask --app src.adapters.flask_app:create_flask_app run
-```
-
-### Option 3: WSGI Server (Production)
-```bash
-gunicorn "run:create_app()"
-```
+**Option B (jetzt):** Content als Datenstruktur
+- ✅ **KEINE Code-Duplizierung** - Content wird einmal definiert
+- ✅ **Single Source of Truth** - Ein ContentBuilder für alle Frontends
+- ✅ **Saubere Trennung** - Content ≠ Rendering
+- ✅ **Einfache Erweiterung** - Neuer Renderer = Neues Frontend
 
 ## 📁 Projektstruktur
 
 ```
 src/
-├── pipeline/                    # CORE (Framework-Agnostic)
-│   ├── get_data.py             # Step 1: Data fetching
-│   ├── calculate.py            # Step 2: Statistics
-│   ├── plot.py                 # Step 3: Plotly figures
-│   ├── display.py              # Step 4: Data preparation
-│   └── regression_pipeline.py  # Orchestrator
+├── content/                     # 📖 EDUCATIONAL CONTENT (Framework-Agnostic)
+│   ├── __init__.py
+│   ├── structure.py             # Content-Datenstrukturen (Chapter, Section, etc.)
+│   ├── builder.py               # Base ContentBuilder
+│   ├── simple_regression.py     # Simple Regression Content (11 Kapitel)
+│   └── multiple_regression.py   # Multiple Regression Content (9 Kapitel)
 │
-├── adapters/                    # FRAMEWORK ADAPTERS
-│   ├── detector.py             # Auto-detection
-│   ├── base.py                 # Abstract interface
-│   │
-│   ├── streamlit/              # Streamlit-specific
-│   │   ├── app.py              # StreamlitRenderer
-│   │   ├── simple_regression_educational.py   # st.* UI
-│   │   └── multiple_regression_educational.py # st.* UI
-│   │
-│   ├── flask_app.py            # Flask renderer
-│   └── templates/              # HTML templates
-│       ├── base.html
-│       ├── index.html
-│       ├── simple_regression.html
-│       └── multiple_regression.html
+├── pipeline/                    # 🔧 DATA PROCESSING (4-Step Pipeline)
+│   ├── get_data.py              # Step 1: GET
+│   ├── calculate.py             # Step 2: CALCULATE
+│   ├── plot.py                  # Step 3: PLOT
+│   ├── display.py               # Step 4: DISPLAY (prepares data)
+│   └── regression_pipeline.py   # Unified Pipeline
 │
-├── data/content.py             # Dynamic content
-└── config/                     # Configuration
-
-run.py                          # Unified entry point
+├── adapters/                    # 🎨 FRONTEND ADAPTERS
+│   ├── detector.py              # Framework Auto-Detection
+│   ├── base.py                  # BaseRenderer, RenderContext
+│   ├── renderers/
+│   │   ├── streamlit_renderer.py  # Interprets Content → st.*
+│   │   └── html_renderer.py       # Interprets Content → HTML
+│   ├── streamlit/
+│   │   └── app.py               # Streamlit Application
+│   ├── flask_app.py             # Flask Application
+│   └── templates/               # Jinja2 Templates for Flask
+│
+├── config/                      # ⚙️ Configuration
+│   └── config.py, logger.py
+│
+└── data/                        # 📊 Data definitions
+    └── content.py               # Static content definitions
 ```
 
-## 🔄 Auto-Detection
+## 🚀 Quick Start
 
-| Aufruf | Erkanntes Framework |
-|--------|---------------------|
-| `streamlit run run.py` | Streamlit |
-| `python run.py` | Flask |
-| `REGRESSION_FRAMEWORK=streamlit` | Streamlit (explizit) |
-| `gunicorn "run:create_app()"` | Flask (WSGI) |
-
-## 💻 API Usage
-
-```python
-from src.pipeline import RegressionPipeline
-
-# Pipeline ist komplett framework-agnostisch
-pipeline = RegressionPipeline()
-
-# Einfache Regression
-result = pipeline.run_simple(dataset="electronics", n=100, seed=42)
-print(f"R² = {result.stats.r_squared:.4f}")
-
-# Multiple Regression
-result = pipeline.run_multiple(dataset="cities", n=100, seed=42)
-print(f"F = {result.stats.f_statistic:.2f}")
+### Streamlit (Empfohlen für Interaktivität)
+```bash
+streamlit run run.py
 ```
 
-## 🏗️ Custom Adapter erstellen
-
-```python
-from src.adapters.base import BaseRenderer, RenderContext
-
-class MyRenderer(BaseRenderer):
-    def render(self, context: RenderContext):
-        # Use context.to_dict() for template data
-        data = context.to_dict()
-        # Render with your framework...
-    
-    def render_simple_regression(self, context):
-        pass
-    
-    def render_multiple_regression(self, context):
-        pass
-    
-    def run(self, host, port, debug):
-        # Start your server
-        pass
+### Flask (Web-Server)
+```bash
+python run.py --flask
+# oder
+FLASK_APP=run.py flask run
 ```
+
+### Auto-Detection
+```bash
+python run.py  # Erkennt automatisch
+```
+
+## 📖 Educational Content
+
+### Simple Regression (11 Kapitel)
+1. Einleitung - Die Analyse von Zusammenhängen
+2. Mehrdimensionale Verteilungen
+3. Das Fundament - Das einfache lineare Regressionsmodell
+4. Kovarianz & Korrelation
+5. Die Methode - OLS-Schätzung
+6. Das Regressionsmodell im Detail
+7. Die Güteprüfung
+8. Die Signifikanz
+9. ANOVA für Gruppenvergleiche
+10. Heteroskedastizität
+11. Fazit und Ausblick
+
+### Multiple Regression (9 Kapitel)
+1. Einleitung - Multiple Regression
+2. Das Multiple Regressionsmodell
+3. OLS in Matrixform
+4. Interpretation der Koeffizienten
+5. Modellgüte - R² und F-Test
+6. Multikollinearität
+7. Dummy-Variablen
+8. Residuendiagnostik
+9. Prognose
 
 ## 🧪 Tests
 
 ```bash
 pytest tests/ -v
-# 26 tests covering pipeline + adapters
 ```
 
-## 📦 Dependencies
+## 💡 Wie es funktioniert
 
-```
-# Core (required)
-numpy>=1.24.0
-pandas>=2.0.0
-scipy>=1.11.0
-plotly>=5.18.0
+### 1. Content wird als Daten definiert
+```python
+from src.content import SimpleRegressionContent
 
-# Frameworks (at least one)
-streamlit>=1.28.0   # For interactive app
-flask>=3.0.0        # For traditional web app
+# Content Builder nimmt nur Statistiken
+builder = SimpleRegressionContent(stats_dict, plots_dict)
+content = builder.build()
+
+# content ist eine EducationalContent-Datenstruktur:
+# - content.title
+# - content.chapters[0].sections[0] → Markdown, Formula, Plot, Table, etc.
 ```
+
+### 2. Renderer interpretiert die Daten
+
+**Streamlit:**
+```python
+from src.adapters.renderers import StreamlitContentRenderer
+
+renderer = StreamlitContentRenderer(plots=plots, data=data, stats=stats)
+renderer.render(content)  # → st.markdown(), st.plotly_chart(), etc.
+```
+
+**Flask/HTML:**
+```python
+from src.adapters.renderers import HTMLContentRenderer
+
+renderer = HTMLContentRenderer(plots=plots, data=data, stats=stats)
+html = renderer.render(content)  # → HTML string
+```
+
+### 3. Beide Frontends zeigen identischen Content
+
+Die Content-Struktur ist **exakt** dieselbe - nur die Darstellung ist unterschiedlich.
+
+## 📊 Content-Elemente
+
+| Element | Beschreibung | Streamlit | Flask |
+|---------|--------------|-----------|-------|
+| `Markdown` | Text | `st.markdown()` | `<div class="markdown">` |
+| `Formula` | LaTeX | `st.latex()` | MathJax |
+| `Plot` | Visualisierung | `st.plotly_chart()` | Plotly.js |
+| `Table` | Tabelle | `st.dataframe()` | `<table>` |
+| `Metric` | KPI | `st.metric()` | Custom Card |
+| `Expander` | Aufklappbar | `st.expander()` | Bootstrap Accordion |
+| `InfoBox` | Info | `st.info()` | Bootstrap Alert |
+| `Columns` | Spalten | `st.columns()` | Bootstrap Grid |
+
+## 🔧 Erweiterung
+
+### Neues Frontend hinzufügen
+
+1. Neuen Renderer erstellen:
+```python
+class TerminalContentRenderer:
+    def render(self, content: EducationalContent) -> str:
+        # Interpretiere Content als Terminal-Output
+        pass
+```
+
+2. In Adapter integrieren - fertig!
+
+### Neuen Content hinzufügen
+
+1. Neuen ContentBuilder erstellen:
+```python
+class TimeSeriesContent(ContentBuilder):
+    def build(self) -> EducationalContent:
+        return EducationalContent(
+            title="📈 Zeitreihenanalyse",
+            chapters=[...]
+        )
+```
+
+2. Beide Frontends zeigen es automatisch an!
 
 ## 📄 Lizenz
 

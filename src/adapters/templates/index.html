@@ -1,40 +1,81 @@
 {% extends "base.html" %}
 
-{% block content %}
-<div class="row">
-    <div class="col-md-6 mb-4">
-        <div class="card h-100">
-            <div class="card-body text-center">
-                <h3>📈 Einfache Regression</h3>
-                <p class="text-muted">Eine unabhängige Variable</p>
-                <p>Analysiere den linearen Zusammenhang zwischen zwei Variablen.</p>
-                <a href="/simple" class="btn btn-primary">Starten →</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 mb-4">
-        <div class="card h-100">
-            <div class="card-body text-center">
-                <h3>📊 Multiple Regression</h3>
-                <p class="text-muted">Mehrere unabhängige Variablen</p>
-                <p>Analysiere den Einfluss mehrerer Prädiktoren gleichzeitig.</p>
-                <a href="/multiple" class="btn btn-primary">Starten →</a>
-            </div>
-        </div>
-    </div>
-</div>
+{% block title %}Regression Analysis - Home{% endblock %}
 
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="info-box">
-            <h5>🎓 Über dieses Tool</h5>
-            <p>Dieses interaktive Tool führt Sie durch die wichtigsten Konzepte der linearen Regression:</p>
-            <ul>
-                <li><strong>GET</strong> - Daten generieren oder laden</li>
-                <li><strong>CALCULATE</strong> - Statistiken berechnen (OLS)</li>
-                <li><strong>PLOT</strong> - Visualisierungen erstellen</li>
-                <li><strong>DISPLAY</strong> - Ergebnisse präsentieren</li>
-            </ul>
+{% block content %}
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="display-4">📊 Regression Analysis</h1>
+        <p class="lead text-muted">Interaktives Lernen mit statistischen Modellen</p>
+    </div>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-5 mb-4">
+            <div class="card h-100 shadow">
+                <div class="card-body text-center">
+                    <h2 class="card-title">📈 Einfache Regression</h2>
+                    <p class="card-text">
+                        Analysiere den Zusammenhang zwischen einer unabhängigen 
+                        und einer abhängigen Variable.
+                    </p>
+                    <ul class="list-unstyled text-start mb-4">
+                        <li>✅ OLS-Schätzung</li>
+                        <li>✅ R² und Modellgüte</li>
+                        <li>✅ t-Tests und F-Tests</li>
+                        <li>✅ Residuendiagnostik</li>
+                        <li>✅ 3D-Visualisierungen</li>
+                    </ul>
+                    <a href="/simple" class="btn btn-primary btn-lg">
+                        Zur Analyse →
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-5 mb-4">
+            <div class="card h-100 shadow">
+                <div class="card-body text-center">
+                    <h2 class="card-title">📊 Multiple Regression</h2>
+                    <p class="card-text">
+                        Erweitere die Analyse auf mehrere Prädiktoren und 
+                        verstehe komplexere Zusammenhänge.
+                    </p>
+                    <ul class="list-unstyled text-start mb-4">
+                        <li>✅ Matrixnotation</li>
+                        <li>✅ Partielle Effekte</li>
+                        <li>✅ Multikollinearität & VIF</li>
+                        <li>✅ Dummy-Variablen</li>
+                        <li>✅ 3D-Regressionsebene</li>
+                    </ul>
+                    <a href="/multiple" class="btn btn-primary btn-lg">
+                        Zur Analyse →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-8">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5 class="card-title">🏗️ Architektur</h5>
+                    <p class="card-text">
+                        Diese Anwendung demonstriert eine <strong>frontend-agnostische Architektur</strong>:
+                    </p>
+                    <ul>
+                        <li><strong>ContentBuilder</strong> - Definiert Inhalte als Datenstrukturen</li>
+                        <li><strong>StreamlitRenderer</strong> - Rendert für Streamlit</li>
+                        <li><strong>HTMLRenderer</strong> - Rendert für Flask/Web</li>
+                    </ul>
+                    <p class="mb-0">
+                        <small class="text-muted">
+                            Der gleiche Educational Content wird von beiden Frontends 
+                            gerendert - ohne Code-Duplizierung!
+                        </small>
+                    </p>
+                </div>
+            </div>
         </div>
     </div>
 </div>

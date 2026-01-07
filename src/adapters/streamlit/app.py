@@ -1,219 +1,450 @@
 """
-Streamlit Adapter - Renders regression analysis in Streamlit.
+Streamlit Application - Universal Frontend.
+
+Uses ContentBuilder + StreamlitContentRenderer for truly frontend-agnostic
+educational content rendering.
+
+The same content structure is used by Flask - only the renderer differs.
 """
 
 import streamlit as st
-from typing import Any, Dict
+import numpy as np
+from typing import Dict, Any, Optional
 
-from ..base import BaseRenderer, RenderContext
-from ...pipeline import RegressionPipeline
-from ...pipeline.plot import PlotCollection
-from ...data import get_multiple_regression_formulas, get_multiple_regression_descriptions
 from ...config import get_logger
+from ...pipeline import RegressionPipeline
+from ...content import SimpleRegressionContent, MultipleRegressionContent
+from ..renderers import StreamlitContentRenderer
 
 logger = get_logger(__name__)
 
 
-class StreamlitRenderer(BaseRenderer):
-    """
-    Streamlit implementation of the regression renderer.
+def run_streamlit_app():
+    """Main Streamlit application entry point."""
+    # Page configuration
+    st.set_page_config(
+        page_title="📊 Regression Analysis",
+        page_icon="📈",
+        layout="wide",
+        initial_sidebar_state="expanded"
+    )
     
-    Uses Streamlit's native components for interactive rendering.
-    """
+    # Custom CSS
+    st.markdown("""
+    <style>
+        .section-header {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1f77b4;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+        .metric-row {
+            display: flex;
+            gap: 1rem;
+        }
+        .stMetric {
+            background-color: #f0f2f6;
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+    </style>
+    """, unsafe_allow_html=True)
     
-    def __init__(self):
-        self.pipeline = RegressionPipeline()
+    # Initialize pipeline
+    pipeline = RegressionPipeline()
     
-    def render(self, context: RenderContext) -> None:
-        """Render based on analysis type."""
-        if context.analysis_type == "simple":
-            self.render_simple_regression(context)
-        else:
-            self.render_multiple_regression(context)
-    
-    def render_simple_regression(self, context: RenderContext) -> None:
-        """Render simple regression with educational content."""
-        from .simple_regression_educational import render_simple_regression_educational
+    # Sidebar controls
+    with st.sidebar:
+        st.title("⚙️ Einstellungen")
         
-        # Deserialize plots back to Plotly figures
-        plots = self._deserialize_plots(context.plots_json)
-        
-        render_simple_regression_educational(
-            data=context.data,
-            stats_result=context.stats,
-            plots=plots,
-            show_formulas=context.show_formulas,
-            show_true_line=context.show_true_line,
-        )
-    
-    def render_multiple_regression(self, context: RenderContext) -> None:
-        """Render multiple regression with educational content."""
-        from .multiple_regression_educational import render_multiple_regression_educational
-        
-        plots = self._deserialize_plots(context.plots_json)
-        
-        render_multiple_regression_educational(
-            data=context.data,
-            stats_result=context.stats,
-            plots=plots,
-            content=context.content,
-            formulas=context.formulas,
-            show_formulas=context.show_formulas,
-        )
-    
-    def _deserialize_plots(self, plots_json: Dict[str, str]) -> PlotCollection:
-        """Deserialize JSON plots back to Plotly figures."""
-        import plotly.io as pio
-        
-        scatter = None
-        residuals = None
-        diagnostics = None
-        extra = {}
-        
-        for name, json_str in plots_json.items():
-            fig = pio.from_json(json_str)
-            if name == "scatter":
-                scatter = fig
-            elif name == "residuals":
-                residuals = fig
-            elif name == "diagnostics":
-                diagnostics = fig
-            else:
-                extra[name] = fig
-        
-        return PlotCollection(
-            scatter=scatter,
-            residuals=residuals,
-            diagnostics=diagnostics,
-            extra=extra
-        )
-    
-    def run(self, host: str = "0.0.0.0", port: int = 8501, debug: bool = False) -> None:
-        """
-        Run the Streamlit app.
-        
-        Note: Streamlit handles its own server, this method sets up the UI.
-        """
-        self._setup_page()
-        self._render_sidebar()
-        self._render_main_content()
-    
-    def _setup_page(self) -> None:
-        """Configure Streamlit page."""
-        st.set_page_config(
-            page_title="📊 Linear Regression Guide",
-            page_icon="📊",
-            layout="wide",
-            initial_sidebar_state="expanded",
-        )
-        
-        # Custom CSS
-        st.markdown("""
-        <style>
-            .main-header { font-size: 2.5rem; font-weight: bold; color: #1f77b4; text-align: center; }
-            .section-header { font-size: 1.6rem; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #1f77b4; padding-bottom: 0.5rem; }
-        </style>
-        """, unsafe_allow_html=True)
-    
-    def _render_sidebar(self) -> None:
-        """Render sidebar controls."""
-        st.sidebar.markdown("# ⚙️ Einstellungen")
-        
-        # Analysis type
-        st.sidebar.markdown("### 📊 Analyse-Typ")
-        analysis_type = st.sidebar.radio(
-            "Wähle Analyse",
+        analysis_type = st.radio(
+            "Analyse-Typ",
             ["Einfache Regression", "Multiple Regression"],
             key="analysis_type"
         )
         
-        # Store in session state
-        st.session_state["current_analysis"] = "simple" if "Einfach" in analysis_type else "multiple"
+        st.markdown("---")
         
         # Dataset selection
-        st.sidebar.markdown("### 📚 Datensatz")
+        st.subheader("📊 Datensatz")
         
-        if st.session_state["current_analysis"] == "simple":
-            datasets = {
-                "electronics": "🏪 Elektronikmarkt",
-                "advertising": "📢 Werbestudie",
-            }
-            dataset = st.sidebar.selectbox(
-                "Datensatz",
-                list(datasets.keys()),
-                format_func=lambda x: datasets[x],
-                key="simple_dataset"
+        if analysis_type == "Einfache Regression":
+            dataset = st.selectbox(
+                "Wähle Datensatz:",
+                ["Bildung & Einkommen", "Grösse & Gewicht", "Temperatur & Eisverkauf", "Custom"],
+                key="dataset_simple"
             )
+            n_points = st.slider("Anzahl Datenpunkte", 20, 200, 50, key="n_simple")
         else:
-            datasets = {
-                "cities": "🌆 Städte-Studie",
-                "houses": "🏠 Immobilien",
-            }
-            dataset = st.sidebar.selectbox(
-                "Datensatz",
-                list(datasets.keys()),
-                format_func=lambda x: datasets[x],
-                key="multiple_dataset"
+            dataset = st.selectbox(
+                "Wähle Datensatz:",
+                ["Immobilienpreise", "Autoverbrauch", "Marketing-Mix", "Custom"],
+                key="dataset_multiple"
             )
+            n_points = st.slider("Anzahl Datenpunkte", 30, 200, 75, key="n_multiple")
         
-        st.session_state["current_dataset"] = dataset
+        st.markdown("---")
         
-        # Parameters
-        st.sidebar.markdown("### 🔧 Parameter")
-        st.session_state["n_samples"] = st.sidebar.slider("Stichprobengrösse", 30, 200, 100)
-        st.session_state["seed"] = st.sidebar.number_input("Seed", 1, 9999, 42)
-        st.session_state["show_formulas"] = st.sidebar.checkbox("Formeln anzeigen", True)
+        # Display options
+        st.subheader("📖 Anzeige")
+        show_formulas = st.checkbox("Formeln anzeigen", value=True)
+        show_code = st.checkbox("R-Code anzeigen", value=False)
     
-    def _render_main_content(self) -> None:
-        """Render main content area."""
-        st.markdown('<p class="main-header">📊 Leitfaden zur Linearen Regression</p>', unsafe_allow_html=True)
+    # Main content
+    if analysis_type == "Einfache Regression":
+        render_simple_regression(pipeline, dataset, n_points, show_formulas)
+    else:
+        render_multiple_regression(pipeline, dataset, n_points, show_formulas)
+
+
+def render_simple_regression(
+    pipeline: RegressionPipeline, 
+    dataset: str, 
+    n_points: int,
+    show_formulas: bool
+):
+    """Render simple regression analysis."""
+    # Get data based on dataset selection
+    data_config = _get_simple_data_config(dataset, n_points)
+    
+    # Map dataset name to pipeline dataset name
+    dataset_map = {
+        "Bildung & Einkommen": "electronics",
+        "Grösse & Gewicht": "temperature",
+        "Temperatur & Eisverkauf": "temperature",
+        "Custom": "electronics",
+    }
+    
+    # Run pipeline
+    pipeline_result = pipeline.run_simple(
+        dataset=dataset_map.get(dataset, "electronics"),
+        n=n_points,
+        seed=42
+    )
+    
+    data = pipeline_result.data
+    # Override labels from our config
+    data.x_label = data_config["x_label"]
+    data.y_label = data_config["y_label"]
+    data.context_title = data_config["title"]
+    data.context_description = data_config["description"]
+    
+    stats_result = pipeline_result.stats
+    
+    # Prepare stats dictionary for content builder
+    stats_dict = _prepare_simple_stats(data, stats_result)
+    
+    # Build content using framework-agnostic ContentBuilder
+    content_builder = SimpleRegressionContent(stats_dict, {})
+    content = content_builder.build()
+    
+    # Render using Streamlit-specific renderer
+    renderer = StreamlitContentRenderer(
+        plots={},  # Plots are generated interactively
+        data={
+            "x": data.x,
+            "y": data.y,
+            "x_label": data.x_label,
+            "y_label": data.y_label,
+        },
+        stats=stats_dict
+    )
+    
+    renderer.render(content)
+
+
+def render_multiple_regression(
+    pipeline: RegressionPipeline,
+    dataset: str,
+    n_points: int,
+    show_formulas: bool
+):
+    """Render multiple regression analysis."""
+    # Get data based on dataset selection
+    data_config = _get_multiple_data_config(dataset, n_points)
+    
+    # Map dataset name to pipeline dataset name
+    dataset_map = {
+        "Immobilienpreise": "houses",
+        "Autoverbrauch": "cities",
+        "Marketing-Mix": "cities",
+        "Custom": "cities",
+    }
+    
+    # Run pipeline
+    pipeline_result = pipeline.run_multiple(
+        dataset=dataset_map.get(dataset, "cities"),
+        n=n_points,
+        seed=42
+    )
+    
+    data = pipeline_result.data
+    stats_result = pipeline_result.stats
+    
+    # Use data from pipeline
+    x1 = data.x1
+    x2 = data.x2
+    y = data.y
+    
+    # Prepare stats dictionary
+    stats_dict = _prepare_multiple_stats(data_config, stats_result, x1, x2, y, n_points)
+    
+    # Build content using framework-agnostic ContentBuilder
+    content_builder = MultipleRegressionContent(stats_dict, {})
+    content = content_builder.build()
+    
+    # Render using Streamlit-specific renderer
+    renderer = StreamlitContentRenderer(
+        plots={},
+        data={
+            "x1": x1,
+            "x2": x2,
+            "y": y,
+            "x1_label": data_config["x1_label"],
+            "x2_label": data_config["x2_label"],
+            "y_label": data_config["y_label"],
+        },
+        stats=stats_dict
+    )
+    
+    renderer.render(content)
+
+
+def _get_simple_data_config(dataset: str, n: int) -> Dict[str, Any]:
+    """Get data configuration for simple regression."""
+    configs = {
+        "Bildung & Einkommen": {
+            "x_label": "Bildungsjahre",
+            "y_label": "Jahreseinkommen (CHF)",
+            "title": "Bildung und Einkommen",
+            "description": "Untersucht den Zusammenhang zwischen Bildungsjahren und Einkommen.",
+            "y_unit": "CHF"
+        },
+        "Grösse & Gewicht": {
+            "x_label": "Körpergrösse (cm)",
+            "y_label": "Körpergewicht (kg)",
+            "title": "Körpergrösse und Gewicht",
+            "description": "Analysiert den Zusammenhang zwischen Körpergrösse und Gewicht.",
+            "y_unit": "kg"
+        },
+        "Temperatur & Eisverkauf": {
+            "x_label": "Temperatur (°C)",
+            "y_label": "Eisverkauf (Einheiten)",
+            "title": "Temperatur und Eisverkauf",
+            "description": "Untersucht wie die Temperatur den Eisverkauf beeinflusst.",
+            "y_unit": "Einheiten"
+        },
+        "Custom": {
+            "x_label": "X",
+            "y_label": "Y",
+            "title": "Benutzerdefinierte Daten",
+            "description": "Analyse mit benutzerdefinierten Daten.",
+            "y_unit": "Einheiten"
+        }
+    }
+    return configs.get(dataset, configs["Custom"])
+
+
+def _get_multiple_data_config(dataset: str, n: int) -> Dict[str, Any]:
+    """Get data configuration for multiple regression."""
+    configs = {
+        "Immobilienpreise": {
+            "x1_label": "Wohnfläche (m²)",
+            "x2_label": "Zimmer",
+            "y_label": "Preis (CHF)",
+            "title": "Immobilienpreise",
+            "description": "Preis basierend auf Fläche und Zimmeranzahl.",
+            "x1_range": (50, 200),
+            "x2_range": (2, 6),
+            "true_intercept": 100000,
+            "true_beta1": 3000,
+            "true_beta2": 50000,
+            "noise": 50000
+        },
+        "Autoverbrauch": {
+            "x1_label": "Gewicht (kg)",
+            "x2_label": "PS",
+            "y_label": "Verbrauch (L/100km)",
+            "title": "Autoerbrauch",
+            "description": "Kraftstoffverbrauch basierend auf Gewicht und Leistung.",
+            "x1_range": (1000, 2500),
+            "x2_range": (80, 300),
+            "true_intercept": 2,
+            "true_beta1": 0.003,
+            "true_beta2": 0.02,
+            "noise": 1
+        },
+        "Marketing-Mix": {
+            "x1_label": "TV-Budget (TCHF)",
+            "x2_label": "Online-Budget (TCHF)",
+            "y_label": "Umsatz (TCHF)",
+            "title": "Marketing-Mix Analyse",
+            "description": "Umsatz basierend auf Werbeausgaben.",
+            "x1_range": (10, 100),
+            "x2_range": (5, 50),
+            "true_intercept": 50,
+            "true_beta1": 1.5,
+            "true_beta2": 2.0,
+            "noise": 20
+        },
+        "Custom": {
+            "x1_label": "X₁",
+            "x2_label": "X₂",
+            "y_label": "Y",
+            "title": "Benutzerdefinierte Daten",
+            "description": "Multiple Regression mit benutzerdefinierten Daten.",
+            "x1_range": (0, 100),
+            "x2_range": (0, 100),
+            "true_intercept": 10,
+            "true_beta1": 2,
+            "true_beta2": 3,
+            "noise": 10
+        }
+    }
+    return configs.get(dataset, configs["Custom"])
+
+
+def _prepare_simple_stats(data, stats_result) -> Dict[str, Any]:
+    """Prepare statistics dictionary for simple regression content."""
+    from scipy import stats as scipy_stats
+    
+    x, y = data.x, data.y
+    n = len(x)
+    
+    # Correlation test
+    corr = np.corrcoef(x, y)[0, 1]
+    t_corr = corr * np.sqrt((n - 2) / (1 - corr**2)) if abs(corr) < 1 else 0
+    p_corr = 2 * (1 - scipy_stats.t.cdf(abs(t_corr), df=n-2)) if abs(corr) < 1 else 0
+    
+    # Spearman
+    spearman_r, spearman_p = scipy_stats.spearmanr(x, y)
+    
+    # F-statistic
+    msr = stats_result.ssr / 1 if stats_result.ssr else 0
+    mse = stats_result.sse / stats_result.df if stats_result.sse and stats_result.df else 1
+    f_stat = msr / mse if mse else 0
+    p_f = 1 - scipy_stats.f.cdf(f_stat, dfn=1, dfd=stats_result.df) if f_stat else 1
+    
+    return {
+        # Context
+        "context_title": data.context_title,
+        "context_description": data.context_description,
+        "x_label": data.x_label,
+        "y_label": data.y_label,
+        "y_unit": getattr(data, 'y_unit', ''),
         
-        analysis_type = st.session_state.get("current_analysis", "simple")
-        dataset = st.session_state.get("current_dataset", "electronics")
-        n = st.session_state.get("n_samples", 100)
-        seed = st.session_state.get("seed", 42)
-        show_formulas = st.session_state.get("show_formulas", True)
+        # Sample info
+        "n": n,
         
-        # Run pipeline
-        if analysis_type == "simple":
-            result = self.pipeline.run_simple(dataset=dataset, n=n, seed=seed)
-            plots = self.pipeline.plotter.simple_regression_plots(result.data, result.stats)
-            
-            context = RenderContext(
-                analysis_type="simple",
-                data=result.data,
-                stats=result.stats,
-                plots_json=self.serialize_plots(plots),
-                show_formulas=show_formulas,
-                dataset_name=dataset,
-            )
-            self.render_simple_regression(context)
-        else:
-            result = self.pipeline.run_multiple(dataset=dataset, n=n, seed=seed)
-            plots = self.pipeline.plotter.multiple_regression_plots(result.data, result.stats)
-            
-            content = get_multiple_regression_descriptions(dataset)
-            formulas = get_multiple_regression_formulas(dataset)
-            
-            context = RenderContext(
-                analysis_type="multiple",
-                data=result.data,
-                stats=result.stats,
-                plots_json=self.serialize_plots(plots),
-                show_formulas=show_formulas,
-                content=content,
-                formulas=formulas,
-                dataset_name=dataset,
-            )
-            self.render_multiple_regression(context)
+        # Descriptive stats
+        "x_mean": np.mean(x),
+        "x_std": np.std(x, ddof=1),
+        "x_min": np.min(x),
+        "x_max": np.max(x),
+        "y_mean": np.mean(y),
+        "y_std": np.std(y, ddof=1),
+        "y_min": np.min(y),
+        "y_max": np.max(y),
+        
+        # Correlation
+        "correlation": corr,
+        "covariance": np.cov(x, y, ddof=1)[0, 1],
+        "t_correlation": t_corr,
+        "p_correlation": p_corr,
+        "spearman_r": spearman_r,
+        "spearman_p": spearman_p,
+        
+        # Regression coefficients
+        "intercept": stats_result.intercept,
+        "slope": stats_result.slope,
+        "se_intercept": stats_result.se_intercept,
+        "se_slope": stats_result.se_slope,
+        "t_intercept": stats_result.t_intercept,
+        "t_slope": stats_result.t_slope,
+        "p_intercept": stats_result.p_intercept,
+        "p_slope": stats_result.p_slope,
+        
+        # Model fit
+        "r_squared": stats_result.r_squared,
+        "r_squared_adj": stats_result.r_squared_adj,
+        "mse": stats_result.mse,
+        "sse": stats_result.sse,
+        "ssr": stats_result.ssr,
+        "sst": stats_result.sst,
+        "df": stats_result.df,
+        
+        # F-test
+        "f_statistic": f_stat,
+        "p_f": p_f,
+        
+        # Residuals
+        "residuals": stats_result.residuals,
+        "y_pred": stats_result.y_pred,
+    }
 
 
-def create_streamlit_app() -> StreamlitRenderer:
-    """Factory function to create Streamlit app."""
-    return StreamlitRenderer()
+def _prepare_multiple_stats(
+    config: Dict[str, Any],
+    stats_result,
+    x1: np.ndarray,
+    x2: np.ndarray,
+    y: np.ndarray,
+    n: int
+) -> Dict[str, Any]:
+    """Prepare statistics dictionary for multiple regression content."""
+    from scipy import stats as scipy_stats
+    
+    # VIF calculation
+    corr_x1_x2 = np.corrcoef(x1, x2)[0, 1]
+    r2_x1 = corr_x1_x2**2
+    vif = 1 / (1 - r2_x1) if r2_x1 < 1 else float('inf')
+    
+    return {
+        # Context
+        "context_title": config["title"],
+        "context_description": config["description"],
+        "x1_label": config["x1_label"],
+        "x2_label": config["x2_label"],
+        "y_label": config["y_label"],
+        
+        # Sample info
+        "n": n,
+        "k": 2,
+        
+        # Coefficients
+        "intercept": stats_result.intercept,
+        "beta1": stats_result.betas[0] if hasattr(stats_result, 'betas') else 0,
+        "beta2": stats_result.betas[1] if hasattr(stats_result, 'betas') else 0,
+        "se_intercept": stats_result.se_intercept if hasattr(stats_result, 'se_intercept') else 0,
+        "se_beta1": stats_result.se_betas[0] if hasattr(stats_result, 'se_betas') else 0,
+        "se_beta2": stats_result.se_betas[1] if hasattr(stats_result, 'se_betas') else 0,
+        "t_intercept": stats_result.t_intercept if hasattr(stats_result, 't_intercept') else 0,
+        "t_beta1": stats_result.t_betas[0] if hasattr(stats_result, 't_betas') else 0,
+        "t_beta2": stats_result.t_betas[1] if hasattr(stats_result, 't_betas') else 0,
+        "p_intercept": stats_result.p_intercept if hasattr(stats_result, 'p_intercept') else 1,
+        "p_beta1": stats_result.p_betas[0] if hasattr(stats_result, 'p_betas') else 1,
+        "p_beta2": stats_result.p_betas[1] if hasattr(stats_result, 'p_betas') else 1,
+        
+        # Model fit
+        "r_squared": stats_result.r_squared,
+        "r_squared_adj": stats_result.r_squared_adj,
+        "f_statistic": stats_result.f_statistic if hasattr(stats_result, 'f_statistic') else 0,
+        "p_f": stats_result.p_f if hasattr(stats_result, 'p_f') else 1,
+        "df": n - 3,
+        
+        # Multicollinearity
+        "corr_x1_x2": corr_x1_x2,
+        "vif_x1": vif,
+        "vif_x2": vif,
+        
+        # Durbin-Watson
+        "durbin_watson": 2.0,  # Placeholder
+        
+        # Residuals
+        "residuals": stats_result.residuals if hasattr(stats_result, 'residuals') else [],
+    }
 
 
-# Direct execution entry point
 if __name__ == "__main__":
-    app = create_streamlit_app()
-    app.run()
+    run_streamlit_app()

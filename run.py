@@ -1,86 +1,117 @@
 #!/usr/bin/env python3
 """
-📊 Linear Regression Guide - Unified Entry Point
+Unified Entry Point - Framework-Agnostic Application.
 
-Auto-detects the framework and runs appropriately:
-- Streamlit: `streamlit run run.py`
-- Flask: `python run.py` or `flask run`
+This module detects the runtime environment and launches the appropriate frontend.
 
-Environment variable override:
-    REGRESSION_FRAMEWORK=streamlit|flask
+Usage:
+    # Auto-detect and run
+    python run.py
+    
+    # Force Streamlit
+    streamlit run run.py
+    
+    # Force Flask
+    FLASK_APP=run.py flask run
+    # or
+    python run.py --flask
+    
+Architecture:
+    ┌─────────────────────────────────────────────────────────────┐
+    │                         run.py                               │
+    │                    (Auto-Detection)                          │
+    └──────────────────────────┬──────────────────────────────────┘
+                               │
+              ┌────────────────┴────────────────┐
+              ↓                                 ↓
+    ┌─────────────────────┐           ┌─────────────────────┐
+    │   Streamlit App     │           │     Flask App       │
+    │  (st.* rendering)   │           │  (HTML rendering)   │
+    └─────────────────────┘           └─────────────────────┘
+              │                                 │
+              └────────────────┬────────────────┘
+                               ↓
+    ┌─────────────────────────────────────────────────────────────┐
+    │              ContentBuilder (Framework-Agnostic)             │
+    │        SimpleRegressionContent / MultipleRegressionContent   │
+    └─────────────────────────────────────────────────────────────┘
+              │                                 │
+              ↓                                 ↓
+    ┌─────────────────────┐           ┌─────────────────────┐
+    │ StreamlitRenderer   │           │   HTMLRenderer      │
+    │  (interprets →st.*) │           │ (interprets →HTML)  │
+    └─────────────────────┘           └─────────────────────┘
 """
 
 import sys
 import os
 
 # Add src to path
-sys.path.insert(0, os.path.dirname(__file__))
-
-from src.adapters.detector import FrameworkDetector, Framework
-from src.config import get_logger
-
-logger = get_logger(__name__)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
-def main():
-    """Main entry point with auto-detection."""
-    framework = FrameworkDetector.detect()
+def detect_framework() -> str:
+    """
+    Detect which framework to use.
     
-    logger.info(f"Detected framework: {framework.value}")
+    Returns:
+        'streamlit', 'flask', or 'unknown'
+    """
+    # Check command line arguments
+    if '--flask' in sys.argv:
+        return 'flask'
+    if '--streamlit' in sys.argv:
+        return 'streamlit'
     
-    if framework == Framework.STREAMLIT:
-        run_streamlit()
-    elif framework == Framework.FLASK:
-        run_flask()
-    else:
-        # Default: try to determine from how we were called
-        if _is_streamlit_invocation():
-            run_streamlit()
-        else:
-            # Default to Flask for direct python execution
-            print("🔍 Framework not detected. Defaulting to Flask.")
-            print("   For Streamlit: streamlit run run.py")
-            print("   For Flask: python run.py")
-            print("")
-            run_flask()
-
-
-def _is_streamlit_invocation() -> bool:
-    """Check if we're being run via streamlit command."""
-    return any('streamlit' in arg.lower() for arg in sys.argv)
+    # Check environment variables
+    if os.environ.get('FLASK_APP'):
+        return 'flask'
+    
+    # Check if running in Streamlit
+    try:
+        import streamlit.runtime.scriptrunner as sr
+        ctx = sr.get_script_run_ctx()
+        if ctx is not None:
+            return 'streamlit'
+    except (ImportError, Exception):
+        pass
+    
+    # Check if imported by Streamlit CLI
+    if any('streamlit' in arg.lower() for arg in sys.argv):
+        return 'streamlit'
+    
+    # Default to Streamlit for interactive use
+    return 'streamlit'
 
 
 def run_streamlit():
-    """Run as Streamlit app."""
-    logger.info("Starting Streamlit app...")
-    
-    from src.adapters.streamlit import StreamlitRenderer
-    
-    app = StreamlitRenderer()
-    app.run()
+    """Run Streamlit application."""
+    from src.adapters.streamlit.app import run_streamlit_app
+    run_streamlit_app()
 
 
-def run_flask(host: str = "0.0.0.0", port: int = 5000, debug: bool = True):
-    """Run as Flask app."""
-    logger.info(f"Starting Flask app on {host}:{port}...")
-    
-    from src.adapters.flask_app import FlaskRenderer
-    
-    app = FlaskRenderer()
-    app.run(host=host, port=port, debug=debug)
+def run_flask():
+    """Run Flask application."""
+    from src.adapters.flask_app import run_flask as flask_run
+    flask_run()
 
 
-# Flask WSGI entry point
 def create_app():
-    """Factory function for WSGI servers (gunicorn, waitress, etc.)."""
+    """Create Flask app for WSGI servers."""
     from src.adapters.flask_app import create_flask_app
     return create_flask_app()
 
 
-# Streamlit entry point (when run via `streamlit run`)
-if FrameworkDetector.is_streamlit():
+# Main execution
+framework = detect_framework()
+
+if framework == 'flask':
+    # For direct Python execution
+    if __name__ == '__main__':
+        run_flask()
+    else:
+        # For WSGI servers (gunicorn, etc.)
+        app = create_app()
+else:
+    # Streamlit mode - execute the app
     run_streamlit()
-
-
-if __name__ == "__main__":
-    main()
