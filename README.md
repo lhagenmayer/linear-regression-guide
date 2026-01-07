@@ -7,24 +7,22 @@ Ein interaktives, didaktisches Tool für lineare Regressionsanalyse.
 ## 🎯 Architektur
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    FRONTEND-AGNOSTIC                        │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│   ┌─────────┐   ┌───────────┐   ┌──────┐   ┌─────────┐    │
-│   │   GET   │ → │ CALCULATE │ → │ PLOT │ → │ DISPLAY │    │
-│   └─────────┘   └───────────┘   └──────┘   └─────────┘    │
-│        │              │             │            │         │
-│   DataFetcher   Statistics     PlotBuilder   Adapters     │
-│                 Calculator                                 │
-│                                                             │
-├─────────────────────────────────────────────────────────────┤
-│              FRAMEWORK ADAPTERS                             │
-│  ┌──────────────────┐    ┌──────────────────┐              │
-│  │    Streamlit     │    │      Flask       │              │
-│  │   (Interactive)  │    │   (Traditional)  │              │
-│  └──────────────────┘    └──────────────────┘              │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                 CORE PIPELINE (Framework-Agnostic)              │
+│  ┌─────────┐   ┌───────────┐   ┌──────────┐   ┌─────────────┐  │
+│  │   GET   │ → │ CALCULATE │ → │   PLOT   │ → │   DISPLAY   │  │
+│  │  Data   │   │   Stats   │   │  Plotly  │   │   Prepare   │  │
+│  └─────────┘   └───────────┘   └──────────┘   └─────────────┘  │
+├─────────────────────────────────────────────────────────────────┤
+│                    FRAMEWORK ADAPTERS                           │
+│  ┌────────────────────────┐    ┌────────────────────────┐      │
+│  │       STREAMLIT        │    │         FLASK          │      │
+│  │  ┌──────────────────┐  │    │  ┌──────────────────┐  │      │
+│  │  │ Educational Tabs │  │    │  │  HTML Templates  │  │      │
+│  │  │   (st.* calls)   │  │    │  │   (Jinja2)       │  │      │
+│  │  └──────────────────┘  │    │  └──────────────────┘  │      │
+│  └────────────────────────┘    └────────────────────────┘      │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ## 🚀 Schnellstart
@@ -45,46 +43,48 @@ python run.py
 ### Option 3: WSGI Server (Production)
 ```bash
 gunicorn "run:create_app()"
-# oder: waitress-serve --port=5000 run:create_app
 ```
 
 ## 📁 Projektstruktur
 
 ```
 src/
-├── pipeline/                 # Core Pipeline (Framework-Agnostic)
-│   ├── get_data.py          # Step 1: GET - Daten generieren
-│   ├── calculate.py         # Step 2: CALCULATE - Statistiken
-│   ├── plot.py              # Step 3: PLOT - Visualisierungen
-│   ├── display.py           # Step 4: DISPLAY - Data Preparation
-│   └── regression_pipeline.py  # Pipeline Orchestrator
+├── pipeline/                    # CORE (Framework-Agnostic)
+│   ├── get_data.py             # Step 1: Data fetching
+│   ├── calculate.py            # Step 2: Statistics
+│   ├── plot.py                 # Step 3: Plotly figures
+│   ├── display.py              # Step 4: Data preparation
+│   └── regression_pipeline.py  # Orchestrator
 │
-├── adapters/                 # Framework Adapters
-│   ├── detector.py          # Auto-Detection (Streamlit/Flask)
-│   ├── base.py              # Abstract Renderer Interface
-│   ├── streamlit_app.py     # Streamlit Implementation
-│   ├── flask_app.py         # Flask Implementation
-│   └── templates/           # Flask HTML Templates
+├── adapters/                    # FRAMEWORK ADAPTERS
+│   ├── detector.py             # Auto-detection
+│   ├── base.py                 # Abstract interface
+│   │
+│   ├── streamlit/              # Streamlit-specific
+│   │   ├── app.py              # StreamlitRenderer
+│   │   ├── simple_regression_educational.py   # st.* UI
+│   │   └── multiple_regression_educational.py # st.* UI
+│   │
+│   ├── flask_app.py            # Flask renderer
+│   └── templates/              # HTML templates
+│       ├── base.html
+│       ├── index.html
+│       ├── simple_regression.html
+│       └── multiple_regression.html
 │
-├── ui/tabs/                  # Educational Content
-│   ├── simple_regression_educational.py
-│   └── multiple_regression_educational.py
-│
-├── data/content.py          # Dynamic Content
-└── config/                  # Configuration & Logging
+├── data/content.py             # Dynamic content
+└── config/                     # Configuration
 
-run.py                       # Unified Entry Point
+run.py                          # Unified entry point
 ```
 
 ## 🔄 Auto-Detection
-
-Das Framework wird automatisch erkannt:
 
 | Aufruf | Erkanntes Framework |
 |--------|---------------------|
 | `streamlit run run.py` | Streamlit |
 | `python run.py` | Flask |
-| `REGRESSION_FRAMEWORK=flask python run.py` | Flask (explizit) |
+| `REGRESSION_FRAMEWORK=streamlit` | Streamlit (explizit) |
 | `gunicorn "run:create_app()"` | Flask (WSGI) |
 
 ## 💻 API Usage
@@ -92,90 +92,59 @@ Das Framework wird automatisch erkannt:
 ```python
 from src.pipeline import RegressionPipeline
 
-# Pipeline initialisieren
+# Pipeline ist komplett framework-agnostisch
 pipeline = RegressionPipeline()
 
 # Einfache Regression
-result = pipeline.run_simple(
-    dataset="electronics",
-    n=100,
-    seed=42
-)
-
+result = pipeline.run_simple(dataset="electronics", n=100, seed=42)
 print(f"R² = {result.stats.r_squared:.4f}")
-print(f"β₁ = {result.stats.slope:.4f}")
 
 # Multiple Regression
-result = pipeline.run_multiple(
-    dataset="cities",
-    n=100,
-    seed=42
-)
-
-print(f"R² = {result.stats.r_squared:.4f}")
+result = pipeline.run_multiple(dataset="cities", n=100, seed=42)
 print(f"F = {result.stats.f_statistic:.2f}")
 ```
 
-## 🎓 Features
+## 🏗️ Custom Adapter erstellen
 
-### Einfache Regression
-- OLS-Schätzung mit transparenten Formeln
-- R², adjustiertes R², Standardfehler
-- t-Tests, p-Werte, Konfidenzintervalle
-- Residuenanalyse & Diagnostik-Plots
-- Interaktive Visualisierungen
+```python
+from src.adapters.base import BaseRenderer, RenderContext
 
-### Multiple Regression
-- Mehrere Prädiktoren
-- 3D Regressionsebene
-- VIF & Multikollinearität
-- F-Test für Gesamtsignifikanz
-- Ceteris Paribus Interpretation
+class MyRenderer(BaseRenderer):
+    def render(self, context: RenderContext):
+        # Use context.to_dict() for template data
+        data = context.to_dict()
+        # Render with your framework...
+    
+    def render_simple_regression(self, context):
+        pass
+    
+    def render_multiple_regression(self, context):
+        pass
+    
+    def run(self, host, port, debug):
+        # Start your server
+        pass
+```
 
 ## 🧪 Tests
 
 ```bash
-# Alle Tests
 pytest tests/ -v
-
-# Nur Pipeline Tests
-pytest tests/unit/test_pipeline.py -v
+# 26 tests covering pipeline + adapters
 ```
 
 ## 📦 Dependencies
 
 ```
-numpy>=1.24.0      # Numerische Berechnungen
-pandas>=2.0.0      # Datenstrukturen
-scipy>=1.11.0      # Statistische Funktionen
-plotly>=5.18.0     # Interaktive Plots
+# Core (required)
+numpy>=1.24.0
+pandas>=2.0.0
+scipy>=1.11.0
+plotly>=5.18.0
 
-# Web Frameworks (mindestens eines)
-streamlit>=1.28.0  # Interaktive Web App
-flask>=3.0.0       # Traditionelle Web App
-```
-
-## 🏗️ Eigenen Adapter erstellen
-
-```python
-from src.adapters.base import BaseRenderer, RenderContext
-
-class MyCustomRenderer(BaseRenderer):
-    def render(self, context: RenderContext):
-        # Eigene Rendering-Logik
-        pass
-    
-    def render_simple_regression(self, context: RenderContext):
-        # Simple Regression rendern
-        pass
-    
-    def render_multiple_regression(self, context: RenderContext):
-        # Multiple Regression rendern
-        pass
-    
-    def run(self, host="0.0.0.0", port=8000, debug=False):
-        # Server starten
-        pass
+# Frameworks (at least one)
+streamlit>=1.28.0   # For interactive app
+flask>=3.0.0        # For traditional web app
 ```
 
 ## 📄 Lizenz

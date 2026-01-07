@@ -5,11 +5,11 @@ Streamlit Adapter - Renders regression analysis in Streamlit.
 import streamlit as st
 from typing import Any, Dict
 
-from .base import BaseRenderer, RenderContext
-from ..pipeline import RegressionPipeline
-from ..pipeline.plot import PlotCollection
-from ..data import get_multiple_regression_formulas, get_multiple_regression_descriptions
-from ..config import get_logger
+from ..base import BaseRenderer, RenderContext
+from ...pipeline import RegressionPipeline
+from ...pipeline.plot import PlotCollection
+from ...data import get_multiple_regression_formulas, get_multiple_regression_descriptions
+from ...config import get_logger
 
 logger = get_logger(__name__)
 
@@ -33,7 +33,7 @@ class StreamlitRenderer(BaseRenderer):
     
     def render_simple_regression(self, context: RenderContext) -> None:
         """Render simple regression with educational content."""
-        from ..ui.tabs.simple_regression_educational import render_simple_regression_educational
+        from .simple_regression_educational import render_simple_regression_educational
         
         # Deserialize plots back to Plotly figures
         plots = self._deserialize_plots(context.plots_json)
@@ -48,7 +48,7 @@ class StreamlitRenderer(BaseRenderer):
     
     def render_multiple_regression(self, context: RenderContext) -> None:
         """Render multiple regression with educational content."""
-        from ..ui.tabs.multiple_regression_educational import render_multiple_regression_educational
+        from .multiple_regression_educational import render_multiple_regression_educational
         
         plots = self._deserialize_plots(context.plots_json)
         

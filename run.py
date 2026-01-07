@@ -54,7 +54,7 @@ def run_streamlit():
     """Run as Streamlit app."""
     logger.info("Starting Streamlit app...")
     
-    from src.adapters.streamlit_app import StreamlitRenderer
+    from src.adapters.streamlit import StreamlitRenderer
     
     app = StreamlitRenderer()
     app.run()

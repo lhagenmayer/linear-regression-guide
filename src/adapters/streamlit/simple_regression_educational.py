@@ -28,10 +28,17 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from typing import Dict, Any, Optional
 
-from ...config import get_logger, CAMERA_PRESETS
+from ...config import get_logger
 from ...pipeline.get_data import DataResult
 from ...pipeline.calculate import RegressionResult
 from ...pipeline.plot import PlotCollection
+
+# Camera presets for 3D plots
+CAMERA_PRESETS = {
+    "default": dict(eye=dict(x=1.5, y=1.5, z=1.2)),
+    "top": dict(eye=dict(x=0, y=0, z=2)),
+    "side": dict(eye=dict(x=2, y=0, z=0.5)),
+}
 
 logger = get_logger(__name__)
 
