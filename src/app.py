@@ -1,69 +1,41 @@
 """
-🎓 Umfassender Leitfaden zur Linearen Regression
-=================================================
-Ein didaktisches Tool zum Verstehen der einfachen linearen Regression.
-Alle Konzepte auf einer Seite mit logischem roten Faden.
+🎓 Leitfaden zur Linearen Regression
+====================================
 
-Starten mit: streamlit run app.py
+Ein didaktisches Tool mit klarer 4-Stufen-Pipeline:
+    1. GET      → Daten holen
+    2. CALCULATE → Statistiken berechnen
+    3. PLOT     → Visualisierungen erstellen
+    4. DISPLAY  → Im UI anzeigen
 
-This is a refactored version with better code organization.
+Start: streamlit run src/app.py
 """
 
 import warnings
 import streamlit as st
 
-# Suppress warnings for cleaner output
-warnings.filterwarnings('ignore', category=FutureWarning)
-warnings.filterwarnings('ignore', category=UserWarning)
-warnings.filterwarnings('ignore', category=DeprecationWarning)
+# Suppress warnings
+warnings.filterwarnings('ignore')
 
-# Import from our modules
+# Path setup for imports
 import sys
 import os
-
-# Setup proper Python path for imports
 current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(current_dir)  # Project root
-
-# Add both src and project root to path
+parent_dir = os.path.dirname(current_dir)
 for path_dir in [current_dir, parent_dir]:
     if path_dir not in sys.path:
         sys.path.insert(0, path_dir)
 
-# Use relative imports (this works with Streamlit)
-# For direct execution, the PYTHONPATH setup above should make it work
-from .config import UI_DEFAULTS
+# Import our pipeline
+from .pipeline import RegressionPipeline
 from .config import get_logger
-from .ui import inject_accessibility_styles
-from .ui import render_r_output_section
-from .utils import initialize_session_state
-from .ui import (
-    render_sidebar_header,
-    render_dataset_selection,
-    render_multiple_regression_params,
-    render_simple_regression_params,
-    render_display_options,
-)
-from .data import (
-    load_multiple_regression_data,
-    load_simple_regression_data,
-    compute_simple_regression_model,
-)
-from .ui import (
-    render_simple_regression_tab,
-    render_multiple_regression_tab,
-    render_datasets_tab,
-)
 
-# Initialize logger for the app
 logger = get_logger(__name__)
 
-# Log application startup
-logger.info("Starting Linear Regression Guide application (refactored version)")
 
-# ---------------------------------------------------------
+# =============================================================================
 # PAGE CONFIG
-# ---------------------------------------------------------
+# =============================================================================
 st.set_page_config(
     page_title="📖 Leitfaden Lineare Regression",
     page_icon="📊",
@@ -71,237 +43,143 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Inject accessibility improvements
-inject_accessibility_styles()
-
-# ---------------------------------------------------------
-# SESSION STATE INITIALIZATION
-# ---------------------------------------------------------
-initialize_session_state()
-
-# Add warning if there have been multiple errors
-if st.session_state.get("error_count", 0) > 3:
-    st.warning("⚠️ Es sind mehrere Fehler aufgetreten. Bitte erwägen Sie, die Seite neu zu laden.")
-    if st.button("🔄 Seite neu laden und Cache leeren"):
-        for key in list(st.session_state.keys()):
-            del st.session_state[key]
-        st.rerun()
-
 # Custom CSS
-st.markdown(
-    """
+st.markdown("""
 <style>
-    .main-header {
-        font-size: 2.8rem;
-        font-weight: bold;
-        color: #1f77b4;
-        text-align: center;
-        margin-bottom: 0.5rem;
-    }
-    .section-header {
-        font-size: 1.8rem;
-        font-weight: bold;
-        color: #2c3e50;
-        border-bottom: 3px solid #1f77b4;
-        padding-bottom: 0.5rem;
-        margin-top: 2rem;
-    }
-    .subsection-header {
-        font-size: 1.4rem;
-        font-weight: bold;
-        color: #34495e;
-        margin-top: 1.5rem;
-    }
-    .concept-box {
-        background-color: #f8f9fa;
-        border-left: 4px solid #1f77b4;
-        padding: 15px;
-        margin: 10px 0;
-        border-radius: 0 8px 8px 0;
-    }
-    .formula-box {
-        background-color: #fff3cd;
-        border: 1px solid #ffc107;
-        padding: 15px;
-        border-radius: 8px;
-        margin: 10px 0;
-    }
-    .interpretation-box {
-        background-color: #d4edda;
-        border: 1px solid #28a745;
-        padding: 15px;
-        border-radius: 8px;
-        margin: 10px 0;
-    }
+    .main-header { font-size: 2.5rem; font-weight: bold; color: #1f77b4; text-align: center; }
+    .section-header { font-size: 1.6rem; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #1f77b4; }
 </style>
-""",
-    unsafe_allow_html=True,
+""", unsafe_allow_html=True)
+
+
+# =============================================================================
+# SIDEBAR - Parameters
+# =============================================================================
+st.sidebar.markdown("# ⚙️ Parameter")
+
+# Tab selection
+analysis_type = st.sidebar.radio(
+    "Analyse-Typ",
+    ["Einfache Regression", "Multiple Regression"],
+    horizontal=True,
 )
 
-# ---------------------------------------------------------
-# SIDEBAR - PARAMETER CONFIGURATION
-# ---------------------------------------------------------
-render_sidebar_header()
-
-# Dataset selection
-dataset_selection = render_dataset_selection()
-dataset_choice = dataset_selection.simple_dataset
-dataset_choice_mult = dataset_selection.multiple_dataset
-
-# Multiple regression parameters
-mult_params_obj = render_multiple_regression_params(dataset_choice_mult)
-n_mult = mult_params_obj.n
-noise_mult_level = mult_params_obj.noise_level
-seed_mult = mult_params_obj.seed
-
-# ---------------------------------------------------------
-# LOAD MULTIPLE REGRESSION DATA
-# ---------------------------------------------------------
-try:
-    mult_data = load_multiple_regression_data(
-        dataset_choice_mult, n_mult, noise_mult_level, seed_mult
-    )
-except Exception as e:
-    logger.error(f"Failed to load multiple regression data: {e}")
-    st.error("Failed to load multiple regression data")
-    st.stop()
-
-# Display options for multiple regression (moved here after data loading)
 st.sidebar.markdown("---")
-with st.sidebar.expander("🔧 Anzeigeoptionen (Multiple)", expanded=False):
-    show_formulas_mult = st.checkbox(
-        "Formeln anzeigen",
-        value=UI_DEFAULTS["show_formulas"],
-        help="Zeige mathematische Formeln in der Anleitung",
-        key="show_formulas_mult",
+
+if analysis_type == "Einfache Regression":
+    # Simple regression parameters
+    st.sidebar.markdown("### 📈 Einfache Regression")
+    
+    dataset = st.sidebar.selectbox(
+        "Datensatz",
+        ["electronics", "advertising", "temperature"],
+        format_func=lambda x: {
+            "electronics": "🏪 Elektronikmarkt",
+            "advertising": "📢 Werbestudie",
+            "temperature": "🍦 Eisverkauf",
+        }.get(x, x)
     )
+    
+    n = st.sidebar.slider("Stichprobengrösse (n)", 10, 100, 50)
+    noise = st.sidebar.slider("Rauschen (σ)", 0.1, 2.0, 0.4, 0.1)
+    seed = st.sidebar.number_input("Random Seed", 1, 9999, 42)
+    
+    with st.sidebar.expander("🎯 Wahre Parameter"):
+        true_intercept = st.slider("β₀ (Intercept)", -2.0, 3.0, 0.6, 0.1)
+        true_slope = st.slider("β₁ (Steigung)", 0.1, 2.0, 0.52, 0.01)
+        show_true_line = st.checkbox("Wahre Linie zeigen", True)
+    
+    show_formulas = st.sidebar.checkbox("Formeln anzeigen", True)
 
-# ---------------------------------------------------------
-# SIMPLE REGRESSION PARAMETERS
-# ---------------------------------------------------------
-# Determine if dataset has true line
-has_true_line = (dataset_choice == "🏪 Elektronikmarkt (simuliert)")
-
-# Render simple regression parameters
-simple_params_obj = render_simple_regression_params(dataset_choice, has_true_line)
-n = simple_params_obj.n
-true_intercept = simple_params_obj.true_intercept
-true_beta = simple_params_obj.true_beta
-noise_level = simple_params_obj.noise_level
-seed = simple_params_obj.seed
-x_variable = simple_params_obj.x_variable
-
-# Display options for simple regression
-display_opts = render_display_options(has_true_line, key_suffix="_simple")
-show_formulas = display_opts.show_formulas
-show_true_line = display_opts.show_true_line
-
-# App Status Indicator
-st.sidebar.markdown("---")
-error_count = st.session_state.get("error_count", 0)
-if error_count == 0:
-    st.sidebar.success("✅ App läuft stabil")
-elif error_count <= 2:
-    st.sidebar.info(f"ℹ️ {error_count} kleine Fehler aufgetreten")
 else:
-    st.sidebar.warning(f"⚠️ {error_count} Fehler - erwägen Sie Neuladen")
-
-# ---------------------------------------------------------
-# LOAD SIMPLE REGRESSION DATA
-# ---------------------------------------------------------
-try:
-    simple_data = load_simple_regression_data(
-        dataset_choice, x_variable, n, true_intercept, true_beta, noise_level, seed
+    # Multiple regression parameters
+    st.sidebar.markdown("### 📊 Multiple Regression")
+    
+    dataset = st.sidebar.selectbox(
+        "Datensatz",
+        ["cities", "houses"],
+        format_func=lambda x: {
+            "cities": "🏙️ Städte-Umsatzstudie",
+            "houses": "🏠 Häuserpreise",
+        }.get(x, x)
     )
     
-    x = simple_data["x"]
-    y = simple_data["y"]
-    x_label = simple_data["x_label"]
-    y_label = simple_data["y_label"]
-    x_unit = simple_data.get("x_unit", "")
-    y_unit = simple_data.get("y_unit", "")
-    context_title = simple_data.get("context_title", "")
-    context_description = simple_data.get("context_description", "")
+    n = st.sidebar.slider("Stichprobengrösse (n)", 20, 200, 75)
+    noise = st.sidebar.slider("Rauschen (σ)", 1.0, 10.0, 3.5, 0.5)
+    seed = st.sidebar.number_input("Random Seed", 1, 9999, 42)
+    show_formulas = st.sidebar.checkbox("Formeln anzeigen", True)
     
-except Exception as e:
-    logger.error(f"Failed to load simple regression data: {e}")
-    st.error("Failed to load simple regression data")
-    st.stop()
+    # Set defaults for simple regression params
+    true_intercept = 0
+    true_slope = 0
+    show_true_line = False
 
-# ---------------------------------------------------------
-# COMPUTE SIMPLE REGRESSION MODEL
-# ---------------------------------------------------------
-try:
-    model_data = compute_simple_regression_model(x, y, x_label, y_label, n)
-except Exception as e:
-    logger.error(f"Failed to compute simple regression model: {e}")
-    st.error("Failed to compute regression model")
-    st.stop()
 
-# ---------------------------------------------------------
-# R OUTPUT DISPLAY - Always visible above tabs
-# ---------------------------------------------------------
-try:
-    render_r_output_section(
-        model=st.session_state.get("current_model"),
-        feature_names=st.session_state.get("current_feature_names"),
-        figsize=(18, 13)
-    )
-except Exception as e:
-    logger.error(f"Error rendering R output: {e}")
-    st.warning("⚠️ R-Ausgabe konnte nicht dargestellt werden.")
-    st.info("Die Regression wurde trotzdem berechnet und kann in den Tabs eingesehen werden.")
+# =============================================================================
+# MAIN CONTENT - Run Pipeline
+# =============================================================================
 
-# ---------------------------------------------------------
-# MAIN CONTENT - Tab-based Navigation
-# ---------------------------------------------------------
-tab1, tab2, tab3 = st.tabs(["📈 Einfache Regression", "📊 Multiple Regression", "📚 Datensätze"])
+# Initialize pipeline
+pipeline = RegressionPipeline()
 
-# TAB 1: SIMPLE REGRESSION
-# Note: For now, we'll use the refactored tab module
-# In a future iteration, the full detailed content from the original app.py
-# can be moved into the simple_regression.py module
-with tab1:
-    render_simple_regression_tab(
-        model_data=model_data,
-        x_label=x_label,
-        y_label=y_label,
-        x_unit=x_unit,
-        y_unit=y_unit,
-        context_title=context_title,
-        context_description=context_description,
-        show_formulas=show_formulas,
-        show_true_line=show_true_line,
-        has_true_line=has_true_line,
-        true_intercept=true_intercept,
-        true_beta=true_beta,
-    )
+# Header
+st.markdown('<p class="main-header">📖 Leitfaden zur Linearen Regression</p>', unsafe_allow_html=True)
+st.markdown("### Von der Frage zur validierten Erkenntnis")
 
-# TAB 2: MULTIPLE REGRESSION
-with tab2:
-    render_multiple_regression_tab(
-        model_data=mult_data,
-        dataset_choice=dataset_choice_mult,
-        show_formulas=show_formulas_mult,
-    )
+# Show pipeline steps
+with st.expander("🔄 Pipeline-Schritte", expanded=False):
+    col1, col2, col3, col4 = st.columns(4)
+    col1.info("**1. GET**\n\nDaten holen")
+    col2.info("**2. CALCULATE**\n\nStatistiken berechnen")
+    col3.info("**3. PLOT**\n\nVisualisierungen")
+    col4.info("**4. DISPLAY**\n\nIm UI anzeigen")
 
-# TAB 3: DATASETS
-with tab3:
-    render_datasets_tab()
-
-# ---------------------------------------------------------
-# FOOTER
-# ---------------------------------------------------------
 st.markdown("---")
-st.markdown(
-    """
-<div style='text-align: center; color: gray; font-size: 12px; padding: 20px;'>
-    📖 Umfassender Leitfaden zur Linearen Regression |
-    Von der Frage zur validierten Erkenntnis |
-    Erstellt mit Streamlit & statsmodels
-</div>
-""",
-    unsafe_allow_html=True,
-)
 
-logger.info("Application rendering complete")
+# Run the appropriate pipeline
+try:
+    if analysis_type == "Einfache Regression":
+        # Run simple regression pipeline
+        result = pipeline.run_simple(
+            dataset=dataset,
+            n=n,
+            noise=noise,
+            seed=seed,
+            true_intercept=true_intercept,
+            true_slope=true_slope,
+            show_true_line=show_true_line,
+        )
+        
+        # Display results
+        pipeline.display(result, show_formulas=show_formulas)
+        
+    else:
+        # Run multiple regression pipeline
+        result = pipeline.run_multiple(
+            dataset=dataset,
+            n=n,
+            noise=noise,
+            seed=seed,
+        )
+        
+        # Display results
+        pipeline.display(result, show_formulas=show_formulas)
+
+except Exception as e:
+    logger.error(f"Pipeline error: {e}")
+    st.error(f"❌ Fehler in der Pipeline: {str(e)}")
+    st.info("💡 Versuchen Sie andere Parameter oder laden Sie die Seite neu.")
+
+
+# =============================================================================
+# FOOTER
+# =============================================================================
+st.markdown("---")
+st.markdown("""
+<div style='text-align: center; color: gray; font-size: 12px;'>
+    📖 Leitfaden zur Linearen Regression | 
+    Simple 4-Step Pipeline: GET → CALCULATE → PLOT → DISPLAY
+</div>
+""", unsafe_allow_html=True)
+
+logger.info("Application rendered successfully")
