@@ -152,6 +152,9 @@ def render_simple_regression(
     )
     
     renderer.render(content)
+    
+    # AI Interpretation Section
+    _render_ai_interpretation(stats_dict)
 
 
 def render_multiple_regression(
@@ -209,6 +212,90 @@ def render_multiple_regression(
     )
     
     renderer.render(content)
+    
+    # AI Interpretation Section
+    _render_ai_interpretation(stats_dict)
+
+
+def _render_ai_interpretation(stats_dict: Dict[str, Any]):
+    """Render AI interpretation section."""
+    from ...ai import PerplexityClient
+    
+    st.markdown("---")
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); 
+                padding: 1.5rem; border-radius: 1rem; color: white; margin: 1rem 0;">
+        <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+            🤖 AI-Interpretation des R-Outputs
+        </h3>
+        <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">
+            Lass dir alle statistischen Werte gesamtheitlich von Perplexity AI erklären.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    client = PerplexityClient()
+    
+    # Status
+    if client.is_configured:
+        st.success("✅ Perplexity API verbunden")
+    else:
+        st.warning("⚠️ Kein API-Key konfiguriert - Fallback-Interpretation wird verwendet")
+        st.caption("Setze `PERPLEXITY_API_KEY` als Umgebungsvariable oder in `.streamlit/secrets.toml`")
+    
+    col1, col2 = st.columns([3, 1])
+    
+    with col1:
+        st.markdown("""
+        Klicke auf **"R-Output interpretieren"** um eine vollständige, 
+        gesamtheitliche Erklärung aller Werte zu erhalten:
+        - Zusammenfassung des Modells
+        - Interpretation der Koeffizienten
+        - Bewertung der Modellgüte
+        - Signifikanz-Erklärung
+        - Praktische Bedeutung
+        """)
+    
+    with col2:
+        interpret_clicked = st.button(
+            "🔍 R-Output interpretieren",
+            type="primary",
+            use_container_width=True,
+            key="ai_interpret_btn"
+        )
+    
+    # Session state for interpretation
+    if "ai_interpretation_result" not in st.session_state:
+        st.session_state.ai_interpretation_result = None
+    
+    if interpret_clicked:
+        with st.spinner("🤖 AI analysiert den R-Output..."):
+            response = client.interpret_r_output(stats_dict)
+            st.session_state.ai_interpretation_result = response
+    
+    # Display interpretation
+    if st.session_state.ai_interpretation_result:
+        response = st.session_state.ai_interpretation_result
+        
+        st.markdown("### 📊 Interpretation")
+        
+        # Main content
+        st.markdown(response.content)
+        
+        # Metadata
+        if not response.error:
+            meta_cols = st.columns(4)
+            meta_cols[0].caption(f"📡 {response.model}")
+            meta_cols[1].caption(f"⏱️ {response.latency_ms:.0f}ms")
+            if response.usage:
+                meta_cols[2].caption(f"📝 {response.usage.get('total_tokens', 'N/A')} Tokens")
+            meta_cols[3].caption(f"💾 {'Cached' if response.cached else 'Live'}")
+        
+        # Citations
+        if response.citations:
+            with st.expander("📚 Quellen"):
+                for i, citation in enumerate(response.citations, 1):
+                    st.markdown(f"{i}. [{citation}]({citation})")
 
 
 def _get_simple_data_config(dataset: str, n: int) -> Dict[str, Any]:

@@ -191,6 +191,127 @@ def create_flask_app() -> Flask:
                 'r_squared': result.r_squared,
             })
     
+    @app.route('/api/interpret', methods=['POST'])
+    def api_interpret():
+        """
+        API endpoint for AI interpretation of R-output.
+        
+        Expects JSON with stats dictionary.
+        Returns HTML with AI interpretation.
+        """
+        from ..ai import PerplexityClient
+        from ..ai.ui_components import AIInterpretationHTML
+        
+        data = request.get_json() or {}
+        
+        # Get stats from request or use cached
+        stats = data.get('stats', {})
+        
+        # If no stats provided, try to get from session/cache
+        if not stats:
+            # Default demo stats
+            stats = {
+                'context_title': 'Demo-Analyse',
+                'x_label': 'X',
+                'y_label': 'Y',
+                'n': 50,
+                'intercept': 10.0,
+                'slope': 2.5,
+                'r_squared': 0.75,
+                'r_squared_adj': 0.74,
+                'se_intercept': 1.5,
+                'se_slope': 0.3,
+                't_intercept': 6.67,
+                't_slope': 8.33,
+                'p_intercept': 0.0001,
+                'p_slope': 0.00001,
+                'mse': 25.0,
+                'sse': 1200.0,
+                'ssr': 3600.0,
+                'df': 48,
+                'residuals': [0] * 50,
+            }
+        
+        # Create client and get interpretation
+        client = PerplexityClient()
+        response = client.interpret_r_output(stats)
+        
+        # Render as HTML
+        ui = AIInterpretationHTML(stats, client)
+        html = ui.render_response(response)
+        
+        return html
+    
+    @app.route('/interpret/<analysis_type>')
+    def interpret_page(analysis_type: str):
+        """
+        Dedicated page for AI interpretation.
+        
+        Runs the analysis and shows AI interpretation.
+        """
+        from ..ai import PerplexityClient
+        from ..ai.ui_components import AIInterpretationHTML
+        
+        dataset = request.args.get('dataset', 'Bildung & Einkommen')
+        n_points = int(request.args.get('n', 50))
+        
+        if analysis_type == 'simple':
+            dataset_map = {
+                "Bildung & Einkommen": "electronics",
+                "Grösse & Gewicht": "temperature",
+                "Temperatur & Eisverkauf": "temperature",
+            }
+            config = _get_simple_data_config(dataset, n_points)
+            
+            pipeline_result = pipeline.run_simple(
+                dataset=dataset_map.get(dataset, "electronics"),
+                n=n_points,
+                seed=42
+            )
+            
+            data = pipeline_result.data
+            data.x_label = config["x_label"]
+            data.y_label = config["y_label"]
+            data.context_title = config["title"]
+            data.context_description = config["description"]
+            
+            stats_dict = _prepare_simple_stats(data, pipeline_result.stats)
+        else:
+            dataset_map = {
+                "Immobilienpreise": "houses",
+                "Autoverbrauch": "cities",
+                "Marketing-Mix": "cities",
+            }
+            config = _get_multiple_data_config(dataset, n_points)
+            
+            pipeline_result = pipeline.run_multiple(
+                dataset=dataset_map.get(dataset, "cities"),
+                n=n_points,
+                seed=42
+            )
+            
+            stats_dict = _prepare_multiple_stats(
+                config, pipeline_result.stats,
+                pipeline_result.data.x1, pipeline_result.data.x2, 
+                pipeline_result.data.y, n_points
+            )
+        
+        # Get AI interpretation
+        client = PerplexityClient()
+        response = client.interpret_r_output(stats_dict)
+        
+        ui = AIInterpretationHTML(stats_dict, client)
+        
+        return render_template(
+            'interpret.html',
+            analysis_type=analysis_type,
+            dataset=dataset,
+            n_points=n_points,
+            stats=stats_dict,
+            interpretation_html=ui.render_response(response),
+            ai_configured=client.is_configured
+        )
+    
     return app
 
 

@@ -209,6 +209,52 @@
     <div class="educational-content fade-in" style="animation-delay: 0.2s;">
         {{ content_html | safe }}
     </div>
+    
+    <!-- AI Interpretation Section -->
+    <div class="ai-section mt-5 fade-in" style="animation-delay: 0.3s;">
+        <div class="card border-0 shadow-lg">
+            <div class="card-header bg-gradient" style="background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%); color: white;">
+                <div class="d-flex align-items-center justify-content-between">
+                    <h4 class="mb-0">
+                        <i class="bi bi-robot me-2"></i>
+                        AI-Interpretation des R-Outputs
+                    </h4>
+                    <span class="badge bg-white text-primary">Perplexity AI</span>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <p class="text-secondary mb-4">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Klicke auf den Button, um eine <strong>gesamtheitliche Interpretation</strong> 
+                    aller statistischen Werte durch Perplexity AI zu erhalten.
+                </p>
+                
+                <div class="d-flex gap-3 mb-4">
+                    <a href="/interpret/{{ analysis_type }}?dataset={{ dataset }}&n={{ n_points }}" 
+                       class="btn btn-primary btn-lg">
+                        <i class="bi bi-search me-2"></i>
+                        R-Output interpretieren lassen
+                    </a>
+                    <button class="btn btn-outline-secondary"
+                            hx-post="/api/interpret"
+                            hx-target="#ai-quick-response"
+                            hx-swap="innerHTML"
+                            hx-vals='{"stats": {{ stats | tojson }}}'
+                            hx-indicator="#ai-quick-loading">
+                        <i class="bi bi-lightning-charge me-2"></i>
+                        Schnelle Interpretation
+                    </button>
+                </div>
+                
+                <div id="ai-quick-loading" class="htmx-indicator text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2 text-secondary">AI analysiert den R-Output...</p>
+                </div>
+                
+                <div id="ai-quick-response"></div>
+            </div>
+        </div>
+    </div>
 </main>
 {% endblock %}
 

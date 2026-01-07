@@ -31,6 +31,13 @@ Eine moderne, interaktive Lernplattform für Regressionsanalyse mit **Frontend-A
 - 3D-Regressionsebene
 - Interaktive Prognose
 
+### 🤖 Perplexity AI Integration
+- Gesamtheitliche Interpretation des R-Outputs
+- Erklärt ALLE statistischen Werte verständlich
+- Fallback-Interpretation ohne API-Key
+- Streaming-Support für Echtzeit-Anzeige
+- Response-Caching für Effizienz
+
 ### 🎨 State-of-the-Art UI (Flask)
 - 🌙 Dark/Light Mode mit Tastenkürzel (D)
 - ⚡ HTMX für dynamische Updates ohne Reload
@@ -73,6 +80,19 @@ python run.py
 |-----------|-----|
 | Streamlit | http://localhost:8501 |
 | Flask | http://localhost:5000 |
+
+### Perplexity AI konfigurieren (optional)
+
+```bash
+# Option 1: Umgebungsvariable
+export PERPLEXITY_API_KEY="your-api-key"
+
+# Option 2: Streamlit secrets (.streamlit/secrets.toml)
+[perplexity]
+api_key = "your-api-key"
+```
+
+Ohne API-Key wird eine Fallback-Interpretation generiert.
 
 ---
 
@@ -131,6 +151,10 @@ regression-analysis/
 ├── run.py                      # 🚀 Unified Entry Point
 │
 ├── src/
+│   ├── ai/                     # 🤖 PERPLEXITY AI INTEGRATION
+│   │   ├── perplexity_client.py #   API Client mit Caching
+│   │   └── ui_components.py    #    UI für Streamlit & Flask
+│   │
 │   ├── content/                # 📖 EDUCATIONAL CONTENT (Framework-Agnostic)
 │   │   ├── structure.py        #    Content-Datenstrukturen
 │   │   ├── builder.py          #    Base ContentBuilder
@@ -241,6 +265,53 @@ pytest tests/ --cov=src --cov-report=html
 
 ---
 
+## 🤖 AI-Interpretation
+
+### Funktionsweise
+
+Der User kann auf Anfrage eine **gesamtheitliche Interpretation** des R-Outputs erhalten:
+
+```python
+from src.ai import PerplexityClient
+
+client = PerplexityClient()
+
+# Interpretation anfordern
+response = client.interpret_r_output(stats_dict)
+print(response.content)
+```
+
+### Was wird interpretiert?
+
+Die AI erklärt ALLE Werte des R-Outputs:
+
+1. **Zusammenfassung** - Was sagt das Modell aus?
+2. **Koeffizienten** - Was bedeuten β₀ und β₁ praktisch?
+3. **Modellgüte** - R², F-Test Interpretation
+4. **Signifikanz** - p-Werte, t-Tests verständlich erklärt
+5. **Praktische Bedeutung** - Reale Anwendung
+6. **Einschränkungen** - Worauf achten?
+
+### Beispiel R-Output
+
+```r
+Call:
+lm(formula = Einkommen ~ Bildungsjahre)
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  20000.00    2500.00    8.00   0.0001 ***
+Bildungsjahre 5000.00     350.00   14.30   0.0000 ***
+
+Multiple R-squared:  0.72
+```
+
+Die AI erklärt dann z.B.:
+> "Pro zusätzlichem Bildungsjahr steigt das erwartete Einkommen um **5000 CHF**. 
+> Das Modell erklärt **72%** der Varianz, was als **gut** einzustufen ist..."
+
+---
+
 ## 🎨 Flask UI Features
 
 ### Dark Mode
@@ -252,6 +323,7 @@ pytest tests/ --cov=src --cov-report=html
 - Dataset-Wechsel ohne Reload
 - Slider-Updates in Echtzeit
 - Loading-Indicator
+- AI-Interpretation ohne Reload
 
 ### Navigation
 - Sticky Sidebar mit Kapitel-Links

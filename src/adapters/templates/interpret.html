@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}AI-Interpretation - {{ stats.context_title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="text-center mb-5 fade-in">
+        <h1 class="display-5 fw-bold mb-3">
+            <i class="bi bi-robot me-2"></i>
+            AI-Interpretation
+        </h1>
+        <p class="lead text-secondary">
+            Perplexity AI erklärt den R-Output deiner Regressionsanalyse
+        </p>
+    </div>
+    
+    <!-- Stats Overview -->
+    <div class="row justify-content-center mb-4 fade-in" style="animation-delay: 0.1s;">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>
+                        <i class="bi bi-graph-up me-2"></i>
+                        {{ stats.context_title }}
+                    </span>
+                    <span class="badge bg-primary">
+                        {{ 'Einfache' if analysis_type == 'simple' else 'Multiple' }} Regression
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-label">R²</div>
+                            <div class="metric-value">{{ "%.4f"|format(stats.r_squared) }}</div>
+                        </div>
+                        {% if stats.slope is defined %}
+                        <div class="metric-card">
+                            <div class="metric-label">β₁ (Slope)</div>
+                            <div class="metric-value">{{ "%.4f"|format(stats.slope) }}</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">p-Wert</div>
+                            <div class="metric-value {% if stats.p_slope < 0.05 %}text-success{% else %}text-warning{% endif %}">
+                                {{ "%.4f"|format(stats.p_slope) }}
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="metric-card">
+                            <div class="metric-label">n</div>
+                            <div class="metric-value">{{ stats.n }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- R-Output -->
+    <div class="row justify-content-center mb-4 fade-in" style="animation-delay: 0.2s;">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-code-square me-2"></i>
+                    R-Output
+                </div>
+                <div class="card-body">
+                    <pre class="mb-0" style="font-size: 0.85rem;"><code>{{ r_output if r_output else "Call:
+lm(formula = " + stats.y_label + " ~ " + stats.x_label + ")
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  " + "%.4f"|format(stats.intercept) + "   " + "%.4f"|format(stats.se_intercept) + "  " + "%.3f"|format(stats.t_intercept) + "   " + "%.2e"|format(stats.p_intercept) + "
+" + stats.x_label[:12] + "   " + "%.4f"|format(stats.slope) + "   " + "%.4f"|format(stats.se_slope) + "  " + "%.3f"|format(stats.t_slope) + "   " + "%.2e"|format(stats.p_slope) + "
+
+Multiple R-squared:  " + "%.4f"|format(stats.r_squared) + ",    Adjusted R-squared:  " + "%.4f"|format(stats.r_squared_adj) }}</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- AI Interpretation -->
+    <div class="row justify-content-center fade-in" style="animation-delay: 0.3s;">
+        <div class="col-lg-10">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <span>
+                        <i class="bi bi-robot me-2"></i>
+                        Gesamtheitliche Interpretation
+                    </span>
+                    {% if ai_configured %}
+                    <span class="badge bg-success">
+                        <i class="bi bi-check-circle me-1"></i>
+                        Perplexity AI
+                    </span>
+                    {% else %}
+                    <span class="badge bg-warning text-dark">
+                        <i class="bi bi-exclamation-triangle me-1"></i>
+                        Fallback
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {{ interpretation_html | safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Back Button -->
+    <div class="row justify-content-center mt-4 fade-in" style="animation-delay: 0.4s;">
+        <div class="col-lg-10 d-flex gap-3">
+            <a href="/{{ analysis_type }}?dataset={{ dataset }}&n={{ n_points }}" class="btn btn-outline-primary">
+                <i class="bi bi-arrow-left me-2"></i>
+                Zurück zur Analyse
+            </a>
+            <a href="/" class="btn btn-outline-secondary">
+                <i class="bi bi-house me-2"></i>
+                Startseite
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
