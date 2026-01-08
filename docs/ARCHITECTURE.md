@@ -300,3 +300,75 @@ grep -r "import numpy\|import pandas" src/core/
 - **[API.md](API.md)** - REST API Dokumentation
 - **[INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md)** - Frontend-Integration
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** - Deployment-Anleitung
+
+---
+
+## 🔒 Encapsulation Benefits
+
+Die Clean Architecture ermöglicht **unabhängige Modifikation** einzelner Schichten, ohne andere Teile des Systems zu beeinflussen.
+
+### ✅ Was KANN unabhängig modifiziert werden
+
+| Layer | Was kann geändert werden | Auswirkung auf andere Schichten |
+|-------|--------------------------|--------------------------------|
+| **Infrastructure** | Numpy → PyTorch, SQLite → PostgreSQL, Plotly → Matplotlib | **Keine** - solange Interface bleibt |
+| **Infrastructure** | Neuer Dataset-Generator | **Keine** - nur `generators.py` ändern |
+| **Infrastructure** | AI-Provider (Perplexity → OpenAI) | **Keine** - nur `ai/` Modul ändern |
+| **Adapters** | Flask → FastAPI, Streamlit → Dash | **Keine** - nur Adapter austauschen |
+| **API Serializers** | JSON → XML, Response-Format | **Keine** - nur `serializers.py` ändern |
+| **DI Container** | Mock-Implementierungen für Tests | **Keine** - nur `container.py` ändern |
+
+### ❌ Was NICHT ohne Auswirkungen geändert werden kann
+
+| Layer | Was NICHT geändert werden sollte | Warum |
+|-------|----------------------------------|-------|
+| **Domain Interfaces** | `IDataProvider`, `IRegressionService` Signaturen | Alle Implementierungen müssen angepasst werden |
+| **Domain Entities** | `RegressionModel` Struktur | Use Cases und Serializers abhängig |
+| **Application DTOs** | `RegressionRequestDTO`, `RegressionResponseDTO` | API und Adapters abhängig |
+| **Domain Value Objects** | `RegressionMetrics` Felder | Infrastruktur und Serializers abhängig |
+
+### 📊 Beispiel: Framework-Wechsel
+
+**Von numpy → PyTorch für GPU-Beschleunigung:**
+
+```python
+# 1. EINZIGE Änderung: src/infrastructure/services/regression.py
+# Vorher:
+import numpy as np
+beta = numpy.linalg.inv(X.T @ X) @ X.T @ y
+
+# Nachher:
+import torch
+beta = torch.linalg.inv(X.T @ X) @ X.T @ y
+
+# 2. Domain Layer: KEINE Änderung nötig!
+# 3. Application Layer: KEINE Änderung nötig!
+# 4. API Layer: KEINE Änderung nötig!
+```
+
+**Von Flask → FastAPI:**
+
+```python
+# 1. EINZIGE Änderung: src/adapters/fastapi_app.py (neu erstellen)
+# 2. container.py bleibt identisch
+# 3. Use Cases bleiben identisch
+# 4. Domain bleibt identisch
+```
+
+### 🎯 Stabilität durch Interfaces
+
+```
+┌─────────────────┐
+│  Domain Layer   │  ← STABIL (ändert sich selten)
+│  interfaces.py  │
+└────────┬────────┘
+         │ Protocol
+         ↓
+┌─────────────────┐
+│ Infrastructure  │  ← FLEXIBEL (kann jederzeit ausgetauscht werden)
+│  provider.py    │
+│  regression.py  │
+└─────────────────┘
+```
+
+**Regel**: Domain-Interfaces sind der "Vertrag". Solange der Vertrag eingehalten wird, können Implementierungen beliebig ausgetauscht werden.
