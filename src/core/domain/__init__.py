@@ -12,6 +12,9 @@ from .value_objects import (
     Success,
     Failure,
     Result,
+    ClassificationResult,
+    ClassificationMetrics,
+    RegressionResult,
 )
 
 from .entities import (
@@ -26,6 +29,7 @@ from .interfaces import (
     IMultipleRegressionTrainer,
     IModelRepository,
     IPredictor,
+    IClassificationService,
     # Combined interfaces (backward compatible)
     IDataProvider,
     IRegressionService,
@@ -40,6 +44,9 @@ __all__ = [
     "RegressionMetrics",
     "DataPoint",
     "DatasetMetadata",
+    "ClassificationResult",
+    "ClassificationMetrics",
+    "RegressionResult",
     # Result Types
     "Success",
     "Failure",
@@ -53,6 +60,7 @@ __all__ = [
     "IMultipleRegressionTrainer",
     "IModelRepository",
     "IPredictor",
+    "IClassificationService",
     "IDataProvider",
     "IRegressionService",
 ]

@@ -106,8 +106,23 @@ class IModelRepository(Protocol):
 # =============================================================================
 
 class IPredictor(Protocol):
-    """Interface for making predictions with trained models."""
+    """Protocol for making predictions."""
+    def predict(self, model: RegressionModel, data: Dict[str, Any]) -> float:
+        """Make a prediction using the model."""
+        ...
+
+
+class IClassificationService(Protocol):
+    """Protocol for classification operations."""
     
-    def predict(self, model: RegressionModel, x: List[float]) -> List[float]:
-        """Generate predictions for new x values."""
+    def train_logistic(self, X: np.ndarray, y: np.ndarray) -> ClassificationResult:
+        """Train a logistic regression model."""
+        ...
+        
+    def train_knn(self, X: np.ndarray, y: np.ndarray, k: int) -> ClassificationResult:
+        """Train a K-Nearest Neighbors model."""
+        ...
+        
+    def calculate_metrics(self, y_true: np.ndarray, y_pred: np.ndarray, y_prob: np.ndarray) -> ClassificationMetrics:
+        """Calculate classification performance metrics."""
         ...

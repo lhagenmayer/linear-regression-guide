@@ -22,6 +22,26 @@ class ModelQuality(Enum):
     EXCELLENT = auto() # R² >= 0.7
 
 
+# Result type for error handling (Result Pattern base class)
+@dataclass(frozen=True)
+class Result:
+    """Base class for results."""
+    pass
+
+
+@dataclass(frozen=True)
+class Success(Result):
+    """Success result wrapper."""
+    value: Any
+
+
+@dataclass(frozen=True)  
+class Failure(Result):
+    """Failure result wrapper."""
+    error: str
+    code: str = "UNKNOWN"
+    
+    
 @dataclass(frozen=True)
 class RegressionParameters:
     """Immutable parameters of a regression model."""
@@ -44,6 +64,49 @@ class RegressionParameters:
     def variable_names(self) -> List[str]:
         """Get ordered list of variable names."""
         return list(self.coefficients.keys())
+
+
+@dataclass(frozen=True)
+class RegressionResult(Result):
+    """Container for regression calculation results."""
+    parameters: RegressionParameters
+    metrics: RegressionMetrics
+    predictions: np.ndarray
+    residuals: np.ndarray
+    model_equation: str
+
+
+@dataclass(frozen=True)
+class ClassificationMetrics:
+    """Metrics for classification model performance."""
+    accuracy: float
+    precision: float
+    recall: float
+    f1_score: float
+    confusion_matrix: np.ndarray  # [[TN, FP], [FN, TP]]
+    auc: Optional[float] = None
+    
+    def __post_init__(self):
+        """Validate metrics are in [0, 1] range."""
+        for name, value in [
+            ("accuracy", self.accuracy),
+            ("precision", self.precision), 
+            ("recall", self.recall),
+            ("f1_score", self.f1_score)
+        ]:
+            if not (0 <= value <= 1):
+                # Small tolerance for floating point errors
+                if not (-0.0001 <= value <= 1.0001):
+                    raise ValueError(f"{name} must be between 0 and 1, got {value}")
+
+@dataclass(frozen=True)
+class ClassificationResult(Result):
+    """Container for classification results."""
+    classes: List[Any]
+    predictions: np.ndarray
+    probabilities: np.ndarray
+    metrics: ClassificationMetrics
+    model_params: Dict[str, Any]  # e.g., coefficients, k-neighbors
 
 
 @dataclass(frozen=True)
@@ -115,19 +178,3 @@ class DatasetMetadata:
             raise ValueError(f"n_observations must be non-negative, got {self.n_observations}")
 
 
-# Result type for error handling (Either pattern)
-@dataclass(frozen=True)
-class Success:
-    """Success result wrapper."""
-    value: Any
-
-
-@dataclass(frozen=True)  
-class Failure:
-    """Failure result wrapper."""
-    error: str
-    code: str = "UNKNOWN"
-
-
-# Type alias for Result
-Result = Success | Failure
