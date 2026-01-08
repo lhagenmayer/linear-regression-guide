@@ -25,103 +25,92 @@ def run_streamlit_app():
     """Main Streamlit application entry point."""
     # Page configuration
     st.set_page_config(
-        page_title="📊 Regression Analysis",
-        page_icon="📈",
+        page_title="Regression Analysis",
+        page_icon="�",
         layout="wide",
         initial_sidebar_state="expanded"
     )
     
     # Custom CSS
-    st.markdown("""
-    <style>
-        .section-header {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #1f77b4;
-            margin-top: 2rem;
-            margin-bottom: 1rem;
-        }
-        .metric-row {
-            display: flex;
-            gap: 1rem;
-        }
-        .stMetric {
-            background-color: #f0f2f6;
-            padding: 1rem;
-            border-radius: 0.5rem;
-        }
-        .api-badge {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 1rem;
-            font-size: 0.8rem;
-            margin-left: 1rem;
-        }
-    </style>
-    """, unsafe_allow_html=True)
+    from .styles import inject_custom_css, render_hero
+    inject_custom_css()
     
-    # Initialize APIs (same as external frontends would use)
+    # Initialize APIs
     regression_api = RegressionAPI()
     content_api = ContentAPI()
     ai_api = AIInterpretationAPI()
     
-    # Sidebar controls
+    # Sidebar
     with st.sidebar:
-        st.title("⚙️ Einstellungen")
-        st.markdown('<span class="api-badge">API-Powered</span>', unsafe_allow_html=True)
-        st.caption("Nutzt dieselbe API wie externe Frontends")
+        st.markdown("""
+        <div style="margin-bottom: 2rem;">
+            <div class="api-badge">API-POWERED</div>
+            <h1 style="font-size: 1.5rem; margin: 0;">RegAnalysis</h1>
+            <p style="color: #94a3b8; font-size: 0.9rem;">Interactive Learning Platform</p>
+        </div>
+        """, unsafe_allow_html=True)
         
         analysis_type = st.radio(
-            "Analyse-Typ",
-            ["Einfache Regression", "Multiple Regression"],
-            key="analysis_type"
+            "Analysis Type",
+            ["Simple Regression", "Multiple Regression"],
+            key="analysis_type",
+            label_visibility="collapsed"
         )
         
         st.markdown("---")
         
-        # Dataset selection from API
+        # Dataset selection
         datasets_response = regression_api.get_datasets()
+        st.markdown("### 📊 Dataset")
         
-        st.subheader("📊 Datensatz")
+        # Map German names to API response (if needed) or direct use
+        # Adapting to English/International structure
         
-        if analysis_type == "Einfache Regression":
+        if analysis_type == "Simple Regression":
             dataset_options = {d["name"]: d["id"] for d in datasets_response["data"]["simple"]}
             dataset_name = st.selectbox(
-                "Wähle Datensatz:",
+                "Select Dataset:",
                 list(dataset_options.keys()),
                 key="dataset_simple"
             )
             dataset_id = dataset_options[dataset_name]
-            n_points = st.slider("Anzahl Datenpunkte", 20, 200, 50, key="n_simple")
+            n_points = st.slider("Samples", 20, 200, 50, key="n_simple")
         else:
             dataset_options = {d["name"]: d["id"] for d in datasets_response["data"]["multiple"]}
             dataset_name = st.selectbox(
-                "Wähle Datensatz:",
+                "Select Dataset:",
                 list(dataset_options.keys()),
                 key="dataset_multiple"
             )
             dataset_id = dataset_options[dataset_name]
-            n_points = st.slider("Anzahl Datenpunkte", 30, 200, 75, key="n_multiple")
+            n_points = st.slider("Samples", 30, 200, 75, key="n_multiple")
+        
+        st.markdown("### ⚙️ Parameters")
+        noise = st.slider("Noise Level", 0.1, 2.0, 0.4, 0.1, key="noise")
+        seed = st.number_input("Random Seed", 1, 9999, 42, key="seed")
         
         st.markdown("---")
         
-        # Noise and seed
-        noise = st.slider("Rauschen", 0.1, 2.0, 0.4, 0.1, key="noise")
-        seed = st.number_input("Seed", 1, 9999, 42, key="seed")
-        
-        st.markdown("---")
-        
-        # API Status
-        st.subheader("🔌 API Status")
-        ai_status = ai_api.get_status()
-        if ai_status["status"]["configured"]:
-            st.success("✅ AI verbunden")
+        # API Status in Sidebar
+        status = ai_api.get_status()
+        if status["status"]["configured"]:
+            st.success("✅ AI Connected")
         else:
-            st.warning("⚠️ AI Fallback-Modus")
+            st.warning("⚠️ AI Fallback")
+            
+    # Main Content
     
-    # Main content
-    if analysis_type == "Einfache Regression":
+    # Hero / Title
+    if "hero_shown" not in st.session_state:
+        st.session_state.hero_shown = True
+        
+    title_suffix = "Simple" if analysis_type == "Simple Regression" else "Multiple"
+    render_hero(
+        f"{title_suffix} Regression", 
+        "Explore relationships, analyze residuals, and master statistical modeling."
+    )
+    
+    if analysis_type == "Simple Regression":
         render_simple_regression(content_api, ai_api, dataset_id, n_points, noise, seed)
     else:
         render_multiple_regression(content_api, ai_api, dataset_id, n_points, noise, seed)

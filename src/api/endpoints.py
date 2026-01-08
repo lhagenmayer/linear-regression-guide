@@ -22,7 +22,12 @@ from .serializers import (
     PipelineSerializer,
 )
 
+from pydantic import ValidationError
+from ..config.logging import configure_logging
+from .schemas import SimpleRegressionRequest, MultipleRegressionRequest, AIInterpretationRequest, DatasetType
+
 logger = logging.getLogger(__name__)
+configure_logging()
 
 
 class RegressionAPI:
@@ -71,36 +76,42 @@ class RegressionAPI:
     ) -> Dict[str, Any]:
         """
         Run simple regression analysis.
-        
-        Args:
-            dataset: Dataset name ("electronics", "advertising", "temperature")
-            n: Sample size
-            noise: Noise level
-            seed: Random seed
-            true_intercept: True β₀
-            true_slope: True β₁
-            include_predictions: Include y_pred and residuals arrays
-            
-        Returns:
-            JSON-serializable result dictionary
         """
         logger.info(f"API: run_simple({dataset}, n={n})")
         
         try:
-            result = self.pipeline.run_simple(
+            # Validate input using Pydantic
+            request = SimpleRegressionRequest(
                 dataset=dataset,
                 n=n,
                 noise=noise,
                 seed=seed,
                 true_intercept=true_intercept,
                 true_slope=true_slope,
+                include_predictions=include_predictions
+            )
+            
+            result = self.pipeline.run_simple(
+                dataset=request.dataset.value,
+                n=request.n,
+                noise=request.noise,
+                seed=request.seed,
+                true_intercept=request.true_intercept,
+                true_slope=request.true_slope,
             )
             return {
                 "success": True,
-                "data": PipelineSerializer.serialize(result, include_predictions),
+                "data": PipelineSerializer.serialize(result, request.include_predictions),
+            }
+        except ValidationError as e:
+            logger.warning(f"Validation error: {e}")
+            return {
+                "success": False,
+                "error": "Validation Error",
+                "details": e.errors()
             }
         except Exception as e:
-            logger.error(f"API error: {e}")
+            logger.error(f"API error: {e}", exc_info=True)
             return {
                 "success": False,
                 "error": str(e),
@@ -116,32 +127,38 @@ class RegressionAPI:
     ) -> Dict[str, Any]:
         """
         Run multiple regression analysis.
-        
-        Args:
-            dataset: Dataset name ("cities", "houses")
-            n: Sample size
-            noise: Noise level
-            seed: Random seed
-            include_predictions: Include predictions arrays
-            
-        Returns:
-            JSON-serializable result dictionary
         """
         logger.info(f"API: run_multiple({dataset}, n={n})")
         
         try:
-            result = self.pipeline.run_multiple(
+            # Validate
+            request = MultipleRegressionRequest(
                 dataset=dataset,
                 n=n,
                 noise=noise,
                 seed=seed,
+                include_predictions=include_predictions
+            )
+            
+            result = self.pipeline.run_multiple(
+                dataset=request.dataset.value,
+                n=request.n,
+                noise=request.noise,
+                seed=request.seed,
             )
             return {
                 "success": True,
-                "data": PipelineSerializer.serialize(result, include_predictions),
+                "data": PipelineSerializer.serialize(result, request.include_predictions),
+            }
+        except ValidationError as e:
+            logger.warning(f"Validation error: {e}")
+            return {
+                "success": False,
+                "error": "Validation Error",
+                "details": e.errors()
             }
         except Exception as e:
-            logger.error(f"API error: {e}")
+            logger.error(f"API error: {e}", exc_info=True)
             return {
                 "success": False,
                 "error": str(e),

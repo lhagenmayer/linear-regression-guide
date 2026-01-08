@@ -120,7 +120,7 @@ def detect_framework() -> str:
     if __name__ == '__main__' and len(sys.argv) == 1:
         return 'help'
     
-    return 'streamlit'
+    return 'help'
 
 
 def run_api_server(host: str = "0.0.0.0", port: int = 8000, cors_origins: list = None):
