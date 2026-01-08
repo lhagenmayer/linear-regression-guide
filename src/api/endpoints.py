@@ -168,6 +168,12 @@ class RegressionAPI:
         """
         List available datasets.
         
+        All datasets are available for BOTH simple and multiple regression.
+        This is intentional for educational purposes:
+        - Simple regression shows larger error term (omitted variable bias)
+        - Multiple regression shows improved R² when adding relevant predictors
+        - Students can directly compare and understand "AHH, that's why!"
+        
         Returns:
             Dictionary of available datasets
         """
@@ -178,20 +184,39 @@ class RegressionAPI:
                     {
                         "id": "electronics",
                         "name": "Elektronikmarkt",
-                        "description": "Verkaufsfläche vs Umsatz",
+                        "description": "Verkaufsfläche → Umsatz",
                         "icon": "🏪",
+                        "hint": "➡️ Multiple: +Marketingbudget",
                     },
                     {
                         "id": "advertising",
                         "name": "Werbestudie",
-                        "description": "Werbeausgaben vs Umsatz",
+                        "description": "Werbeausgaben → Umsatz",
                         "icon": "📢",
+                        "hint": "➡️ Multiple: +Produktqualität",
                     },
                     {
                         "id": "temperature",
                         "name": "Eisverkauf",
-                        "description": "Temperatur vs Verkauf",
+                        "description": "Temperatur → Verkauf",
                         "icon": "🍦",
+                        "hint": "➡️ Multiple: +Wochenende",
+                    },
+                    {
+                        "id": "cities",
+                        "name": "Städtestudie (nur Preis)",
+                        "description": "Preis → Umsatz ⚠️ Omitted Variable!",
+                        "icon": "🏙️",
+                        "hint": "💡 Vergleiche mit Multipler Regression!",
+                        "educational": True,
+                    },
+                    {
+                        "id": "houses",
+                        "name": "Hauspreise (nur Fläche)",
+                        "description": "Wohnfläche → Preis ⚠️ Omitted Variable!",
+                        "icon": "🏠",
+                        "hint": "💡 Pool-Effekt fehlt! Wechsle zu Multiple.",
+                        "educational": True,
                     },
                 ],
                 "multiple": [
@@ -200,12 +225,35 @@ class RegressionAPI:
                         "name": "Städtestudie",
                         "description": "Preis & Werbung → Umsatz",
                         "icon": "🏙️",
+                        "hint": "➡️ Simple: Nur Preis (Bias Demo)",
                     },
                     {
                         "id": "houses",
                         "name": "Hauspreise",
                         "description": "Fläche & Pool → Preis",
                         "icon": "🏠",
+                        "hint": "➡️ Simple: Nur Fläche (Bias Demo)",
+                    },
+                    {
+                        "id": "electronics",
+                        "name": "Elektronikmarkt (+Marketing)",
+                        "description": "Fläche & Budget → Umsatz",
+                        "icon": "🏪",
+                        "educational": True,
+                    },
+                    {
+                        "id": "advertising",
+                        "name": "Werbestudie (+Qualität)",
+                        "description": "Ausgaben & Rating → Umsatz",
+                        "icon": "📢",
+                        "educational": True,
+                    },
+                    {
+                        "id": "temperature",
+                        "name": "Eisverkauf (+Wochenende)",
+                        "description": "Grad & Tag → Einheiten",
+                        "icon": "🍦",
+                        "educational": True,
                     },
                 ],
             },
