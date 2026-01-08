@@ -1,5 +1,5 @@
 """
-Framework Detector - Automatically detects which framework is running.
+Framework-Detektor - Automatische Erkennung des aktiven UI-Frameworks.
 """
 
 import sys
@@ -9,33 +9,33 @@ from typing import Optional
 
 
 class Framework(Enum):
-    """Supported frameworks."""
+    """Unterstützte Web-Frameworks."""
     STREAMLIT = "streamlit"
     FLASK = "flask"
-    UNKNOWN = "unknown"
+    UNKNOWN = "unbekannt"
 
 
 class FrameworkDetector:
     """
-    Detects the current runtime framework.
+    Erkennt das aktuelle Framework zur Laufzeit.
     
-    Detection order:
-    1. Environment variable REGRESSION_FRAMEWORK
-    2. Streamlit runtime context
-    3. Flask app context
-    4. Command line arguments
-    5. Default to unknown
+    Reihenfolge der Erkennung:
+    1. Umgebungsvariable REGRESSION_FRAMEWORK
+    2. Streamlit Runtime-Kontext
+    3. Flask App-Kontext
+    4. Kommandozeilenargumente
+    5. Standardmäßig 'unbekannt'
     """
     
     _cached_framework: Optional[Framework] = None
     
     @classmethod
     def detect(cls) -> Framework:
-        """Detect the current framework."""
+        """Führt die Erkennung aus und cached das Ergebnis."""
         if cls._cached_framework is not None:
             return cls._cached_framework
         
-        # 1. Check environment variable (explicit override)
+        # 1. Expliziter Override via Umgebungsvariable
         env_framework = os.environ.get("REGRESSION_FRAMEWORK", "").lower()
         if env_framework == "streamlit":
             cls._cached_framework = Framework.STREAMLIT
@@ -44,27 +44,27 @@ class FrameworkDetector:
             cls._cached_framework = Framework.FLASK
             return cls._cached_framework
         
-        # 2. Check if running in Streamlit
+        # 2. Prüfung auf Streamlit-Kontext
         if cls._is_streamlit():
             cls._cached_framework = Framework.STREAMLIT
             return cls._cached_framework
         
-        # 3. Check if running in Flask
+        # 3. Prüfung auf Flask-Kontext (aktive App)
         if cls._is_flask():
             cls._cached_framework = Framework.FLASK
             return cls._cached_framework
         
-        # 4. Check command line arguments
+        # 4. Analyse der CLI-Argumente
         if cls._check_cli_args():
             return cls._cached_framework
         
-        # 5. Default
+        # 5. Fallback
         cls._cached_framework = Framework.UNKNOWN
         return cls._cached_framework
     
     @classmethod
     def _is_streamlit(cls) -> bool:
-        """Check if running in Streamlit context."""
+        """Prüft, ob der Code innerhalb eines Streamlit-Kontextes läuft."""
         try:
             from streamlit.runtime.scriptrunner import get_script_run_ctx
             ctx = get_script_run_ctx()
@@ -72,9 +72,8 @@ class FrameworkDetector:
         except ImportError:
             pass
         
-        # Fallback: check if streamlit is in sys.modules and was invoked
+        # Fallback: Prüfung ob streamlit in den sys.modules geladen ist
         if "streamlit" in sys.modules:
-            # Check if we're being run by streamlit
             for arg in sys.argv:
                 if "streamlit" in arg.lower():
                     return True
@@ -83,10 +82,9 @@ class FrameworkDetector:
     
     @classmethod
     def _is_flask(cls) -> bool:
-        """Check if running in Flask context."""
+        """Prüft, ob eine Flask-Instanz aktiv ist."""
         try:
             from flask import current_app
-            # Check if we're in an application context
             return current_app is not None
         except (ImportError, RuntimeError):
             pass
@@ -95,7 +93,7 @@ class FrameworkDetector:
     
     @classmethod
     def _check_cli_args(cls) -> bool:
-        """Check command line arguments for framework hints."""
+        """Sucht in den Start-Argumenten nach Framework-Hinweisen."""
         args = " ".join(sys.argv).lower()
         
         if "streamlit" in args:
@@ -109,15 +107,15 @@ class FrameworkDetector:
     
     @classmethod
     def reset(cls) -> None:
-        """Reset cached detection (useful for testing)."""
+        """Setzt den Cache zurück (primär für Tests relevant)."""
         cls._cached_framework = None
     
     @classmethod
     def is_streamlit(cls) -> bool:
-        """Convenience method to check if running Streamlit."""
+        """Hilfsmethode: Läuft Streamlit?"""
         return cls.detect() == Framework.STREAMLIT
     
     @classmethod
     def is_flask(cls) -> bool:
-        """Convenience method to check if running Flask."""
+        """Hilfsmethode: Läuft Flask?"""
         return cls.detect() == Framework.FLASK

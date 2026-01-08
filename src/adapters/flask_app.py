@@ -1,13 +1,13 @@
 """
-Flask Application - 100% Platform Agnostic.
+Flask Application - 100% Plattform-Agnostisch.
 
-Uses the same API layer as external frontends (Next.js, Vite, etc.)
-This ensures consistency across all frontends.
+Nutzt dieselbe API-Schicht wie externe Frontends (Next.js, Vite, etc.).
+Dies stellt die Konsistenz über alle Benutzeroberflächen hinweg sicher.
 
-Architecture:
+Architektur-Fluss:
     Flask App → API Layer → Core Pipeline
     
-    Same as:
+    Identisch zu:
     Next.js App → HTTP → API Layer → Core Pipeline
 """
 
@@ -23,18 +23,18 @@ logger = get_logger(__name__)
 
 
 def create_flask_app() -> Flask:
-    """Create and configure Flask application."""
+    """Erstellt und konfiguriert die Flask-Anwendung für das HTML-Frontend."""
     app = Flask(__name__, template_folder='templates')
     
-    # Initialize APIs (same as external frontends would use)
+    # Initalisierung der APIs (dieselben, die auch ein externes Frontend nutzen würde)
     regression_api = RegressionAPI()
     content_api = ContentAPI()
     ai_api = AIInterpretationAPI()
     
     @app.route('/')
     def index():
-        """Landing page."""
-        # Get available datasets from API
+        """Hauptseite (Landing Page)."""
+        # Abruf der verfügbaren Datensätze über die API
         datasets = regression_api.get_datasets()
         return render_template(
             'index.html',
@@ -44,14 +44,14 @@ def create_flask_app() -> Flask:
     
     @app.route('/simple')
     def simple_regression():
-        """Simple regression analysis page."""
-        # Get parameters from query string
+        """Seite für die einfache lineare Regression."""
+        # Parameter aus dem Query-String extrahieren
         dataset = request.args.get('dataset', 'electronics')
         n_points = int(request.args.get('n', 50))
         noise = float(request.args.get('noise', 0.4))
         seed = int(request.args.get('seed', 42))
         
-        # Call Content API (same as external frontend would)
+        # Aufruf der Content-API (wie ein modernes JS-Frontend)
         response = content_api.get_simple_content(
             dataset=dataset,
             n=n_points,
@@ -60,30 +60,30 @@ def create_flask_app() -> Flask:
         )
         
         if not response['success']:
-            return render_template('error.html', error=response.get('error', 'Unknown error'))
+            return render_template('error.html', error=response.get('error', 'Unbekannter Fehler'))
         
-        # Extract data from API response
+        # Daten aus dem API-Response extrahieren
         content = response['content']
         plots = response['plots']
         stats = response['stats']
         data = response['data']
         
-        # Build flat stats dict for template
+        # Statistiken für das Template flach klopfen
         stats_dict = _flatten_stats_for_template(stats, data)
         
-        # Render content to HTML using HTMLContentRenderer
+        # Inhalte mittels HTMLContentRenderer in HTML umwandeln
         from ..content import SimpleRegressionContent
         content_builder = SimpleRegressionContent(stats_dict, {})
         content_obj = content_builder.build()
         
         renderer = HTMLContentRenderer(
-            plots=plots,  # Pass serialized plots
+            plots=plots,
             data=data,
             stats=stats_dict
         )
         content_dict = renderer.render_to_dict(content_obj)
         
-        # Get available datasets for dropdown
+        # Verfügbare Datensätze für das Dropdown-Menü
         datasets = regression_api.get_datasets()
         
         return render_template(
@@ -105,14 +105,14 @@ def create_flask_app() -> Flask:
     
     @app.route('/multiple')
     def multiple_regression():
-        """Multiple regression analysis page."""
-        # Get parameters
+        """Seite für die multiple Regressionsanalyse."""
+        # Parameter abrufen
         dataset = request.args.get('dataset', 'cities')
         n_points = int(request.args.get('n', 75))
         noise = float(request.args.get('noise', 3.5))
         seed = int(request.args.get('seed', 42))
         
-        # Call Content API
+        # Content-API aufrufen (identische Logik wie Simple Regression)
         response = content_api.get_multiple_content(
             dataset=dataset,
             n=n_points,
@@ -121,18 +121,18 @@ def create_flask_app() -> Flask:
         )
         
         if not response['success']:
-            return render_template('error.html', error=response.get('error', 'Unknown error'))
+            return render_template('error.html', error=response.get('error', 'Unbekannter Fehler'))
         
-        # Extract data
+        # Daten extrahieren
         content = response['content']
         plots = response['plots']
         stats = response['stats']
         data = response['data']
         
-        # Build flat stats dict
+        # Flache Struktur für die Template-Engine (Jinja2)
         stats_dict = _flatten_multiple_stats_for_template(stats, data)
         
-        # Render content
+        # Content generieren
         from ..content import MultipleRegressionContent
         content_builder = MultipleRegressionContent(stats_dict, {})
         content_obj = content_builder.build()
@@ -144,7 +144,6 @@ def create_flask_app() -> Flask:
         )
         content_dict = renderer.render_to_dict(content_obj)
         
-        # Get available datasets
         datasets = regression_api.get_datasets()
         
         return render_template(
@@ -166,8 +165,8 @@ def create_flask_app() -> Flask:
     
     @app.route('/classification')
     def classification():
-        """Classification analysis page."""
-        # Get parameters
+        """Seite für Klassifikationsanalysen (Logistische Regression & KNN)."""
+        # Parameter (Klassifikation benötigt oft train_size und k)
         dataset = request.args.get('dataset', 'fruits')
         method = request.args.get('method', 'logistic')
         n_points = int(request.args.get('n', 100))
@@ -177,7 +176,7 @@ def create_flask_app() -> Flask:
         train_size = float(request.args.get('train_size', 0.8))
         stratify = request.args.get('stratify', 'true').lower() == 'true'
         
-        # Call Content API
+        # Content-API für Klassifikation abfragen
         response = content_api.get_classification_content(
             dataset=dataset,
             method=method,
@@ -190,28 +189,25 @@ def create_flask_app() -> Flask:
         )
         
         if not response['success']:
-             return render_template('error.html', error=response.get('error', 'Unknown error'))
+             return render_template('error.html', error=response.get('error', 'Unbekannter Fehler'))
              
-        # Extract data
+        # Daten extrahieren
         content = response['content']
         plots = response['plots']
         stats = response['stats']
         data = response['data']
         results = response.get('results', {})
-        test_metrics = results.get('test_metrics', {})
         
-        # Build flat stats dict
+        # Statistiken für das Frontend aufbereiten
         stats_dict = _flatten_classification_stats_for_template(stats, data, results)
         
-        # Render content
-        from ..content import ClassificationContent
-        # Note: ClassificationContent might need generic dict structure
-        # Implementation depends on how it behaves. Assuming it works like others.
+        # Konvertierung der API-Inhaltsstruktur in ein EducationalContent Objekt
         try:
              from ..infrastructure.content.structure import EducationalContent
              content_obj = EducationalContent.from_dict(content)
         except:
-             # Fallback if specific builder needed
+             # Rückfall, falls Konvertierung fehlschlägt
+             from ..content import ClassificationContent
              content_builder = ClassificationContent(stats_dict, {})
              content_obj = content_builder.build()
 
@@ -226,8 +222,8 @@ def create_flask_app() -> Flask:
         
         return render_template(
             'educational_content.html',
-            title=content.get('title', 'Classification'),
-            subtitle=content.get('subtitle', 'Logistic Regression & KNN'),
+            title=content.get('title', 'Klassifikation'),
+            subtitle=content.get('subtitle', 'Logistische Regression & KNN'),
             content_html=content_dict['full_html'],
             chapters=content_dict['chapters'],
             analysis_type='classification',
@@ -239,7 +235,7 @@ def create_flask_app() -> Flask:
             stats=stats_dict,
             plots_json=json.dumps(plots),
             ai_configured=ai_api.get_status()['status']['configured'],
-            # Extra params for classification UI
+            # Zusätzliche Parameter für UI-Controls
             method=method,
             k=k,
             train_size=train_size,
@@ -250,47 +246,49 @@ def create_flask_app() -> Flask:
     # API ENDPOINTS - Proxy to API Layer
     # =========================================================================
     
+    # =========================================================================
+    # API ENDPOINTS - Proxy zur API-Schicht
+    # =========================================================================
+    
     @app.route('/api/datasets', methods=['GET'])
     def api_datasets():
-        """Get available datasets via API."""
+        """Gibt verfügbare Datensätze über die API zurück."""
         return jsonify(regression_api.get_datasets())
     
     @app.route('/api/regression/simple', methods=['POST'])
     def api_simple_regression():
-        """Run simple regression via API."""
+        """Führt eine einfache Regression via API-Proxy aus."""
         data = request.get_json() or {}
         return jsonify(regression_api.run_simple(**data))
     
     @app.route('/api/regression/multiple', methods=['POST'])
     def api_multiple_regression():
-        """Run multiple regression via API."""
+        """Führt eine multiple Regression via API-Proxy aus."""
         data = request.get_json() or {}
         return jsonify(regression_api.run_multiple(**data))
     
     @app.route('/api/content/simple', methods=['POST'])
     def api_content_simple():
-        """Get simple regression content via API."""
+        """Liefert Inhalte für einfache Regression via API."""
         data = request.get_json() or {}
         return jsonify(content_api.get_simple_content(**data))
     
     @app.route('/api/content/multiple', methods=['POST'])
     def api_content_multiple():
-        """Get multiple regression content via API."""
+        """Liefert Inhalte für multiple Regression via API."""
         data = request.get_json() or {}
         return jsonify(content_api.get_multiple_content(**data))
     
     @app.route('/api/content/schema', methods=['GET'])
     def api_content_schema():
-        """Get content schema via API."""
+        """Liefert das Inhalts-Schema (Metadaten)."""
         return jsonify(content_api.get_content_schema())
     
     @app.route('/api/ai/interpret', methods=['POST'])
     def api_ai_interpret():
         """
-        AI interpretation via API.
-        
-        Accepts JSON with 'stats' field.
-        Returns JSON with interpretation.
+        KI-Interpretation via API-Proxy.
+        Akzeptiert JSON mit 'stats' und liefert die Analyse zurück.
         """
         data = request.get_json() or {}
         stats = data.get('stats', {})
@@ -302,9 +300,8 @@ def create_flask_app() -> Flask:
     @app.route('/api/ai/interpret-html', methods=['POST'])
     def api_ai_interpret_html():
         """
-        AI interpretation via API - returns HTML.
-        
-        For HTMX integration - returns rendered HTML.
+        KI-Interpretation via API - liefert fertiges HTML zurück.
+        Optimiert für HTMX-Integration (Partial Page Updates).
         """
         from ..ai.ui_components import AIInterpretationHTML
         from ..ai import PerplexityClient
@@ -312,14 +309,14 @@ def create_flask_app() -> Flask:
         data = request.get_json() or {}
         stats = data.get('stats', {})
         
-        # Get interpretation via API
+        # Interpretation über die API holen
         result = ai_api.interpret(stats=stats, use_cache=True)
         
-        # Render as HTML
+        # Rendering als HTML Fragment
         client = PerplexityClient()
         ui = AIInterpretationHTML(stats, client)
         
-        # Build response object
+        # Hilfsobjekt für das UI-Komponenten-Rendering
         class ResponseObj:
             def __init__(self, result):
                 interp = result.get('interpretation', {})
@@ -338,26 +335,26 @@ def create_flask_app() -> Flask:
     
     @app.route('/api/ai/r-output', methods=['POST'])
     def api_ai_r_output():
-        """Generate R-style output via API."""
+        """Generiert R-Style Summary Output via API."""
         data = request.get_json() or {}
         stats = data.get('stats', {})
         return jsonify(ai_api.get_r_output(stats))
     
     @app.route('/api/ai/status', methods=['GET'])
     def api_ai_status():
-        """Get AI service status via API."""
+        """Liefert den Status des KI-Dienstes."""
         return jsonify(ai_api.get_status())
     
     @app.route('/api/openapi.json', methods=['GET'])
     def api_openapi():
-        """Get OpenAPI specification."""
+        """Liefert die OpenAPI-Spezifikation."""
         from ..api.endpoints import UnifiedAPI
         unified = UnifiedAPI()
         return jsonify(unified.get_openapi_spec())
     
     @app.route('/api/health', methods=['GET'])
     def api_health():
-        """Health check endpoint."""
+        """Health-Check Endpunkt."""
         return jsonify({
             'status': 'ok',
             'framework': 'flask',
@@ -365,18 +362,18 @@ def create_flask_app() -> Flask:
         })
     
     # =========================================================================
-    # AI INTERPRETATION PAGES
+    # KI-INTERPRETATIONSSEITEN
     # =========================================================================
     
     @app.route('/interpret/<analysis_type>')
     def interpret_page(analysis_type: str):
         """
-        Dedicated page for AI interpretation.
+        Dedizierte Seite für die KI-gestützte Interpretation der Ergebnisse.
         """
         dataset = request.args.get('dataset', 'electronics' if analysis_type == 'simple' else 'cities')
         n_points = int(request.args.get('n', 50 if analysis_type == 'simple' else 75))
         
-        # Get content via API
+        # Daten und Statistiken über die API beziehen
         if analysis_type == 'simple':
             response = content_api.get_simple_content(dataset=dataset, n=n_points)
             stats_dict = _flatten_stats_for_template(response['stats'], response['data'])
@@ -384,7 +381,7 @@ def create_flask_app() -> Flask:
             response = content_api.get_multiple_content(dataset=dataset, n=n_points)
             stats_dict = _flatten_multiple_stats_for_template(response['stats'], response['data'])
         
-        # Get AI interpretation via API
+        # Interpretation und R-Output über die API anfordern
         interp_result = ai_api.interpret(stats=stats_dict)
         r_output_result = ai_api.get_r_output(stats_dict)
         
@@ -404,8 +401,13 @@ def create_flask_app() -> Flask:
     return app
 
 
+# =========================================================================
+# HILFSFUNKTIONEN FÜR TEMPLATE-RENDERING
+# Diese Funktionen transformieren API-Antworten in Jinja2-freundliche Formate.
+# =========================================================================
+
 def _flatten_stats_for_template(stats: Dict[str, Any], data: Dict[str, Any]) -> Dict[str, Any]:
-    """Flatten API stats response for Jinja2 templates."""
+    """Konvertiert API-Stats in ein flaches Dict für die einfache Regressions-UI."""
     coefficients = stats.get('coefficients', {})
     model_fit = stats.get('model_fit', {})
     t_tests = stats.get('t_tests', {})
@@ -513,39 +515,38 @@ def _flatten_multiple_stats_for_template(stats: Dict[str, Any], data: Dict[str, 
 
 
 def _flatten_classification_stats_for_template(stats: Dict[str, Any], data: Dict[str, Any], results: Dict[str, Any]) -> Dict[str, Any]:
-    """Flatten classification stats for templates."""
-    metrics = stats # In classification, stats is essentially metrics
+    """Bereitet Klassifikations-Daten für das HTML-Template auf."""
+    metrics = stats # Bei der Klassifikation sind Stats im Wesentlichen die Metriken
     test_metrics = results.get('test_metrics', {})
     
     return {
-        'context_title': 'Classification',
-        'context_description': f"Predicting {data.get('target_names', ['Class'])[0] if isinstance(data.get('target_names'), list) and len(data.get('target_names'))>0 else 'Target'}",
+        'context_title': 'Klassifikationsanalyse',
+        'context_description': f"Vorhersage von {data.get('target_names', ['Klasse'])[0] if isinstance(data.get('target_names'), list) and len(data.get('target_names'))>0 else 'Zielvariable'}",
         
-        # Method info
-        'method': stats.get('method', 'unknown'),
+        # Methoden-Informationen
+        'method': stats.get('method', 'unbekannt'),
         'k': stats.get('k'),
         
-        # Metrics
+        # Trainings-Metriken
         'accuracy': metrics.get('accuracy', 0),
         'precision': metrics.get('precision', 0),
         'recall': metrics.get('recall', 0),
         'f1': metrics.get('f1', 0),
         
-        # Test Metrics (if available)
+        # Test-Metriken (falls Split vorhanden)
         'test_accuracy': test_metrics.get('accuracy'),
         'test_precision': test_metrics.get('precision'),
         'test_recall': test_metrics.get('recall'),
         'test_f1': test_metrics.get('f1'),
         
-        # Confusion Matrix
+        # Konfusionsmatrix
         'confusion_matrix': metrics.get('confusion_matrix'),
         
-        # Logistic Params
+        # Logistische Regressions-Parameter
         'coefficients': metrics.get('coefficients'),
         'intercept': metrics.get('intercept'),
         
-        # Use existing regression keys as placeholders to prevent template errors if mixed
-        # (Though we should control this via analysis_type check in template)
+        # Platzhalter für Regressions-Keys zur Vermeidung von Template-Fehlern
         'r_squared': 0, 
         'p_slope': 1,
         'slope': 0,
@@ -553,29 +554,30 @@ def _flatten_classification_stats_for_template(stats: Dict[str, Any], data: Dict
     }
 
 def run_flask(host: str = '0.0.0.0', port: int = 5000, debug: bool = True):
-    """Run Flask application."""
+    """Startet die Flask-Anwendung."""
     app = create_flask_app()
     
     print("""
-╔══════════════════════════════════════════════════════════════════════════╗
-║                    🌐 Flask Web Application                               ║
-║                    100% API-Powered Architecture                          ║
-╠══════════════════════════════════════════════════════════════════════════╣
-║  Uses the same API layer as external frontends (Next.js, Vite, etc.)     ║
-║                                                                           ║
-║  Pages:                                                                   ║
-║    /              - Landing Page                                          ║
-║    /simple        - Simple Regression Analysis                            ║
-║    /multiple      - Multiple Regression Analysis                          ║
-║    /interpret/*   - AI Interpretation                                     ║
-║                                                                           ║
-║  API Endpoints (same as REST API server):                                 ║
-║    /api/datasets                  - List datasets                         ║
-║    /api/regression/simple         - Run simple regression                 ║
-║    /api/content/simple            - Get educational content               ║
-║    /api/ai/interpret              - AI interpretation                     ║
-║    /api/openapi.json              - OpenAPI specification                 ║
-╚══════════════════════════════════════════════════════════════════════════╝
+    ╔══════════════════════════════════════════════════════════════════════════╗
+    ║                    🌐 Flask Web-Anwendung                                ║
+    ║                    100% API-Gestützte Architektur                        ║
+    ╠══════════════════════════════════════════════════════════════════════════╣
+    ║  Nutzt dieselbe API-Schicht wie moderne Frontends (React, Vue, etc.)      ║
+    ║                                                                           ║
+    ║  Seiten:                                                                  ║
+    ║    /              - Startseite (Landing Page)                             ║
+    ║    /simple        - Einfache Regressionsanalyse                           ║
+    ║    /multiple      - Multiple Regressionsanalyse                           ║
+    ║    /classification - Klassifikationsanalyse                                ║
+    ║    /interpret/*   - KI-Interpretation                                     ║
+    ║                                                                           ║
+    ║  API-Endpunkte (identisch zum API-Server):                                ║
+    ║    /api/datasets                  - Datensätze auflisten                  ║
+    ║    /api/regression/simple         - Regression ausführen                  ║
+    ║    /api/content/simple            - Edukativen Content laden              ║
+    ║    /api/ai/interpret              - KI-Interpretation anfordern           ║
+    ║    /api/openapi.json              - OpenAPI Spezifikation                 ║
+    ╚══════════════════════════════════════════════════════════════════════════╝
     """)
     
     print(f"🌐 Server: http://{host}:{port}")

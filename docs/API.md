@@ -871,21 +871,47 @@ Alle Fehler folgen diesem Format:
 ```json
 {
   "success": false,
-  "error": "Beschreibung des Fehlers"
+  "error": "Beschreibung des Fehlers",
+  "error_id": "a1b2c3d4",
+  "error_code": "SINGULAR_MATRIX",
+  "details": {
+    "validation_errors": [...]
+  }
 }
 ```
+
+**Error Response Felder:**
+
+| Feld | Typ | Beschreibung |
+|------|-----|--------------|
+| `success` | boolean | Immer `false` bei Fehlern |
+| `error` | string | Menschlich lesbare Fehlermeldung |
+| `error_id` | string | Eindeutige Error-ID (8 Zeichen) für Tracking und Debugging |
+| `error_code` | string | Optional: Maschinenlesbarer Error-Code |
+| `details` | object | Optional: Zusätzliche Fehlerdetails |
+
+**Error-Codes:**
+
+| Code | Beschreibung | Lösung |
+|------|--------------|--------|
+| `VALIDATION_ERROR` | Request-Validierung fehlgeschlagen | Prüfe Request-Parameter |
+| `SINGULAR_MATRIX` | Datenmatrix ist singulär (Multikollinearität) | Prüfe Daten, entferne abhängige Variablen |
+| `DOMAIN_ERROR` | Domain-spezifischer Fehler | Siehe Error-Message für Details |
+| `UNKNOWN_ERROR` | Unerwarteter Fehler | Prüfe Logs mit `error_id` |
 
 ### HTTP Status Codes
 
 | Code | Bedeutung |
 |------|-----------|
 | `200` | Erfolg |
-| `400` | Ungültige Anfrage |
+| `400` | Ungültige Anfrage (Validation Error) |
 | `404` | Ressource nicht gefunden |
 | `429` | Rate Limit erreicht |
 | `500` | Server-Fehler |
 
 ### Beispiel Fehler-Handling
+
+**JavaScript / TypeScript:**
 
 ```javascript
 async function fetchRegression(params) {
@@ -898,13 +924,50 @@ async function fetchRegression(params) {
   const data = await response.json();
   
   if (!data.success) {
-    console.error('API Error:', data.error);
+    // Log error with ID for debugging
+    console.error(`Error ID: ${data.error_id}`);
+    console.error(`Error Code: ${data.error_code}`);
+    console.error(`Message: ${data.error}`);
+    
+    // Show user-friendly message
     throw new Error(data.error);
   }
   
   return data.data;
 }
 ```
+
+**Python:**
+
+```python
+import requests
+
+def fetch_regression(params):
+    try:
+        response = requests.post(
+            'http://localhost:8000/api/regression/simple',
+            json=params
+        )
+        data = response.json()
+        
+        if not data.get('success'):
+            error_id = data.get('error_id')
+            error_code = data.get('error_code')
+            print(f"Error ID: {error_id}, Code: {error_code}")
+            raise Exception(data.get('error', 'Unknown error'))
+        
+        return data['data']
+    except requests.exceptions.RequestException as e:
+        print(f"Network error: {e}")
+        raise
+```
+
+**Error-Tracking:**
+
+Jeder Fehler erhält eine eindeutige `error_id`, die in den Logs verwendet wird:
+- Einfaches Debugging durch Suche in Logs: `grep "ERROR_ID=a1b2c3d4" logs/errors.log`
+- Fehlerverfolgung über mehrere Requests
+- Monitoring und Alerting
 
 ---
 

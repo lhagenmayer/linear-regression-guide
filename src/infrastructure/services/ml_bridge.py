@@ -1,9 +1,9 @@
 """
-Step 2: CALCULATE (ML Bridge)
+Schritt 2: BERECHNEN (ML-Brücke)
 
-This module implements calculations for the "Statistics -> ML" bridge chapter.
-It provides data generation for visualizations like Loss Landscapes,
-Gradient Descent paths, and Overfitting demonstrations.
+Dieses Modul implementiert Berechnungen für das Kapitel "Statistik -> ML Brücke".
+Es bietet Datengenerierung für Visualisierungen wie Loss Landscapes (Fehlerlandschaften),
+Gradient-Descent-Pfade und Overfitting-Demonstrationen.
 """
 
 import numpy as np
@@ -17,20 +17,20 @@ logger = get_logger(__name__)
 
 @dataclass
 class LossSurfaceResult:
-    """Data for 3D Loss Surface visualization."""
-    w_grid: np.ndarray  # Grid of weights (X axis)
-    b_grid: np.ndarray  # Grid of biases (Y axis)
-    loss_grid: np.ndarray  # Grid of losses (Z axis)
-    path_w: List[float]  # Gradient descent path (weights)
-    path_b: List[float]  # Gradient descent path (biases)
-    path_loss: List[float]  # Gradient descent path (losses)
+    """Daten für die 3D-Visualisierung der Fehlerlandschaft (Loss Surface)."""
+    w_grid: np.ndarray  # Gitter der Gewichte (Weights, X-Achse)
+    b_grid: np.ndarray  # Gitter der Biases (Y-Achse)
+    loss_grid: np.ndarray  # Gitter der Fehlerwerte (Losses, Z-Achse)
+    path_w: List[float]  # Pfad des Gradientenabstiegs (Gewichte)
+    path_b: List[float]  # Pfad des Gradientenabstiegs (Biases)
+    path_loss: List[float]  # Pfad der Fehlerwerte während der Optimierung
     optimal_w: float
     optimal_b: float
 
 
 @dataclass
 class OptimizationResult:
-    """Result of an optimization process (e.g., Gradient Descent)."""
+    """Ergebnis eines Optimierungsprozesses (z.B. Gradient Descent)."""
     iterations: List[int]
     losses: List[float]
     final_w: float
@@ -40,25 +40,25 @@ class OptimizationResult:
 
 @dataclass
 class OverfittingDemoResult:
-    """Data for polynomial overfitting demonstration."""
+    """Daten für die Demonstration von Overfitting mittels Polynomen."""
     x_train: np.ndarray
     y_train: np.ndarray
     x_test: np.ndarray
     y_test: np.ndarray
-    x_plot: np.ndarray  # Dense grid for plotting curves
-    train_metrics: Dict[int, float]  # degree -> MSE
-    test_metrics: Dict[int, float]   # degree -> MSE
-    predictions: Dict[int, np.ndarray] # degree -> y_plot prediction
+    x_plot: np.ndarray  # Dichtes Gitter für das Zeichnen glatter Kurven
+    train_metrics: Dict[int, float]  # Grad des Polynoms -> MSE
+    test_metrics: Dict[int, float]   # Grad des Polynoms -> MSE
+    predictions: Dict[int, np.ndarray] # Grad -> y_plot Vorhersage
 
 
 class MLBridgeService:
     """
-    Service for calculating ML bridge concepts.
+    Service zur Berechnung von Konzepten an der Schnittstelle Statistik/ML.
     
-    Principles:
-    1. Grid generation for 3D surfaces
-    2. Iterative optimization simulation
-    3. Bias-Variance decomposition helpers
+    Prinzipien:
+    1. Gitter-Generierung für 3D-Oberflächen
+    2. Simulation iterativer Optimierungen
+    3. Hilfestellungen für Bias-Variance-Dekomposition
     """
     
     def calculate_loss_surface(
@@ -69,21 +69,21 @@ class MLBridgeService:
         margin: float = 2.0
     ) -> LossSurfaceResult:
         """
-        Calculate MSE loss surface over a grid of parameters (w, b).
-        Also simulates a gradient descent path on this surface.
+        Berechnet die MSE-Fehlerlandschaft über ein Gitter von Parametern (w, b).
+        Simuliert zusätzlich einen Gradientenabstiegs-Pfad auf dieser Oberfläche.
         """
-        # 1. Find optimal parameters (OLS) for centering
+        # 1. Optimale Parameter (OLS) finden, um das Gitter zu zentrieren
         X_b = np.column_stack([np.ones(len(X)), X])
         theta_best = np.linalg.inv(X_b.T.dot(X_b)).dot(X_b.T).dot(y)
         opt_b, opt_w = theta_best[0], theta_best[1]
         
-        # 2. Create grid around optimum
+        # 2. Gitter um das Optimum herum erstellen
         w_range = np.linspace(opt_w - margin, opt_w + margin, grid_size)
         b_range = np.linspace(opt_b - margin, opt_b + margin, grid_size)
         w_grid, b_grid = np.meshgrid(w_range, b_range)
         
-        # 3. Calculate Loss (MSE) for each grid point
-        # Vectorized implementation for speed
+        # 3. Fehler (MSE) für jeden Gitterpunkt berechnen
+        # Vektorisierte Implementierung für maximale Geschwindigkeit
         n = len(X)
         loss_grid = np.zeros_like(w_grid)
         
@@ -93,8 +93,8 @@ class MLBridgeService:
                 preds = w * X + b
                 loss_grid[i, j] = np.mean((preds - y)**2)
                 
-        # 4. Simulate Gradient Descent Path (Learning)
-        # Start far from optimum to show path
+        # 4. Gradientenabstiegs-Pfad simulieren (Lernprozess)
+        # Wir starten bewusst etwas abseits vom Optimum, um den Pfad zu zeigen
         start_w = opt_w - margin * 0.8
         start_b = opt_b - margin * 0.8
         
@@ -116,25 +116,25 @@ class MLBridgeService:
     def _simulate_gradient_descent(
         self, X: np.ndarray, y: np.ndarray, w_init: float, b_init: float, learning_rate: float
     ) -> Tuple[List[float], List[float], List[float]]:
-        """Simulate GD for path visualization."""
+        """Simuliert Gradient Descent für die Pfad-Visualisierung."""
         w, b = w_init, b_init
         path_w, path_b, path_loss = [w], [b], []
         
         n = len(X)
         
-        # Compute initial loss
+        # Initialen Fehler berechnen
         initial_pred = w * X + b
         path_loss.append(np.mean((initial_pred - y)**2))
         
-        for _ in range(20):  # Short simulation for visualization
+        for _ in range(20):  # Kurze Simulation für didaktische Zwecke
             pred = w * X + b
             error = pred - y
             
-            # Gradients
+            # Gradienten-Berechnung
             dw = (2/n) * np.sum(error * X)
             db = (2/n) * np.sum(error)
             
-            # Update
+            # Update-Schritt
             w -= learning_rate * dw
             b -= learning_rate * db
             
@@ -148,16 +148,16 @@ class MLBridgeService:
         self, n_samples: int = 20, noise: float = 0.3
     ) -> OverfittingDemoResult:
         """
-        Generate data and fit polynomials of degrees 1, 3, 10
-        to demonstrate Underfitting vs Optimal vs Overfitting.
+        Generiert Daten und fittet Polynome der Grade 1, 3, 12,
+        um Underfitting vs. Optimum vs. Overfitting zu demonstrieren.
         """
         np.random.seed(42)
         
-        # True function: sin(2πx)
+        # Wahre Funktion: sin(2πx)
         features = np.sort(np.random.uniform(0, 1, n_samples))
         target = np.sin(2 * np.pi * features) + np.random.normal(0, noise, n_samples)
         
-        # Split
+        # Datensplit
         indices = np.random.permutation(n_samples)
         split = int(n_samples * 0.7)
         train_idx, test_idx = indices[:split], indices[split:]
@@ -165,20 +165,20 @@ class MLBridgeService:
         x_train, y_train = features[train_idx], target[train_idx]
         x_test, y_test = features[test_idx], target[test_idx]
         
-        # Dense grid for plotting smooth lines
+        # Dichtes Gitter für glatte Kurvendarstellung
         x_plot = np.linspace(0, 1, 100)
         
         train_metrics = {}
         test_metrics = {}
         predictions = {}
         
-        # Fit degrees 1, 3, 12
+        # Fitting für die Grade 1, 3, 12
         for degree in [1, 3, 12]:
-            # Polynomial fit
+            # Polynomialer Fit
             coeffs = np.polyfit(x_train, y_train, degree)
             poly = np.poly1d(coeffs)
             
-            # Predictions
+            # Vorhersagen
             y_plot = poly(x_plot)
             train_pred = poly(x_train)
             test_pred = poly(x_test)

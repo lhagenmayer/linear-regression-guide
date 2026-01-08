@@ -1,8 +1,6 @@
 """
-Step 2: CALCULATE (Classification)
-
-This module implements classification algorithms from scratch
-using only NumPy, ensuring transparency and educational value.
+Infrastructure: Klassifikations-Algorithmen (Logistic Regression, KNN).
+Implementierung "from scratch" mittels NumPy zur Veranschaulichung der mathematischen Konzepte.
 """
 
 import numpy as np
@@ -22,16 +20,16 @@ logger = get_logger(__name__)
 
 class ClassificationServiceImpl(IClassificationService):
     """
-    Implementation of classification algorithms (Logistic, KNN).
+    Implementierung von Klassifikations-Algorithmen.
     
-    Principles:
-    1. Pure NumPy implementation (educational)
-    2. Vectorized operations (clean code)
-    3. Detailed metrics calculation
+    Prinzipien:
+    1. Reine NumPy-Implementierung (kein Scikit-Learn)
+    2. Vektorisierte Operationen für Effizienz
+    3. Transparente Metriken-Berechnung
     """
     
     # =========================================================================
-    # LOGISTIC REGRESSION (Binary)
+    # LOGISTISCHE REGRESSION (Binär)
     # =========================================================================
     
     def train_logistic(
@@ -42,56 +40,52 @@ class ClassificationServiceImpl(IClassificationService):
         iterations: int = 1000
     ) -> ClassificationResult:
         """
-        Train binary logistic regression using Gradient Descent.
+        Trainiert eine binäre logistische Regression mittels Gradientenabstieg (Gradient Descent).
         
-        Model: p = sigmoid(X * w + b)
-        Loss: Binary Cross Entropy
+        Modell: p = sigmoid(X * w + b)
+        Loss-Funktion: Binary Cross Entropy
         """
         n_samples, n_features = X.shape
         
-        # Initialize weights and bias
-        # Using simplified standardization for stability during training
-        # (Ideally this should be handled by a pre-processor service)
+        # Standardisierung der Daten zur Stabilisierung des Trainings
         X_mean = np.mean(X, axis=0)
         X_std = np.std(X, axis=0) + 1e-8
         X_scaled = (X - X_mean) / X_std
         
+        # Initialisierung der Gewichte (Weights) und des Bias
         weights = np.zeros(n_features)
         bias = 0.0
         
-        # Gradient Descent
         loss_history = []
         
+        # Iterativer Optimierungsprozess
         for _ in range(iterations):
-            # 1. Linear model
+            # 1. Lineares Modell berechnen: z = Xw + b
             z = np.dot(X_scaled, weights) + bias
             
-            # 2. Sigmoid activation
+            # 2. Sigmoid-Aktivierung: Transformation in Wahrscheinlichkeiten [0, 1]
             predictions = 1 / (1 + np.exp(-z))
             
-            # 3. Gradients
-            # dL/dw = (1/N) * X.T * (y_pred - y)
+            # 3. Berechnung der Gradienten (dL/dw und dL/db)
             error = predictions - y
             dw = (1 / n_samples) * np.dot(X_scaled.T, error)
             db = (1 / n_samples) * np.sum(error)
             
-            # 4. Updates
+            # 4. Update der Parameter in Richtung des negativen Gradienten
             weights -= learning_rate * dw
             bias -= learning_rate * db
             
-            # Log loss occasionally
+            # Protokollierung der Loss-Entwicklung (BCE-Loss)
             if _ % 100 == 0:
                 loss = -np.mean(y * np.log(predictions + 1e-15) + (1-y) * np.log(1-predictions + 1e-15))
                 loss_history.append(loss)
         
-        # Final predictions
+        # Finale Vorhersagen auf den Trainingsdaten
         z_final = np.dot(X_scaled, weights) + bias
         probs = 1 / (1 + np.exp(-z_final))
         preds = (probs >= 0.5).astype(int)
         
-        # Unscale weights for interpretability (approximate)
-        # w_orig = w_scaled / std
-        # b_orig = b_scaled - sum(w_scaled * mean / std)
+        # Rückrechnung der Gewichte auf die Originalskala (für Interpretierbarkeit)
         real_weights = weights / X_std
         real_bias = bias - np.sum(weights * X_mean / X_std)
         
@@ -112,7 +106,7 @@ class ClassificationServiceImpl(IClassificationService):
         )
     
     # =========================================================================
-    # K-NEAREST NEIGHBORS (Multi-class)
+    # K-NEAREST NEIGHBORS (KNN)
     # =========================================================================
     
     def train_knn(
@@ -122,40 +116,33 @@ class ClassificationServiceImpl(IClassificationService):
         k: int = 3
     ) -> ClassificationResult:
         """
-        Train KNN model.
-        
-        Note: KNN is "lazy", so training just stores data.
-        To make this output a Result immediately useful for visualization,
-        we compute predictions on the Training set (or could be Test set if passed).
-        Here we return training performance for consistency.
+        "Training" eines KNN-Modells.
+        Da KNN ein 'Lazy Learner' ist, werden hier primär die Daten gespeichert.
+        Zusätzlich berechnen wir Vorhersagen für die Trainingsdaten.
         """
         n_samples = len(y)
         classes = np.unique(y)
         n_classes = len(classes)
         
-        # Standardize for distance calculation
+        # Standardisierung für die Distanzberechnung (Euklidischer Abstand)
         X_mean = np.mean(X, axis=0)
         X_std = np.std(X, axis=0) + 1e-8
         X_scaled = (X - X_mean) / X_std
         
-        # Predict for all points (Leave-One-Out style ideally, but standard fit-predict here)
         preds = np.zeros(n_samples, dtype=int)
         probs = np.zeros((n_samples, n_classes))
         
-        # Vectorized distance calculation is heavy for large N, 
-        # but fine for our small datasets (<1000 samples)
+        # Klassifizierung jedes Punktes durch Vergleich mit allen anderen Punkten
         for i in range(n_samples):
-            # 1. Calculate distances to all POINTS
-            # Euclidean: sqrt(sum((x - y)^2))
+            # 1. Berechnung der euklidischen Distanzen zu allen Punkten
             diff = X_scaled - X_scaled[i]
             dists = np.sqrt(np.sum(diff**2, axis=1))
             
-            # 2. Find k nearest (excluding self if strictly LOO, but standard sklearn approach includes self in fit-predict)
-            # We'll use standard approach: find k neighbors including self (k=1 will maximize accuracy to 1.0)
+            # 2. Finden der k nächsten Nachbarn
             nearest_indices = np.argsort(dists)[:k]
             nearest_labels = y[nearest_indices]
             
-            # 3. Vote
+            # 3. Mehrheitsentscheidung (Voting)
             counts = np.bincount(nearest_labels, minlength=n_classes)
             preds[i] = np.argmax(counts)
             probs[i] = counts / k
@@ -177,7 +164,7 @@ class ClassificationServiceImpl(IClassificationService):
         )
 
     # =========================================================================
-    # METRICS
+    # METRIKEN BERECHNUNG
     # =========================================================================
 
     def calculate_metrics(
@@ -186,54 +173,57 @@ class ClassificationServiceImpl(IClassificationService):
         y_pred: np.ndarray, 
         y_prob: np.ndarray
     ) -> ClassificationMetrics:
-        """Calculate comprehensive classification metrics."""
+        """Berechnet umfassende Klassifikationsmetriken (Accuracy, Precision, Recall, F1)."""
         n = len(y_true)
         if n == 0:
             return ClassificationMetrics(0, 0, 0, 0, np.zeros((2,2)))
             
-        # 1. Confusion Matrix
-        # Handle both binary and multiclass by treating macro averages or specific class of interest
-        # For simplicity in this version, we assume Binary or handle Multiclass via weighted
+        # Unterscheidung zwischen binärer und Multiklassen-Klassifikation
         classes = np.unique(y_true)
         is_binary = len(classes) <= 2
         
         if is_binary:
-            # Binary: 0=Negative, 1=Positive
-            tp = np.sum((y_true == 1) & (y_pred == 1))
-            tn = np.sum((y_true == 0) & (y_pred == 0))
-            fp = np.sum((y_true == 0) & (y_pred == 1))
-            fn = np.sum((y_true == 1) & (y_pred == 0))
+            # Binär: 0=Negativ, 1=Positiv
+            tp = np.sum((y_true == 1) & (y_pred == 1)) # True Positive
+            tn = np.sum((y_true == 0) & (y_pred == 0)) # True Negative
+            fp = np.sum((y_true == 0) & (y_pred == 1)) # False Positive
+            fn = np.sum((y_true == 1) & (y_pred == 0)) # False Negative
             
-            cm = np.array([[tn, fp], [fn, tp]])
+            cm = np.array([[tn, fp], [fn, tp]]) # Confusion Matrix
             
             accuracy = (tp + tn) / n
             precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
             recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
             f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
             
-            # Simple AUC approximation (trapezoidal) using sorted probabilities
+            # Manual AUC-Approximation (Trapezoidal Rule)
             if len(np.unique(y_true)) > 1:
-                # Basic AUC implementation
                 order = np.argsort(y_prob)[::-1]
                 y_true_sorted = y_true[order]
                 tpr = np.cumsum(y_true_sorted) / np.sum(y_true_sorted)
                 fpr = np.cumsum(1 - y_true_sorted) / np.sum(1 - y_true_sorted)
-                auc = np.trapezoid(tpr, fpr)
+                
+                # Manual integration (trapz)
+                auc = 0.0
+                for i in range(1, len(fpr)):
+                    auc += (fpr[i] - fpr[i-1]) * (tpr[i] + tpr[i-1]) / 2.0
             else:
                 auc = 0.5
                 
         else:
-            # Multiclass: Macro averaging
+            # Multiklasse: Macro-Averaging
             n_classes = len(classes)
             precisions, recalls = [], []
             cm = np.zeros((n_classes, n_classes), dtype=int)
             
+            # Aufbau der Konfusionsmatrix
             for i, c_true in enumerate(classes):
                 for j, c_pred in enumerate(classes):
                     cm[i, j] = np.sum((y_true == c_true) & (y_pred == c_pred))
             
             accuracy = np.trace(cm) / n
             
+            # Berechnung für jede Klasse einzeln
             for i in range(n_classes):
                 tp = cm[i, i]
                 fp = np.sum(cm[:, i]) - tp
@@ -244,10 +234,11 @@ class ClassificationServiceImpl(IClassificationService):
                 precisions.append(p)
                 recalls.append(r)
             
+            # Durchschnitt über alle Klassen (Macro)
             precision = np.mean(precisions)
             recall = np.mean(recalls)
             f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
-            auc = None # Multiclass AUC is complex (One-vs-Rest), skipping for now
+            auc = None 
             
         return ClassificationMetrics(
             accuracy=accuracy,
@@ -259,7 +250,7 @@ class ClassificationServiceImpl(IClassificationService):
         )
 
     # =========================================================================
-    # PREDICTION & EVALUATION
+    # VORHERSAGE & EVALUIERUNG
     # =========================================================================
 
     def predict_logistic(
@@ -267,29 +258,14 @@ class ClassificationServiceImpl(IClassificationService):
         X: np.ndarray,
         params: Dict[str, Any]
     ) -> Tuple[np.ndarray, np.ndarray]:
-        """Predict using Logistic Regression params."""
+        """Vorhersage mittels logistischer Regressionsparameter."""
         weights = np.array(params["coefficients"])
         bias = params["intercept"]
         
         if X.shape[1] != len(weights):
-             raise ValueError(f"Feature mismatch: X has {X.shape[1]}, model has {len(weights)}")
+             raise ValueError(f"Feature mismatch: X hat {X.shape[1]}, Modell erwartet {len(weights)}")
              
-        # Standardize X using assumption of similar scale 
-        # (Limitations of stateless service without stored scaler)
-        # Ideally parameters should include scaler stats.
-        # In current train_logistic, we unscaled weights, so they work on RAW X 
-        # IF X has same scale. But we used Z-score.
-        # Wait, if we use real_weights = weights / X_std, then:
-        # y = w_scaled * x_scaled + b_scaled
-        #   = w_scaled * (x - mean)/std + b_scaled
-        #   = (w_scaled/std) * x - (w_scaled*mean/std) + b_scaled
-        #   = real_weights * x + real_bias
-        # So yes, real_weights and real_bias work on RAW X.
-        
-        # However, for stability, we might want to scale again? 
-        # But we computed real_weights precisely to avoid storing scaler.
-        # So we can just dot product.
-        
+        # Anwendung der gelernten (unskalierten) Parameter auf die Rohdaten
         z = np.dot(X, weights) + bias
         probs = 1 / (1 + np.exp(-z))
         preds = (probs >= 0.5).astype(int)
@@ -301,16 +277,15 @@ class ClassificationServiceImpl(IClassificationService):
         X: np.ndarray,
         params: Dict[str, Any]
     ) -> Tuple[np.ndarray, np.ndarray]:
-        """Predict using KNN params."""
+        """Vorhersage mittels KNN-Modell (Vergleich mit Trainingsdaten)."""
         k = params["k"]
         X_train = np.array(params["X_train"])
         y_train = np.array(params["y_train"])
         X_train_mean = np.array(params["X_mean"])
         X_train_std = np.array(params["X_std"])
         
-        # Scale input using training stats
+        # Skalierung der Eingabedaten basierend auf dem Trainings-Set-Zustand
         X_scaled = (X - X_train_mean) / X_train_std
-        # Note: X_train in params is ORIGINAL. We need to scale it too for distance calc.
         X_train_scaled = (X_train - X_train_mean) / X_train_std
         
         n_samples = len(X)
@@ -318,10 +293,6 @@ class ClassificationServiceImpl(IClassificationService):
         
         preds = np.zeros(n_samples, dtype=int)
         probs = np.zeros((n_samples, n_classes))
-        
-        # Optimization: matrix operations for distances? vectorization
-        # dists = sqrt(|x|^2 + |y|^2 - 2xy)
-        # For education we stick to simple loop or semi-vectorized.
         
         for i in range(n_samples):
             diff = X_train_scaled - X_scaled[i]
@@ -343,7 +314,7 @@ class ClassificationServiceImpl(IClassificationService):
         params: Dict[str, Any],
         method: str
     ) -> ClassificationMetrics:
-        """Evaluate model on new data."""
+        """Evaluiert das Modell auf unbekannten (Test-)Daten."""
         if method == "knn":
             preds, probs = self.predict_knn(X, params)
         else:

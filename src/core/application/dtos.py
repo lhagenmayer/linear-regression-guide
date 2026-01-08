@@ -1,19 +1,20 @@
 """
-Data Transfer Objects (DTOs) for Application Layer.
-Type-safe data transfer between API/CLI and Use Cases.
+Data Transfer Objects (DTOs) für den Application-Layer.
+Typsicherer Datentransport zwischen API/CLI und Use Cases.
 """
 from dataclasses import dataclass, field
 from typing import Dict, Any, List, Optional, Union
 from enum import Enum
 
+# Import von Enums aus dem Domain-Layer
 from ..domain.value_objects import RegressionType, ModelQuality
 
 
 @dataclass(frozen=True)
 class RegressionRequestDTO:
     """
-    Immutable Request DTO for running a regression.
-    Uses Enum for type safety.
+    Unveränderliches Request-Objekt zum Starten einer Regressionsanalyse.
+    Nutzt Enums für Typsicherheit.
     """
     dataset_id: str
     n_observations: int
@@ -21,60 +22,61 @@ class RegressionRequestDTO:
     seed: int
     regression_type: RegressionType = RegressionType.SIMPLE
     
-    # Optional overrides for synthetic data
+    # Optionale Overrides für synthetische Daten (Steigung/Achsenabschnitt)
     true_intercept: Optional[float] = None
     true_slope: Optional[float] = None
     
     def __post_init__(self):
-        """Validate request parameters."""
+        """Validierung der Request-Parameter."""
         if self.n_observations < 2:
-            raise ValueError(f"n_observations must be >= 2, got {self.n_observations}")
+            raise ValueError(f"n_observations muss >= 2 sein, erhalten wurde {self.n_observations}")
         if self.noise_level < 0:
-            raise ValueError(f"noise_level must be non-negative, got {self.noise_level}")
+            raise ValueError(f"noise_level darf nicht negativ sein, erhalten wurde {self.noise_level}")
 
 
 @dataclass(frozen=True)
 class RegressionResponseDTO:
     """
-    Immutable Response DTO containing results and data.
+    Unveränderliches Response-Objekt, das Ergebnisse und Rohdaten enthält.
     
-    Note: frozen=True ensures immutability, but lists are still mutable internally.
-    For true immutability, consider using tuples for x_data, y_data, etc.
+    Architektur-Hinweis: frozen=True stellt Unveränderlichkeit sicher, 
+    aber Listen sind intern noch mutierbar. Für echte Immutability nutzen wir Tuples 
+    für x_data, y_data etc.
     """
     model_id: str
     success: bool
     
-    # Result Data (using tuple for true immutability)
+    # Ergebnisdaten (als Dicts für einfache JSON-Serialisierung)
     coefficients: Dict[str, float]
     metrics: Dict[str, float]
     
-    # Raw Data (for plotting by frontend)
-    x_data: tuple  # Tuple for immutability
+    # Rohdaten (für die Visualisierung im Frontend)
+    x_data: tuple  # Tuple für strikte Unveränderlichkeit
     y_data: tuple
     residuals: tuple
     predictions: tuple
     
-    # Metadata
+    # Metadaten zur Beschriftung
     x_label: str
     y_label: str
     title: str
     description: str
     
-    # Quality classification
+    # Qualitätsbewertung
     quality: Optional[ModelQuality] = None
     is_significant: bool = False
     
-    # Extensibility
+    # Erweiterbarkeit für zusätzliche Informationen
     extra: Dict[str, Any] = field(default_factory=dict)
     
     @property
     def r_squared(self) -> Optional[float]:
-        """Convenience accessor for R²."""
+        """Bequemer Zugriff auf den R²-Wert."""
         return self.metrics.get("r_squared")
     
     @property
     def slope(self) -> Optional[float]:
-        """Convenience accessor for slope (simple regression)."""
+        """Bequemer Zugriff auf die Steigung (nur bei einfacher Regression)."""
         if "x" in self.coefficients:
             return self.coefficients["x"]
         return None
@@ -82,53 +84,50 @@ class RegressionResponseDTO:
 
 @dataclass(frozen=True)
 class ErrorDTO:
-    """Standardized error response."""
+    """Standardisierte Fehlerrückgabe."""
     code: str
     message: str
     details: Optional[Dict[str, Any]] = None
 
 
-# Type alias for responses that can fail
+# Typ-Alias für Resultate, die entweder Daten oder einen Fehler enthalten
 ResponseResult = Union[RegressionResponseDTO, ErrorDTO]
 
 
 @dataclass(frozen=True)
 class ClassificationRequestDTO:
-    """DTO for classification analysis request."""
+    """DTO für Klassifikations-Anfragen (Logistic / KNN)."""
     dataset_id: str
     n_observations: int
     noise_level: float
     seed: int
-    method: str  # "logistic" or "knn"
+    method: str  # "logistic" oder "knn"
     k_neighbors: int = 3
     stratify: bool = False
     train_size: float = 0.8
-    
-    # Optional parameters
-    # test_size removed in favor of train_size for consistency
 
 
 @dataclass(frozen=True)
 class ClassificationResponseDTO:
-    """Response DTO for classification results."""
+    """DTO für Klassifikations-Ergebnisse."""
     success: bool
     method: str
     classes: tuple
     
-    # Metrics (Train & Test)
-    metrics: Dict[str, Any]      # Train metrics
-    test_metrics: Dict[str, Any] # Test metrics
+    # Metriken für Trainings- und Testdaten
+    metrics: Dict[str, Any]      # Training
+    test_metrics: Dict[str, Any] # Test
     
-    # Model parameters
+    # Modell-Parameter (z.B. Koeffizienten)
     parameters: Dict[str, Any]
     
-    # Data for Plotting
-    X_data: tuple # Tuple of tuples? or flattened?
+    # Daten für die grafische Darstellung
+    X_data: tuple # Tuple von Tuples (für Plotly 3D)
     y_data: tuple
     predictions: tuple
     probabilities: tuple
     
-    # Metadata
+    # Metadaten zur Benennung
     feature_names: tuple
     target_names: tuple
     dataset_name: str

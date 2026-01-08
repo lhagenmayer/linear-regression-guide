@@ -1,8 +1,8 @@
 """
 Application Use Cases.
-Orchestrate domain objects and infrastructure services using dependency injection.
+Orchestrierung von Domain-Objekten und Infrastructure-Services mittels Dependency Injection.
 """
-from typing import Dict, Any
+from typing import Dict, Any, List
 import numpy as np
 from .dtos import RegressionRequestDTO, RegressionResponseDTO, ClassificationRequestDTO, ClassificationResponseDTO
 from ..domain.interfaces import IDataProvider, IRegressionService, IClassificationService
@@ -12,25 +12,28 @@ from ..domain.value_objects import RegressionType
 
 class RunRegressionUseCase:
     """
-    Use Case: Run a regression analysis (Simple or Multiple).
+    Use Case: Ausführung einer Regressionsanalyse (Einfach oder Multipel).
     
-    Follows Clean Architecture: orchestrates domain objects without
-    implementing business logic itself.
+    Folgt der Clean Architecture: Orchestriert Domain-Objekte, ohne selbst 
+    Geschäftslogik (Mathematik) zu implementieren.
     """
     
     def __init__(self, data_provider: IDataProvider, regression_service: IRegressionService):
+        """
+        Dependency Injection über den Konstruktor. 
+        Die konkreten Implementierungen werden vom DI-Container (container.py) injiziert.
+        """
         self.data_provider = data_provider
         self.regression_service = regression_service
         
     def execute(self, request: RegressionRequestDTO) -> RegressionResponseDTO:
         """
-        Execute regression analysis pipeline.
-        
-        1. Fetch data via IDataProvider
-        2. Train model via IRegressionService
-        3. Build response DTO
+        Führt die Regressions-Pipeline aus:
+        1. Daten abrufen (IDataProvider)
+        2. Modell trainieren (IRegressionService)
+        3. Response DTO erstellen
         """
-        # 1. Fetch Data via Interface
+        # 1. Daten über das Interface abrufen
         data_result = self.data_provider.get_dataset(
             dataset_id=request.dataset_id,
             n=request.n_observations,
@@ -38,29 +41,29 @@ class RunRegressionUseCase:
             seed=request.seed,
             true_intercept=request.true_intercept or 0.6,
             true_slope=request.true_slope or 0.52,
-            regression_type=request.regression_type.name.lower()  # Convert Enum to string for infrastructure
+            regression_type=request.regression_type.name.lower()  # Enum zu String für Infrastruktur
         )
         
-        # 2. Perform Regression via Service
+        # 2. Regression über den Service ausführen
         if request.regression_type == RegressionType.MULTIPLE:
-            # Multiple regression
+            # Multiple Regression: Mehrere Features (x1, x2)
             x_data = [data_result["x1"], data_result["x2"]]
             y_data = data_result["y"]
             variable_names = [data_result.get("x1_label", "x1"), data_result.get("x2_label", "x2")]
             
             model = self.regression_service.train_multiple(x_data, y_data, variable_names)
         else:
-            # Simple regression (default)
+            # Einfache Regression (Standard): Ein Feature (x)
             x_data = data_result["x"]
             y_data = data_result["y"]
             
             model = self.regression_service.train_simple(x_data, y_data)
         
-        # 3. Add Metadata
+        # 3. Metadaten hinzufügen
         model.dataset_metadata = data_result.get("metadata")
         model.regression_type = request.regression_type
         
-        # 4. Construct Response DTO
+        # 4. Response DTO konstruieren
         return self._build_response(model, data_result, request.regression_type)
 
     def _build_response(
@@ -69,11 +72,11 @@ class RunRegressionUseCase:
         data_raw: Dict[str, Any],
         regression_type: RegressionType
     ) -> RegressionResponseDTO:
-        """Build immutable response DTO from model and raw data."""
+        """Erzeugt ein unveränderliches Response-DTO aus dem Modell und den Rohdaten."""
         params = model.parameters
         metrics = model.metrics
         
-        # Determine x_data based on regression type
+        # X-Daten je nach Regressionsart aufbereiten
         if regression_type == RegressionType.MULTIPLE:
             x_data = tuple([
                 tuple(data_raw.get("x1", [])), 
@@ -112,19 +115,20 @@ class RunRegressionUseCase:
 
 class RunClassificationUseCase:
     """
-    Use Case: Run a classification analysis (Logistic / KNN).
+    Use Case: Ausführung einer Klassifikationsanalyse (Logistic Regression / KNN).
     """
     
     def __init__(self, data_provider: IDataProvider, classification_service: IClassificationService):
         self.data_provider = data_provider
         self.classification_service = classification_service
-        # Lazy load splitter to avoid heavy imports in init if not needed?
-        # Better to have it injected, but for now we follow the pattern
+        
+        # Lazy Loading des Splitter-Services (Infrastruktur-Abhängigkeit)
         from ...infrastructure.services.data_splitting import DataSplitterService
         self.splitter_service = DataSplitterService()
         
     def execute(self, request: ClassificationRequestDTO) -> ClassificationResponseDTO:
-        # 1. Fetch Data
+        """Führt die Klassifikations-Pipeline (Split, Train, Evaluate) aus."""
+        # 1. Daten abrufen
         data_raw = self.data_provider.get_dataset(
             dataset_id=request.dataset_id,
             n=request.n_observations,
@@ -133,14 +137,14 @@ class RunClassificationUseCase:
             analysis_type="classification"
         )
         
-        # 2. Extract arrays
+        # 2. Arrays extrahieren (NumPy wird hier für die Übergabe an Services genutzt)
         if "X" not in data_raw or "y" not in data_raw:
-             raise ValueError("Dataset does not contain X and y for classification")
+             raise ValueError("Datensatz enthält keine X und y Daten für Klassifikation")
              
         X = np.array(data_raw["X"])
         y = np.array(data_raw["y"])
         
-        # 3. Split Data
+        # 3. Daten aufteilen (Train/Test Split)
         from ..domain.value_objects import SplitConfig
         config = SplitConfig(
             train_size=request.train_size,
@@ -149,14 +153,15 @@ class RunClassificationUseCase:
         )
         X_train, X_test, y_train, y_test = self.splitter_service.split_data(X, y, config)
         
-        # 4. Train Model (on Training Set)
+        # 4. Modell trainieren (auf dem Trainings-Set)
         if request.method == "knn":
-            # For KNN, "training" is just storing X_train, y_train
+            # Bei KNN besteht das 'Training' primär aus dem Speichern der Daten
             train_result = self.classification_service.train_knn(X_train, y_train, k=request.k_neighbors)
         else:
+            # Logistische Regression (Gradient Descent)
             train_result = self.classification_service.train_logistic(X_train, y_train)
             
-        # 5. Evaluate on Test Set
+        # 5. Evaluierung auf dem Test-Set (Unabhängige Validierung)
         test_metrics = self.classification_service.evaluate(
             X_test, 
             y_test, 
@@ -164,27 +169,25 @@ class RunClassificationUseCase:
             request.method
         )
         
-        # 6. Predict on Full Data for Visualization
-        # Use simple utility in service, or re-run "train" in prediction mode? 
-        # But `train` returns Result with metrics. 
+        # 6. Vorhersagen für den gesamten Datensatz (für die Visualisierung im Frontend)
         if request.method == "knn":
             full_preds, full_probs = self.classification_service.predict_knn(X, train_result.model_params)
         else:
             full_preds, full_probs = self.classification_service.predict_logistic(X, train_result.model_params)
             
-        # 6. Build Response
+        # 7. Response DTO bauen (Konvertierung von NumPy zurück zu Tuples/Listen für Serialisierung)
         return ClassificationResponseDTO(
             success=train_result.is_success,
             method=request.method,
             classes=tuple(train_result.classes),
-            metrics={ # Train Metrics
+            metrics={ # Trainings-Metriken
                 "accuracy": train_result.metrics.accuracy,
                 "precision": train_result.metrics.precision,
                 "recall": train_result.metrics.recall,
                 "f1": train_result.metrics.f1_score,
                 "confusion_matrix": train_result.metrics.confusion_matrix.tolist()
             },
-            test_metrics={ # Test Metrics
+            test_metrics={ # Test-Metriken (Wichtiger für Generalisierung)
                 "accuracy": test_metrics.accuracy,
                 "precision": test_metrics.precision,
                 "recall": test_metrics.recall,
@@ -192,17 +195,17 @@ class RunClassificationUseCase:
                 "confusion_matrix": test_metrics.confusion_matrix.tolist()
             },
             parameters=train_result.model_params,
-            # We return FULL data for visualization context
+            # Rückgabe der VOLLSTÄNDIGEN Daten für den Plot-Kontext
             X_data=tuple(map(tuple, X)), 
             y_data=tuple(y),
             
-            # Predictions on FULL dataset
+            # Vorhersagen auf dem gesamten Datensatz
             predictions=tuple(full_preds),
             probabilities=tuple(full_probs) if full_probs is not None else (),
             
             feature_names=tuple(data_raw.get("feature_names", [])),
             target_names=tuple(data_raw.get("target_names", [])),
-            dataset_name=data_raw.get("name", "Dataset"),
+            dataset_name=data_raw.get("name", "Datensatz"),
             dataset_description=data_raw.get("description", ""),
             extra={}
         )
@@ -210,7 +213,8 @@ class RunClassificationUseCase:
 
 class PreviewSplitUseCase:
     """
-    Use Case: Preview data split statistics.
+    Use Case: Vorschau der Statistiken einer Datenaufteilung (Split).
+    Erlaubt es dem Nutzer im Frontend zu sehen, wie sich 'stratify' auf die Verteilung auswirkt.
     """
     
     def __init__(self, data_provider: IDataProvider, splitter_service):
@@ -218,7 +222,7 @@ class PreviewSplitUseCase:
         self.splitter_service = splitter_service
         
     def execute(self, dataset_id: str, n: int, noise: float, seed: int, train_size: float, stratify: bool) -> Any:
-        # 1. Fetch Data
+        # 1. Daten abrufen
         data_raw = self.data_provider.get_dataset(
             dataset_id=dataset_id,
             n=n,
@@ -228,11 +232,11 @@ class PreviewSplitUseCase:
         )
         
         if "y" not in data_raw:
-             raise ValueError("Dataset does not contain y for splitting")
+             raise ValueError("Datensatz enthält keine y-Werte für den Split")
              
         y = np.array(data_raw["y"])
         
-        # 2. Config
+        # 2. Konfiguration erstellen
         from ..domain.value_objects import SplitConfig
         config = SplitConfig(
             train_size=train_size,
@@ -240,7 +244,7 @@ class PreviewSplitUseCase:
             seed=seed
         )
         
-        # 3. Calculate Stats
+        # 3. Statistiken berechnen (ohne das Modell zu trainieren)
         stats = self.splitter_service.preview_split(y, config)
         
         return stats

@@ -1,49 +1,50 @@
 """
-Pipeline Package - Simple 4-step data processing pipeline.
-Migrated to infrastructure layer.
+Pipeline Package - Einfache 4-stufige Datenverarbeitungspipeline.
+Migriert in den Infrastructure-Layer.
 
-The pipeline follows a clear flow:
-    1. GET      → Fetch/generate data
-    2. CALCULATE → Compute statistics & fit models
-    3. PLOT     → Create visualizations
-    4. DISPLAY  → Render in UI
+Die Pipeline folgt einem klaren Ablauf:
+    1. GET      → Daten abrufen oder generieren
+    2. CALCULATE → Statistiken berechnen & Modelle trainieren
+    3. PLOT     → Visualisierungen erstellen
+    4. DISPLAY  → In der Benutzeroberfläche rendern
 
-Usage:
+Nutzung:
     from src.infrastructure import RegressionPipeline
     
     pipeline = RegressionPipeline()
     result = pipeline.run(dataset="electronics", n=50)
 """
 
-# Core components from migrated infrastructure
+# Kernkomponenten aus dem migrierten Infrastructure-Layer
 from .data.generators import DataFetcher
 from .services.calculate import StatisticsCalculator
 
-# Lazy imports for components with external dependencies
+# Lazy Imports für Komponenten mit externen Abhängigkeiten (Performance/Modularität)
 def get_plot_builder():
-    """Lazy import PlotBuilder (requires plotly)."""
+    """Importiert den PlotBuilder verzögert (benötigt Plotly)."""
     from .services.plot import PlotBuilder
     return PlotBuilder
 
-# For convenience, try to import full pipeline
+# Komfort-Imports für die vollständige Pipeline-Struktur
 try:
     from .services.plot import PlotBuilder, PlotCollection
     from .regression_pipeline import RegressionPipeline, PipelineResult
 except ImportError:
+    # Fallback, falls Abhängigkeiten fehlen
     PlotBuilder = None
     PlotCollection = None
     RegressionPipeline = None
     PipelineResult = None
 
 __all__ = [
-    # Core pipeline
+    # Haupt-Pipeline
     'RegressionPipeline',
     'PipelineResult',
-    # Individual steps
+    # Einzelne Schritte
     'DataFetcher',
     'StatisticsCalculator', 
     'PlotBuilder',
     'PlotCollection',
-    # Lazy loaders
+    # Lazy Loaders
     'get_plot_builder',
 ]

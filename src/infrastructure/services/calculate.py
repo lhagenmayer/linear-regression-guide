@@ -1,8 +1,8 @@
 """
-Step 2: CALCULATE
+Schritt 2: BERECHNEN (CALCULATE)
 
-This module handles all statistical calculations.
-It computes regression models and statistics from data.
+Dieses Modul verwaltet alle statistischen Berechnungen.
+Es berechnet Regressionsmodelle und Statistiken aus den bereitgestellten Daten.
 """
 
 from dataclasses import dataclass, field
@@ -17,91 +17,91 @@ logger = get_logger(__name__)
 
 @dataclass
 class RegressionResult:
-    """Result from regression calculation."""
-    # Coefficients
+    """Ergebnis einer einfachen Regressionsberechnung."""
+    # Koeffizienten
     intercept: float
     slope: float
     
-    # Predictions
+    # Vorhersagen
     y_pred: np.ndarray
     residuals: np.ndarray
     
-    # Model fit statistics
+    # Modell-Güte (Model Fit)
     r_squared: float
     r_squared_adj: float
     
-    # Standard errors
+    # Standardfehler
     se_intercept: float
     se_slope: float
     
-    # Test statistics
+    # Teststatistiken
     t_intercept: float
     t_slope: float
     p_intercept: float
     p_slope: float
     
-    # Sum of squares
-    sse: float  # Sum of Squared Errors
-    sst: float  # Total Sum of Squares
-    ssr: float  # Regression Sum of Squares
-    mse: float  # Mean Squared Error
+    # Quadratsummen (Sum of Squares)
+    sse: float  # Sum of Squared Errors (Residualsumme)
+    sst: float  # Total Sum of Squares (Gesamtsumme)
+    ssr: float  # Regression Sum of Squares (Erklärte Summe)
+    mse: float  # Mean Squared Error (Mittlerer quadratischer Fehler)
     
-    # Sample info
+    # Stichproben-Informationen
     n: int
-    df: int  # Degrees of freedom
+    df: int  # Freiheitsgrade (Degrees of freedom)
     
-    # Extra stats
+    # Zusätzliche Statistiken
     extra: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class MultipleRegressionResult:
-    """Result from multiple regression calculation."""
-    # Coefficients
+    """Ergebnis einer multiplen Regressionsberechnung."""
+    # Koeffizienten
     intercept: float
     coefficients: List[float]
     
-    # Predictions
+    # Vorhersagen
     y_pred: np.ndarray
     residuals: np.ndarray
     
-    # Model fit
+    # Modell-Güte
     r_squared: float
     r_squared_adj: float
     f_statistic: float
     f_pvalue: float
     
-    # Standard errors and tests for each coefficient
+    # Standardfehler und Tests für jeden Koeffizienten
     se_coefficients: List[float]
     t_values: List[float]
     p_values: List[float]
     
-    # Sum of squares
+    # Quadratsummen
     sse: float
     sst: float
     ssr: float
     
-    # Sample info
+    # Stichproben-Informationen
     n: int
-    k: int  # Number of predictors
+    k: int  # Anzahl der Prädiktoren
     
     extra: Dict[str, Any] = field(default_factory=dict)
 
 
 class StatisticsCalculator:
     """
-    Step 2: CALCULATE
+    Klasse für statistische Berechnungen (Schritt 2: CALCULATE).
     
-    Computes regression models and statistics.
-    Uses transparent, verifiable formulas (no black-box libraries).
+    Berechnet Regressionsmodelle und zugehörige Statistiken.
+    Nutzt transparente, nachvollziehbare Formeln (keine Black-Box-Bibliotheken).
     
-    Example:
+    Beispiel:
         calc = StatisticsCalculator()
         result = calc.simple_regression(data.x, data.y)
     """
     
     def __init__(self):
-        logger.info("StatisticsCalculator initialized")
+        logger.info("StatisticsCalculator initialisiert")
     
     def simple_regression(
         self, 
@@ -109,70 +109,70 @@ class StatisticsCalculator:
         y: np.ndarray
     ) -> RegressionResult:
         """
-        Compute simple linear regression: ŷ = b₀ + b₁x
+        Berechnet eine einfache lineare Regression: ŷ = b₀ + b₁x
         
-        All formulas are explicit for educational transparency:
+        Alle Formeln sind für didaktische Transparenz explizit implementiert:
         - b₁ = Cov(x,y) / Var(x) = Σ(xᵢ-x̄)(yᵢ-ȳ) / Σ(xᵢ-x̄)²
         - b₀ = ȳ - b₁x̄
         - R² = 1 - SSE/SST
         
         Args:
-            x: Predictor variable
-            y: Response variable
+            x: Unabhängige Variable (Prädiktor)
+            y: Abhängige Variable (Response)
         
         Returns:
-            RegressionResult with all statistics
+            RegressionResult mit allen statistischen Kennzahlen
         """
         x = np.asarray(x, dtype=float)
         y = np.asarray(y, dtype=float)
         n = len(x)
         
-        logger.info(f"Computing simple regression: n={n}")
+        logger.info(f"Berechne einfache Regression: n={n}")
         
         # =========================================================
-        # STEP 1: Basic Statistics
+        # SCHRITT 1: Basale Statistiken (Mittelwerte)
         # =========================================================
         x_mean = np.mean(x)
         y_mean = np.mean(y)
         
-        # Deviations from mean
+        # Abweichungen vom Mittelwert
         x_dev = x - x_mean
         y_dev = y - y_mean
         
         # =========================================================
-        # STEP 2: OLS Coefficients
+        # SCHRITT 2: OLS-Koeffizienten (Ordinary Least Squares)
         # b₁ = Σ(xᵢ-x̄)(yᵢ-ȳ) / Σ(xᵢ-x̄)²
         # b₀ = ȳ - b₁x̄
         # =========================================================
         ss_xx = np.sum(x_dev ** 2)  # Σ(xᵢ-x̄)²
         ss_xy = np.sum(x_dev * y_dev)  # Σ(xᵢ-x̄)(yᵢ-ȳ)
         
-        b1 = ss_xy / ss_xx if ss_xx > 0 else 0  # Slope
-        b0 = y_mean - b1 * x_mean  # Intercept
+        b1 = ss_xy / ss_xx if ss_xx > 0 else 0  # Steigung (Slope)
+        b0 = y_mean - b1 * x_mean  # Achsenabschnitt (Intercept)
         
         # =========================================================
-        # STEP 3: Predictions & Residuals
+        # SCHRITT 3: Vorhersagen & Residuen
         # =========================================================
         y_pred = b0 + b1 * x
         residuals = y - y_pred
         
         # =========================================================
-        # STEP 4: Sum of Squares
+        # SCHRITT 4: Quadratsummen (Sum of Squares)
         # =========================================================
-        sse = np.sum(residuals ** 2)  # SSE = Σ(yᵢ - ŷᵢ)²
-        sst = np.sum(y_dev ** 2)  # SST = Σ(yᵢ - ȳ)²
-        ssr = sst - sse  # SSR = SST - SSE
+        sse = np.sum(residuals ** 2)  # SSE = Σ(yᵢ - ŷᵢ)² (Fehlersumme)
+        sst = np.sum(y_dev ** 2)  # SST = Σ(yᵢ - ȳ)² (Gesamtsumme)
+        ssr = sst - sse  # SSR = SST - SSE (Erklärte Summe)
         
         # =========================================================
-        # STEP 5: R² and Adjusted R²
+        # SCHRITT 5: R² und adjustiertes R²
         # =========================================================
         r_squared = 1 - (sse / sst) if sst > 0 else 0
         r_squared_adj = 1 - (1 - r_squared) * (n - 1) / (n - 2) if n > 2 else 0
         
         # =========================================================
-        # STEP 6: Standard Errors
+        # SCHRITT 6: Standardfehler
         # =========================================================
-        df = n - 2  # Degrees of freedom
+        df = n - 2  # Freiheitsgrade
         mse = sse / df if df > 0 else 0
         se_regression = np.sqrt(mse)
         
@@ -183,17 +183,17 @@ class StatisticsCalculator:
         se_b0 = se_regression * np.sqrt(1/n + x_mean**2 / ss_xx) if ss_xx > 0 else 0
         
         # =========================================================
-        # STEP 7: t-Statistics and p-Values
+        # SCHRITT 7: t-Statistiken und p-Werte
         # =========================================================
         t_b0 = b0 / se_b0 if se_b0 > 0 else 0
         t_b1 = b1 / se_b1 if se_b1 > 0 else 0
         
-        # p-values using t-distribution
+        # p-Werte unter Nutzung der t-Verteilung
         from scipy import stats
         p_b0 = 2 * (1 - stats.t.cdf(abs(t_b0), df)) if df > 0 else 1
         p_b1 = 2 * (1 - stats.t.cdf(abs(t_b1), df)) if df > 0 else 1
         
-        logger.info(f"Regression complete: R²={r_squared:.4f}, b₀={b0:.4f}, b₁={b1:.4f}")
+        logger.info(f"Regression abgeschlossen: R²={r_squared:.4f}, b₀={b0:.4f}, b₁={b1:.4f}")
         
         return RegressionResult(
             intercept=b0,
@@ -229,34 +229,34 @@ class StatisticsCalculator:
         y: np.ndarray
     ) -> MultipleRegressionResult:
         """
-        Compute multiple regression: ŷ = b₀ + b₁x₁ + b₂x₂
+        Berechnet eine multiple Regression: ŷ = b₀ + b₁x₁ + b₂x₂
         
-        Uses matrix formula: b = (X'X)⁻¹X'y
+        Nutzt die Matrix-Formel: b = (X'X)⁻¹X'y
         
         Args:
-            x1: First predictor
-            x2: Second predictor
-            y: Response variable
+            x1: Erster Prädiktor
+            x2: Zweiter Prädiktor
+            y: Zielvariable (Response)
         
         Returns:
-            MultipleRegressionResult with all statistics
+            MultipleRegressionResult mit allen Kennzahlen
         """
         x1 = np.asarray(x1, dtype=float)
         x2 = np.asarray(x2, dtype=float)
         y = np.asarray(y, dtype=float)
         n = len(y)
-        k = 2  # Number of predictors
+        k = 2  # Anzahl der Prädiktoren
         
-        logger.info(f"Computing multiple regression: n={n}, k={k}")
+        logger.info(f"Berechne multiple Regression: n={n}, k={k}")
         
         # =========================================================
-        # STEP 1: Build Design Matrix
+        # SCHRITT 1: Design-Matrix aufbauen
         # X = [1, x₁, x₂]
         # =========================================================
         X = np.column_stack([np.ones(n), x1, x2])
         
         # =========================================================
-        # STEP 2: OLS via Matrix Formula
+        # SCHRITT 2: OLS via Matrix-Algebra
         # b = (X'X)⁻¹X'y
         # =========================================================
         XtX = X.T @ X
@@ -267,27 +267,27 @@ class StatisticsCalculator:
         b0, b1, b2 = b[0], b[1], b[2]
         
         # =========================================================
-        # STEP 3: Predictions & Residuals
+        # SCHRITT 3: Vorhersagen & Residuen
         # =========================================================
         y_pred = X @ b
         residuals = y - y_pred
         y_mean = np.mean(y)
         
         # =========================================================
-        # STEP 4: Sum of Squares
+        # SCHRITT 4: Quadratsummen
         # =========================================================
         sse = np.sum(residuals ** 2)
         sst = np.sum((y - y_mean) ** 2)
         ssr = sst - sse
         
         # =========================================================
-        # STEP 5: R² and Adjusted R²
+        # SCHRITT 5: R² und adjustiertes R²
         # =========================================================
         r_squared = 1 - (sse / sst) if sst > 0 else 0
         r_squared_adj = 1 - (1 - r_squared) * (n - 1) / (n - k - 1) if n > k + 1 else 0
         
         # =========================================================
-        # STEP 6: Standard Errors
+        # SCHRITT 6: Standardfehler der Koeffizienten
         # Var(b) = σ²(X'X)⁻¹
         # =========================================================
         df = n - k - 1
@@ -296,7 +296,7 @@ class StatisticsCalculator:
         se_b = np.sqrt(np.diag(var_b))
         
         # =========================================================
-        # STEP 7: t-Statistics and p-Values
+        # SCHRITT 7: t-Statistiken und p-Werte
         # =========================================================
         t_values = b / se_b
         
@@ -304,14 +304,14 @@ class StatisticsCalculator:
         p_values = [2 * (1 - stats.t.cdf(abs(t), df)) if df > 0 else 1 for t in t_values]
         
         # =========================================================
-        # STEP 8: F-Statistic
+        # SCHRITT 8: F-Statistik (Gesamtmodell-Signifikanz)
         # F = (SSR/k) / (SSE/(n-k-1))
         # =========================================================
         msr = ssr / k if k > 0 else 0
         f_stat = msr / mse if mse > 0 else 0
         f_pvalue = 1 - stats.f.cdf(f_stat, k, df) if df > 0 else 1
         
-        logger.info(f"Multiple regression complete: R²={r_squared:.4f}")
+        logger.info(f"Multiple Regression abgeschlossen: R²={r_squared:.4f}")
         
         return MultipleRegressionResult(
             intercept=b0,
@@ -335,13 +335,13 @@ class StatisticsCalculator:
     
     def basic_stats(self, data: np.ndarray) -> Dict[str, float]:
         """
-        Compute basic descriptive statistics.
+        Berechnet grundlegende deskriptive Statistiken.
         
         Args:
-            data: Numeric array
+            data: Numerisches Array
         
         Returns:
-            Dictionary with mean, std, min, max, etc.
+            Dictionary mit Mittelwert, StdAbw, Min, Max etc.
         """
         data = np.asarray(data, dtype=float)
         return {

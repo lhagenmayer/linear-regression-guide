@@ -1,8 +1,8 @@
 """
-Content Builder - Base class for building educational content.
+Content Builder - Basisklasse für den Aufbau edukativer Inhalte.
 
-This is framework-agnostic: it produces ContentStructures
-that any renderer can interpret.
+Dieser Builder ist framework-agnostisch: Er erzeugt Inhaltsstrukturen (ContentStructures),
+die von jedem Renderer (z.B. für Flask oder Streamlit) interpretiert werden können.
 """
 
 from abc import ABC, abstractmethod
@@ -18,39 +18,39 @@ from .structure import (
 
 
 class ContentBuilder(ABC):
-    """Abstract base class for content builders."""
+    """Abstrakte Basisklasse für alle Inhalts-Builder."""
     
     def __init__(self, stats: Dict[str, Any], plots: Dict[str, Any]):
         """
-        Initialize content builder.
+        Initialisiert den Content Builder.
         
         Args:
-            stats: Statistical results from pipeline
-            plots: Plot keys/figures from pipeline
+            stats: Statistische Ergebnisse aus der Pipeline
+            plots: Diagramm-Referenzen/Figuren aus der Pipeline
         """
         self.stats = stats
         self.plots = plots
     
     @abstractmethod
     def build(self) -> EducationalContent:
-        """Build complete educational content."""
+        """Erstellt den vollständigen edukativen Inhalt."""
         pass
     
-    # Helper methods for formatting
+    # Hilfsmethoden zur Formatierung
     def fmt(self, value: float, decimals: int = 4) -> str:
-        """Format numeric value."""
+        """Formatiert numerische Werte."""
         if value is None or (isinstance(value, float) and np.isnan(value)):
-            return "N/A"
+            return "N/V"
         return f"{value:.{decimals}f}"
     
     def fmt_pct(self, value: float) -> str:
-        """Format as percentage."""
+        """Formatiert Werte als Prozentsatz."""
         if value is None or (isinstance(value, float) and np.isnan(value)):
-            return "N/A"
+            return "N/V"
         return f"{value*100:.2f}%"
     
     def interpret_r2(self, r2: float) -> str:
-        """Interpret R² value."""
+        """Interpretiert den R²-Wert (Bestimmtheitsmaß)."""
         if r2 >= 0.9:
             return "Exzellent"
         elif r2 >= 0.7:
@@ -62,7 +62,7 @@ class ContentBuilder(ABC):
         return "Sehr schwach"
     
     def interpret_p_value(self, p: float) -> str:
-        """Interpret p-value."""
+        """Interpretiert den p-Wert (Signifikanz)."""
         if p < 0.001:
             return "Höchst signifikant (***)"
         elif p < 0.01:
@@ -74,7 +74,7 @@ class ContentBuilder(ABC):
         return "Nicht signifikant"
     
     def interpret_correlation(self, r: float) -> str:
-        """Interpret correlation coefficient."""
+        """Interpretiert den Korrelationskoeffizienten."""
         abs_r = abs(r)
         direction = "positive" if r > 0 else "negative"
         if abs_r >= 0.9:
@@ -88,7 +88,7 @@ class ContentBuilder(ABC):
         return "Keine/sehr schwache Korrelation"
     
     def interpret_vif(self, vif: float) -> str:
-        """Interpret VIF value."""
+        """Interpretiert den VIF-Wert (Varianzinflationsfaktor)."""
         if vif < 5:
             return "✅ Keine problematische Multikollinearität"
         elif vif < 10:
@@ -96,16 +96,16 @@ class ContentBuilder(ABC):
         return "🚨 Starke Multikollinearität - problematisch!"
     
     def interpret_durbin_watson(self, dw: float) -> str:
-        """Interpret Durbin-Watson statistic."""
+        """Interpretiert die Durbin-Watson-Statistik (Autokorrelation)."""
         if 1.5 <= dw <= 2.5:
             return "✅ Keine signifikante Autokorrelation"
         elif dw < 1.5:
             return "⚠️ Positive Autokorrelation möglich"
         return "⚠️ Negative Autokorrelation möglich"
     
-    # Common content building blocks
+    # Gemeinsame Bausteine für den Inhaltsaufbau
     def make_metric_row(self, metrics: List[tuple]) -> MetricRow:
-        """Create a row of metrics from (label, value, help) tuples."""
+        """Erstellt eine Zeile mit Metriken aus (Label, Wert, Hilfe)-Tupeln."""
         return MetricRow([
             Metric(label=m[0], value=str(m[1]), help_text=m[2] if len(m) > 2 else "")
             for m in metrics
@@ -117,7 +117,7 @@ class ContentBuilder(ABC):
         right: List[ContentElement],
         widths: Optional[List[float]] = None
     ) -> Columns:
-        """Create two-column layout."""
+        """Erstellt ein zweispaltiges Layout."""
         return Columns([left, right], widths or [1.0, 1.0])
     
     def make_three_columns(
@@ -127,5 +127,5 @@ class ContentBuilder(ABC):
         col3: List[ContentElement],
         widths: Optional[List[float]] = None
     ) -> Columns:
-        """Create three-column layout."""
+        """Erstellt ein dreispaltiges Layout."""
         return Columns([col1, col2, col3], widths or [1.0, 1.0, 1.0])

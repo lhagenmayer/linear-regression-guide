@@ -1,16 +1,16 @@
 """
-API Server - Pure REST API Server.
+API Server - Reiner REST-API-Server.
 
-Creates a minimal REST API server that can be used by ANY frontend.
-Supports both Flask and FastAPI (if available).
+Erstellt einen minimalen REST-API-Server, der von JEDEM Frontend genutzt werden kann.
+Unterstützt sowohl Flask als auch FastAPI (falls installiert).
 
-This is a PURE API server - no HTML templates, no UI rendering.
-All responses are JSON.
+Dies ist ein REINER API-Server - keine HTML-Templates, kein UI-Rendering.
+Alle Antworten sind im JSON-Format.
 
-API Documentation:
-- /api/docs - Interactive Swagger UI
-- /api/openapi.json - OpenAPI 3.0 Specification (JSON)
-- /api/openapi.yaml - OpenAPI 3.0 Specification (YAML)
+API-Dokumentation:
+- /api/docs - Interaktive Swagger UI
+- /api/openapi.json - OpenAPI 3.0 Spezifikation (JSON)
+- /api/openapi.yaml - OpenAPI 3.0 Spezifikation (YAML)
 """
 
 import json
@@ -23,12 +23,12 @@ from .endpoints import UnifiedAPI, RegressionAPI, ContentAPI, AIInterpretationAP
 
 logger = logging.getLogger(__name__)
 
-# Path to docs directory
+# Pfad zum docs-Verzeichnis für die OpenAPI-Spezifikation
 DOCS_DIR = Path(__file__).parent.parent.parent / "docs"
 
 
 def _get_full_openapi_spec() -> Dict[str, Any]:
-    """Load the full OpenAPI spec from YAML file if available."""
+    """Lädt die vollständige OpenAPI-Spezifikation aus der YAML-Datei."""
     yaml_path = DOCS_DIR / "openapi.yaml"
     
     if yaml_path.exists():
@@ -37,17 +37,17 @@ def _get_full_openapi_spec() -> Dict[str, Any]:
             with open(yaml_path, 'r', encoding='utf-8') as f:
                 return yaml.safe_load(f)
         except ImportError:
-            # PyYAML not installed, use fallback
+            # PyYAML nicht installiert, Fallback auf generierte Spec
             pass
         except Exception as e:
-            logger.warning(f"Could not load OpenAPI YAML: {e}")
+            logger.warning(f"Konnte OpenAPI YAML nicht laden: {e}")
     
-    # Fallback to generated spec
+    # Fallback auf programmatisch generierte Spezifikation
     return UnifiedAPI().get_openapi_spec()
 
 
 def _get_swagger_ui_html(openapi_url: str = "/api/openapi.json") -> str:
-    """Generate Swagger UI HTML."""
+    """Generiert das HTML für die interaktive Swagger-Dokumentation."""
     return f'''<!DOCTYPE html>
 <html lang="de">
 <head>
@@ -75,7 +75,7 @@ def _get_swagger_ui_html(openapi_url: str = "/api/openapi.json") -> str:
 <body>
     <div class="custom-header">
         <h1>📊 Regression Analysis API</h1>
-        <p>100% Platform-Agnostic REST API für Statistische Analysen</p>
+        <p>100% Plattform-Agnostische REST API für Statistische Analysen</p>
         <p style="font-size: 0.9em; margin-top: 15px;">
             <a href="/api/openapi.json">OpenAPI JSON</a> |
             <a href="/api/openapi.yaml">OpenAPI YAML</a> |
@@ -114,7 +114,7 @@ def _get_swagger_ui_html(openapi_url: str = "/api/openapi.json") -> str:
 
 
 def _get_redoc_html(openapi_url: str = "/api/openapi.json") -> str:
-    """Generate ReDoc HTML for alternative documentation."""
+    """Generiert ReDoc HTML für alternative API-Dokumentation."""
     return f'''<!DOCTYPE html>
 <html lang="de">
 <head>
@@ -135,17 +135,12 @@ def _get_redoc_html(openapi_url: str = "/api/openapi.json") -> str:
 
 def create_api_server(framework: str = "auto", cors_origins: list = None):
     """
-    Create a REST API server.
+    Erstellt einen REST-API-Server.
     
-    Args:
-        framework: "flask", "fastapi", or "auto" (detect)
-        cors_origins: List of allowed CORS origins (e.g., ["http://localhost:3000"])
-        
-    Returns:
-        Flask app or FastAPI app
+    Wählt automatisch zwischen Flask und FastAPI, basierend auf der Verfügbarkeit.
     """
     if cors_origins is None:
-        cors_origins = ["*"]  # Allow all by default
+        cors_origins = ["*"] # Standardmäßig alles erlauben
     
     if framework == "auto":
         try:
@@ -154,7 +149,7 @@ def create_api_server(framework: str = "auto", cors_origins: list = None):
         except ImportError:
             framework = "flask"
     
-    logger.info(f"Creating API server with framework: {framework}")
+    logger.info(f"Erstelle API-Server mit Framework: {framework}")
     
     if framework == "fastapi":
         return _create_fastapi_server(cors_origins)
@@ -163,12 +158,12 @@ def create_api_server(framework: str = "auto", cors_origins: list = None):
 
 
 def _create_flask_server(cors_origins: list):
-    """Create Flask-based API server."""
+    """Erstellt den API-Server basierend auf Flask."""
     from flask import Flask, request, jsonify
     
     app = Flask(__name__)
     
-    # CORS support
+    # Manuelle CORS-Unterstützung (Cross-Origin Resource Sharing)
     @app.after_request
     def add_cors_headers(response):
         origin = request.headers.get('Origin', '*')
@@ -180,17 +175,19 @@ def _create_flask_server(cors_origins: list):
     
     @app.route('/api/health', methods=['GET'])
     def health():
+        """Health-Check-Endpunkt."""
         return jsonify({"status": "ok", "framework": "flask"})
     
-    # Initialize APIs
+    # Initialisierung der framework-agnostischen APIs
     api = UnifiedAPI()
     
     # =========================================================================
-    # Regression Endpoints
+    # Regressions-Endpunkte
     # =========================================================================
     
     @app.route('/api/regression/simple', methods=['POST', 'OPTIONS'])
     def regression_simple():
+        """Führt eine einfache Regression über POST aus."""
         if request.method == 'OPTIONS':
             return '', 204
         data = request.get_json() or {}
@@ -198,6 +195,7 @@ def _create_flask_server(cors_origins: list):
     
     @app.route('/api/regression/multiple', methods=['POST', 'OPTIONS'])
     def regression_multiple():
+        """Führt eine multiple Regression über POST aus."""
         if request.method == 'OPTIONS':
             return '', 204
         data = request.get_json() or {}
@@ -205,10 +203,11 @@ def _create_flask_server(cors_origins: list):
     
     @app.route('/api/datasets', methods=['GET'])
     def datasets():
+        """Gibt die Liste der verfügbaren Datensätze zurück."""
         return jsonify(api.regression.get_datasets())
     
     # =========================================================================
-    # Content Endpoints
+    # Inhalts-Endpunkte (Educational Content)
     # =========================================================================
     
     @app.route('/api/content/simple', methods=['POST', 'OPTIONS'])
@@ -230,7 +229,7 @@ def _create_flask_server(cors_origins: list):
         return jsonify(api.content.get_content_schema())
     
     # =========================================================================
-    # AI Endpoints
+    # KI-Endpunkte (AI Interpretation)
     # =========================================================================
     
     @app.route('/api/ai/interpret', methods=['POST', 'OPTIONS'])
@@ -256,17 +255,17 @@ def _create_flask_server(cors_origins: list):
         return jsonify(api.ai.clear_cache())
     
     # =========================================================================
-    # Documentation Endpoints
+    # Dokumentations-Endpunkte
     # =========================================================================
     
     @app.route('/api/openapi.json', methods=['GET'])
     def openapi_json():
-        """OpenAPI 3.0 Specification (JSON)."""
+        """Gibt die OpenAPI-Spezifikation im JSON-Format zurück."""
         return jsonify(_get_full_openapi_spec())
     
     @app.route('/api/openapi.yaml', methods=['GET'])
     def openapi_yaml():
-        """OpenAPI 3.0 Specification (YAML)."""
+        """Gibt die OpenAPI-Spezifikation im YAML-Format zurück."""
         from flask import Response
         yaml_path = DOCS_DIR / "openapi.yaml"
         
@@ -275,23 +274,23 @@ def _create_flask_server(cors_origins: list):
                 content = f.read()
             return Response(content, mimetype='text/yaml')
         
-        # Fallback: Generate from JSON
+        # Fallback: Generiere YAML aus dem JSON-Objekt
         try:
             import yaml
             spec = _get_full_openapi_spec()
             return Response(yaml.dump(spec, allow_unicode=True), mimetype='text/yaml')
         except ImportError:
-            return Response("# PyYAML not installed\n# Use /api/openapi.json instead", mimetype='text/yaml')
+            return Response("# PyYAML nicht installiert\n# Nutze /api/openapi.json", mimetype='text/yaml')
     
     @app.route('/api/docs', methods=['GET'])
     def swagger_ui():
-        """Interactive Swagger UI Documentation."""
+        """Hostet die interaktive Swagger UI Dokumentation."""
         from flask import Response
         return Response(_get_swagger_ui_html(), mimetype='text/html')
     
     @app.route('/api/redoc', methods=['GET'])
     def redoc():
-        """Alternative ReDoc Documentation."""
+        """Hostet die alternative ReDoc Dokumentation."""
         from flask import Response
         return Response(_get_redoc_html(), mimetype='text/html')
     
@@ -299,21 +298,21 @@ def _create_flask_server(cors_origins: list):
 
 
 def _create_fastapi_server(cors_origins: list):
-    """Create FastAPI-based API server."""
+    """Erstellt den API-Server basierend auf FastAPI."""
     try:
         from fastapi import FastAPI, Request
         from fastapi.middleware.cors import CORSMiddleware
         from fastapi.responses import JSONResponse
     except ImportError:
-        raise ImportError("FastAPI not installed. Install with: pip install fastapi uvicorn")
+        raise ImportError("FastAPI nicht installiert. Installiere mit: pip install fastapi uvicorn")
     
     app = FastAPI(
         title="Regression Analysis API",
-        description="Platform-agnostic API for regression analysis",
+        description="Plattform-agnostische REST API für Regressionsanalysen",
         version="1.0.0",
     )
     
-    # CORS
+    # Konfiguration der CORS-Middleware
     app.add_middleware(
         CORSMiddleware,
         allow_origins=cors_origins,
@@ -322,7 +321,7 @@ def _create_fastapi_server(cors_origins: list):
         allow_headers=["*"],
     )
     
-    # Initialize APIs
+    # Framework-agnostische API-Logik initialisieren
     api = UnifiedAPI()
     
     @app.get("/api/health")
@@ -330,7 +329,7 @@ def _create_fastapi_server(cors_origins: list):
         return {"status": "ok", "framework": "fastapi"}
     
     # =========================================================================
-    # Regression Endpoints
+    # Regressions-Endpunkte
     # =========================================================================
     
     @app.post("/api/regression/simple")
@@ -348,7 +347,7 @@ def _create_fastapi_server(cors_origins: list):
         return api.regression.get_datasets()
     
     # =========================================================================
-    # Content Endpoints
+    # Inhalts-Endpunkte
     # =========================================================================
     
     @app.post("/api/content/simple")
@@ -366,7 +365,7 @@ def _create_fastapi_server(cors_origins: list):
         return api.content.get_content_schema()
     
     # =========================================================================
-    # AI Endpoints
+    # KI-Endpunkte
     # =========================================================================
     
     @app.post("/api/ai/interpret")
@@ -388,17 +387,17 @@ def _create_fastapi_server(cors_origins: list):
         return api.ai.clear_cache()
     
     # =========================================================================
-    # Documentation Endpoints
+    # Dokumentations-Endpunkte
     # =========================================================================
     
     @app.get("/api/openapi.json")
     async def openapi_json():
-        """OpenAPI 3.0 Specification (JSON)."""
+        """Gibt die Spec im JSON-Format zurück."""
         return _get_full_openapi_spec()
     
     @app.get("/api/openapi.yaml")
     async def openapi_yaml():
-        """OpenAPI 3.0 Specification (YAML)."""
+        """Gibt die Spec im YAML-Format zurück."""
         from fastapi.responses import PlainTextResponse
         yaml_path = DOCS_DIR / "openapi.yaml"
         
@@ -407,23 +406,23 @@ def _create_fastapi_server(cors_origins: list):
                 content = f.read()
             return PlainTextResponse(content, media_type='text/yaml')
         
-        # Fallback
+        # Fallback auf On-the-fly Generierung
         try:
             import yaml
             spec = _get_full_openapi_spec()
             return PlainTextResponse(yaml.dump(spec, allow_unicode=True), media_type='text/yaml')
         except ImportError:
-            return PlainTextResponse("# PyYAML not installed", media_type='text/yaml')
+            return PlainTextResponse("# PyYAML nicht installiert", media_type='text/yaml')
     
     @app.get("/api/docs")
     async def swagger_ui():
-        """Interactive Swagger UI."""
+        """Interaktive Swagger-Doku."""
         from fastapi.responses import HTMLResponse
         return HTMLResponse(_get_swagger_ui_html())
     
     @app.get("/api/redoc")
     async def redoc():
-        """ReDoc Documentation."""
+        """Alternative ReDoc-Doku."""
         from fastapi.responses import HTMLResponse
         return HTMLResponse(_get_redoc_html())
     
@@ -431,7 +430,7 @@ def _create_fastapi_server(cors_origins: list):
 
 
 # =========================================================================
-# Standalone Runner
+# Standalone-Runner (CLI)
 # =========================================================================
 
 def run_api_server(
@@ -442,14 +441,7 @@ def run_api_server(
     debug: bool = False,
 ):
     """
-    Run the API server standalone.
-    
-    Args:
-        host: Host to bind to
-        port: Port to bind to
-        framework: "flask", "fastapi", or "auto"
-        cors_origins: CORS origins
-        debug: Debug mode
+    Startet den API-Server als eigenständigen Prozess.
     """
     if cors_origins is None:
         cors_origins = ["*"]
@@ -462,21 +454,18 @@ def run_api_server(
     print("=" * 60)
     
     if hasattr(app, 'run'):
-        # Flask
+        # Flask-spezifischer Start
         print(f"🚀 Server:      http://{host}:{port}")
         print(f"📖 Swagger UI:  http://{host}:{port}/api/docs")
-        print(f"📕 ReDoc:       http://{host}:{port}/api/redoc")
         print(f"📄 OpenAPI:     http://{host}:{port}/api/openapi.json")
-        print(f"📄 YAML Spec:   http://{host}:{port}/api/openapi.yaml")
         print("=" * 60)
         print()
         app.run(host=host, port=port, debug=debug)
     else:
-        # FastAPI
+        # FastAPI-spezifischer Start via Uvicorn
         import uvicorn
         print(f"🚀 Server:      http://{host}:{port}")
         print(f"📖 Swagger UI:  http://{host}:{port}/api/docs")
-        print(f"📕 ReDoc:       http://{host}:{port}/api/redoc")
         print(f"📄 OpenAPI:     http://{host}:{port}/api/openapi.json")
         print("=" * 60)
         print()
@@ -486,11 +475,11 @@ def run_api_server(
 if __name__ == "__main__":
     import argparse
     
-    parser = argparse.ArgumentParser(description="Run Regression Analysis API")
-    parser.add_argument("--host", default="0.0.0.0", help="Host to bind to")
-    parser.add_argument("--port", type=int, default=8000, help="Port to bind to")
+    parser = argparse.ArgumentParser(description="Starte die Regression Analysis API")
+    parser.add_argument("--host", default="0.0.0.0", help="Host-Adresse")
+    parser.add_argument("--port", type=int, default=8000, help="Port-Nummer")
     parser.add_argument("--framework", choices=["auto", "flask", "fastapi"], default="auto")
-    parser.add_argument("--debug", action="store_true", help="Debug mode")
+    parser.add_argument("--debug", action="store_true", help="Debug-Modus aktivieren")
     
     args = parser.parse_args()
     run_api_server(args.host, args.port, args.framework, debug=args.debug)

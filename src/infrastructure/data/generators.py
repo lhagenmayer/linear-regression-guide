@@ -1,8 +1,7 @@
 """
-Step 1: GET DATA
-
-This module handles all data fetching and generation.
-It provides a unified interface to get data from various sources.
+Infrastructure: Daten-Generierung und -Beschaffung.
+Dieses Modul stellt alle Funktionen zur Verfügung, um Datensätze für Simulationen 
+und Fallbeispiele (Regression & Klassifikation) zu erzeugen oder zu laden.
 """
 
 from dataclasses import dataclass
@@ -13,15 +12,17 @@ import requests
 from typing import Dict, Any, Optional, List, Union
 
 from ...config import get_logger
+from ...config.logger import log_error_with_context
+from .dataset_config import get_simple_config, get_multiple_config
 
 logger = get_logger(__name__)
 
 
 @dataclass
 class DataResult:
-    """Result from data fetching operation."""
-    x: np.ndarray
-    y: np.ndarray
+    """Ergebnis eines Datenabrufs für die einfache Regression."""
+    x: np.ndarray # Unabhängige Variable (Prädiktor)
+    y: np.ndarray # Abhängige Variable (Target)
     x_label: str
     y_label: str
     x_unit: str = ""
@@ -36,16 +37,16 @@ class DataResult:
     
     @property
     def n(self) -> int:
-        """Number of observations."""
+        """Anzahl der Beobachtungen."""
         return len(self.x)
 
 
 @dataclass 
 class MultipleRegressionDataResult:
-    """Result from multiple regression data fetching."""
-    x1: np.ndarray
-    x2: np.ndarray
-    y: np.ndarray
+    """Ergebnis eines Datenabrufs für die multiple Regression (2 Prädiktoren)."""
+    x1: np.ndarray # Erster Prädiktor
+    x2: np.ndarray # Zweiter Prädiktor
+    y: np.ndarray  # Zielvariable
     x1_label: str
     x2_label: str
     y_label: str
@@ -57,19 +58,18 @@ class MultipleRegressionDataResult:
     
     @property
     def n(self) -> int:
-        """Number of observations."""
+        """Anzahl der Beobachtungen."""
         return len(self.y)
 
 
 @dataclass
 class ClassificationDataResult:
-    """Result from classification data fetching.
-    
-    Used for KNN, Logistic Regression, and other classifiers.
-    Supports multi-dimensional features and multi-class targets.
     """
-    X: np.ndarray  # Feature matrix (n_samples, n_features)
-    y: np.ndarray  # Target array (n_samples,)
+    Ergebnis eines Datenabrufs für Klassifikationsaufgaben (z.B. KNN, Logistische Regression).
+    Unterstützt mehrdimensionale Features und mehrere Klassen.
+    """
+    X: np.ndarray  # Feature-Matrix (n_samples, n_features)
+    y: np.ndarray  # Label-Array (n_samples,)
     feature_names: List[str]
     target_names: List[str]
     context_title: str = ""
@@ -82,35 +82,29 @@ class ClassificationDataResult:
     
     @property
     def n(self) -> int:
-        """Number of samples."""
+        """Anzahl der Stichproben."""
         return len(self.y)
     
     @property
     def n_features(self) -> int:
-        """Number of features."""
+        """Anzahl der Merkmale (Features)."""
         return self.X.shape[1] if len(self.X.shape) > 1 else 1
     
     @property
     def n_classes(self) -> int:
-        """Number of classes."""
+        """Anzahl der Zielklassen."""
         return len(self.target_names)
 
 
 class DataFetcher:
     """
-    Step 1: GET DATA
-    
-    Fetches or generates data for regression analysis.
-    Provides a simple, unified interface for all data sources.
-    
-    Example:
-        fetcher = DataFetcher()
-        data = fetcher.get_simple("electronics", n=50, seed=42)
+    Zentrale Komponente zur Datenbeschaffung.
+    Bietet ein einheitliches Interface für verschiedene Datenquellen und Simulationen.
     """
     
     def __init__(self):
         self._generators = {}
-        logger.info("DataFetcher initialized")
+        logger.info("DataFetcher initialisiert")
     
     def get_simple(
         self,
@@ -122,20 +116,9 @@ class DataFetcher:
         true_slope: float = 0.52,
     ) -> DataResult:
         """
-        Get data for simple regression.
-        
-        Args:
-            dataset: Dataset name ("electronics", "advertising", "temperature")
-            n: Number of observations
-            noise: Noise level (standard deviation)
-            seed: Random seed for reproducibility
-            true_intercept: True β₀ (for simulated data)
-            true_slope: True β₁ (for simulated data)
-        
-        Returns:
-            DataResult with x, y arrays and metadata
+        Beschafft Daten für die einfache lineare Regression.
         """
-        logger.info(f"Fetching simple regression data: {dataset}, n={n}")
+        logger.info(f"Abruf von Daten für einfache Regression: {dataset}, n={n}")
         np.random.seed(seed)
         
         result = None
@@ -147,29 +130,27 @@ class DataFetcher:
             result = self._generate_temperature(n, noise)
         elif dataset == "cantons":
              res = self._generate_cantons(n, noise)
-             result = DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="Swiss Cantons", context_description=res.extra.get("context", ""))
+             result = DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="Schweizer Kantone", context_description=res.extra.get("context", ""))
         elif dataset == "weather":
              res = self._generate_weather(n, noise)
-             # Map Altitude (x1) -> Temperature (y)
-             result = DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="Swiss Weather", context_description="Altitude -> Temperature")
+             result = DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="Schweizer Wetter", context_description="Höhe -> Temperatur")
         elif dataset == "world_bank":
              res = self._generate_world_bank(n, noise)
-             result = DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="World Bank", context_description="GDP -> Life Exp")
+             result = DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="World Bank", context_description="BIP -> Lebenserwartung")
         elif dataset == "fred_economic":
              res = self._generate_fred(n, noise)
-             result = DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="FRED", context_description="Unemployment -> GDP")
+             result = DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="FRED", context_description="Arbeitslosigkeit -> BIP")
         elif dataset == "who_health":
              res = self._generate_who(n, noise)
-             result = DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="WHO", context_description="Health Spend -> Life Exp")
+             result = DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="WHO", context_description="Gesundheitsausgaben -> Lebenserwartung")
         elif dataset == "eurostat":
              res = self._generate_eurostat(n, noise)
-             result = DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="Eurostat", context_description="Emp -> GDP")
+             result = DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="Eurostat", context_description="Beschäftigung -> BIP")
         elif dataset == "nasa_weather":
              res = self._generate_nasa(n, noise)
-             result = DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="NASA", context_description="Temp -> Crop Yield")
+             result = DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="NASA", context_description="Temperatur -> Ernteertrag")
         else:
-            # Default synthetic data
-            result = self._generate_synthetic(n, noise, true_intercept, true_slope)
+            raise ValueError(f"Unbekannter Datensatz für einfache Regression: {dataset}")
             
         if result:
             result.extra["dataset"] = dataset
@@ -184,18 +165,9 @@ class DataFetcher:
         seed: int = 42,
     ) -> MultipleRegressionDataResult:
         """
-        Get data for multiple regression.
-        
-        Args:
-            dataset: Dataset name ("cities", "houses")
-            n: Number of observations
-            noise: Noise level
-            seed: Random seed
-            
-        Returns:
-            MultipleRegressionDataResult with x1, x2, y arrays
+        Beschafft Daten für die multiple lineare Regression.
         """
-        logger.info(f"Fetching multiple regression data: {dataset}, n={n}")
+        logger.info(f"Abruf von Daten für multiple Regression: {dataset}, n={n}")
         np.random.seed(seed)
         
         result = None
@@ -218,7 +190,17 @@ class DataFetcher:
         elif dataset == "nasa_weather":
              result = self._generate_nasa(n, noise)
         else:
-            result = self._generate_cities(n, noise)
+            error = ValueError(f"Unbekannter Datensatz für multiple Regression: {dataset}")
+            log_error_with_context(
+                logger=logger,
+                error=error,
+                context="Multiple regression dataset validation",
+                service="DataFetcher",
+                operation="fetch_multiple",
+                dataset=dataset,
+                available_datasets=list(MULTIPLE_DATASETS.keys())
+            )
+            raise error
             
         if result:
             result.extra["dataset"] = dataset
@@ -253,7 +235,16 @@ class DataFetcher:
             df = pd.DataFrame(mock_data)
             return df.pivot(index=['country', 'year'], columns='indicator', values='value').reset_index()
         except Exception as e:
-            logger.error(f"World Bank API Error: {e}")
+            log_error_with_context(
+                logger=logger,
+                error=e,
+                context="World Bank API fetch",
+                service="DataFetcher",
+                operation="_fetch_worldbank",
+                countries=countries,
+                years=years,
+                indicators=indicators
+            )
             return pd.DataFrame()
 
     def _fetch_fred(self, series_ids: List[str], start_date: str = '2010-01-01', end_date: str = '2023-12-31') -> pd.DataFrame:
@@ -274,7 +265,16 @@ class DataFetcher:
 
             return pd.DataFrame(mock_data)
         except Exception as e:
-            logger.error(f"FRED API Error: {e}")
+            log_error_with_context(
+                logger=logger,
+                error=e,
+                context="FRED API fetch",
+                service="DataFetcher",
+                operation="_fetch_fred",
+                series_ids=series_ids,
+                start_date=start_date,
+                end_date=end_date
+            )
             return pd.DataFrame()
 
     def _fetch_who(self, indicators: List[str], countries: List[str] = None, years: List[int] = None) -> pd.DataFrame:
@@ -298,7 +298,16 @@ class DataFetcher:
             df = pd.DataFrame(mock_data)
             return df.pivot(index=['country', 'year'], columns='indicator', values='value').reset_index()
         except Exception as e:
-            logger.error(f"WHO API Error: {e}")
+            log_error_with_context(
+                logger=logger,
+                error=e,
+                context="WHO API fetch",
+                service="DataFetcher",
+                operation="_fetch_who",
+                indicators=indicators,
+                countries=countries,
+                years=years
+            )
             return pd.DataFrame()
 
     def _fetch_eurostat(self, dataset_codes: List[str], countries: List[str] = None, years: List[int] = None) -> pd.DataFrame:
@@ -320,7 +329,16 @@ class DataFetcher:
             df = pd.DataFrame(mock_data)
             return df.pivot(index=['country', 'year'], columns='dataset', values='value').reset_index()
         except Exception as e:
-            logger.error(f"Eurostat Error: {e}")
+            log_error_with_context(
+                logger=logger,
+                error=e,
+                context="Eurostat API fetch",
+                service="DataFetcher",
+                operation="_fetch_eurostat",
+                dataset_codes=dataset_codes,
+                countries=countries,
+                years=years
+            )
             return pd.DataFrame()
 
     def _fetch_nasa(self, variables: List[str], locations: int = 50) -> pd.DataFrame:
@@ -336,7 +354,15 @@ class DataFetcher:
             
             return pd.DataFrame({'lat': lats, 'solar': solar, 'temp': temp})
         except Exception as e:
-            logger.error(f"NASA API Error: {e}")
+            log_error_with_context(
+                logger=logger,
+                error=e,
+                context="NASA POWER API fetch",
+                service="DataFetcher",
+                operation="_fetch_nasa",
+                variables=variables,
+                locations=locations
+            )
             return pd.DataFrame()
 
     def _generate_eurostat(self, n: int, noise: float) -> MultipleRegressionDataResult:
@@ -350,12 +376,13 @@ class DataFetcher:
         # 2nd predictor: Education Index (mock)
         edu = np.clip(0.00001 * gdp + np.random.normal(0, 5, len(gdp)), 10, 60)
         
+        config = get_multiple_config("eurostat")
         return MultipleRegressionDataResult(
             x1=emp, x2=edu, y=gdp,
-            x1_label="Employment Rate (%)",
-            x2_label="Tertiary Education (%)",
-            y_label="GDP (Million €)",
-            extra={"context": "Eurostat Socioeconomic Data"}
+            x1_label=config.x1_label,
+            x2_label=config.x2_label,
+            y_label=config.y_label,
+            extra={"context": config.context_description}
         )
 
     def _generate_nasa(self, n: int, noise: float) -> MultipleRegressionDataResult:
@@ -368,12 +395,13 @@ class DataFetcher:
         # Predict Crop Yield (for example) using Temp and Solar
         yield_val = 20 + 2 * temp + 5 * solar + np.random.normal(0, noise, len(temp))
         
+        config = get_multiple_config("nasa_weather")
         return MultipleRegressionDataResult(
             x1=temp, x2=solar, y=yield_val,
-            x1_label="Temperature (°C)",
-            x2_label="Solar Radiation (kWh/m²/day)",
-            y_label="Crop Yield Index",
-            extra={"context": "NASA POWER Agro-Climatology"}
+            x1_label=config.x1_label,
+            x2_label=config.x2_label,
+            y_label=config.y_label,
+            extra={"context": config.context_description}
         )
 
     def _generate_world_bank(self, n: int, noise: float) -> MultipleRegressionDataResult:
@@ -390,12 +418,13 @@ class DataFetcher:
         # Or better: "Education" as 2nd predictor (mocked)
         education = np.clip(0.0005 * gdp + np.random.normal(0, 2, len(gdp)), 5, 20)
         
+        config = get_multiple_config("world_bank")
         return MultipleRegressionDataResult(
             x1=gdp, x2=education, y=life,
-            x1_label="GDP per Capita (USD)",
-            x2_label="Education Years",
-            y_label="Life Expectancy (years)",
-            extra={"context": "World Bank Development Indicators"}
+            x1_label=config.x1_label,
+            x2_label=config.x2_label,
+            y_label=config.y_label,
+            extra={"context": config.context_description}
         )
 
     def _generate_fred(self, n: int, noise: float) -> MultipleRegressionDataResult:
@@ -409,12 +438,13 @@ class DataFetcher:
         # 2nd predictor: Interest Rate (Inverse to GDP usually)
         interest = np.clip(5 - 0.0001 * gdp + np.random.normal(0, 1, len(gdp)), 0, 10)
         
+        config = get_multiple_config("fred_economic")
         return MultipleRegressionDataResult(
             x1=unrate, x2=interest, y=gdp,
-            x1_label="Unemployment Rate (%)",
-            x2_label="Interest Rate (%)",
-            y_label="GDP (Billions USD)",
-            extra={"context": "FRED US Economic Data"}
+            x1_label=config.x1_label,
+            x2_label=config.x2_label,
+            y_label=config.y_label,
+            extra={"context": config.context_description}
         )
 
     def _generate_who(self, n: int, noise: float) -> MultipleRegressionDataResult:
@@ -428,200 +458,188 @@ class DataFetcher:
         spend = (life_exp - 50) * 100 + np.random.normal(0, 500, len(life_exp))
         sanitation = np.clip((life_exp - 40) * 2 + np.random.normal(0, 5, len(life_exp)), 0, 100)
         
+        config = get_multiple_config("who_health")
         return MultipleRegressionDataResult(
             x1=spend, x2=sanitation, y=life_exp,
-            x1_label="Health Expenditure ($)",
-            x2_label="Sanitation Access (%)",
-            y_label="Life Expectancy (years)",
-            extra={"context": "WHO Global Health Indicators"}
+            x1_label=config.x1_label,
+            x2_label=config.x2_label,
+            y_label=config.y_label,
+            extra={"context": config.context_description}
         )
     
     # =========================================================
-    # PRIVATE: Data Generators
+    # PRIVATE: Daten-Generatoren (Simulationen)
     # =========================================================
     
     def _generate_cantons(self, n: int, noise: float) -> MultipleRegressionDataResult:
         """
-        Generate Swiss Cantons data (Density, Foreigners, Unemployment -> GDP).
-        Real-ish parameters based on Swiss socio-economic data.
+        Generiert Daten für Schweizer Kantone (Dichte, Ausländeranteil -> BIP).
+        Realitätsnahe Parameter basierend auf sozioökonomischen Daten der Schweiz.
         """
-        # Feature 1: Population Density (log-normal distributed)
-        # Most cantons < 500, some (Zurich, Geneva, Basel) very high
+        # Feature 1: Bevölkerungsdichte (Log-Normal verteilt)
+        # Die meisten Kantone < 500, einige (Zürich, Genf, Basel) sehr hoch.
         x1 = np.random.lognormal(5.5, 0.8, n)
         x1 = np.clip(x1, 50, 5000)
         
-        # Feature 2: Foreign Population % (15% to 50%)
+        # Feature 2: Ausländeranteil % (15% bis 50%)
         x2 = np.random.normal(25, 8, n)
         x2 = np.clip(x2, 10, 50)
         
-        # Feature 3: Unemployment Rate (1.5% to 5.0%)
-        # Correlated with Foreign % (slightly)
+        # Feature 3: Arbeitslosenrate (1.5% bis 5.0%) - Korreliert leicht mit Ausländeranteil
         x3 = 1.5 + 0.05 * x2 + np.random.normal(0, 0.5, n)
         x3 = np.clip(x3, 0.5, 6.0)
         
-        # GDP per Capita (CHF)
-        # Base 60k + Density bonus + Foreign bonus (skilled expat effect) - Unempl malus
-        # Note: In Switzerland, high foreign % often correlates with high GDP (Zurich/Geneva/Basel)
+        # BIP pro Kopf (CHF)
+        # Basis 60k + Bonus für Dichte + Bonus für Ausländeranteil (Spezialisten-Effekt) - Malus für Arbeitslosigkeit
         y = 55000 + 5 * x1 + 800 * x2 - 2000 * x3 + np.random.normal(0, noise * 2000, n)
         
-        # For simple 2D regression compatibility, we return first two X
-        # But maybe we should return a dedicated result for >2 variables?
-        # For now, we map x3 to 'extra' or handle it if the system supports >2
-        # current MultipleRegressionDataResult only supports x1, x2. 
-        # Wait, the content says x1, x2, x3. We need to handle this.
-        # But result struct is x1, x2.
-        # I will pass x3 in 'extra' and rely on the pipeline to ignoring it or 
-        # update the struct. 
-        # Looking at DataResult, it seems strictly 2 predictors?
-        # MultipleRegressionDataResult: x1, x2.
-        # If I want 3, I need to upgrade the data/pipeline structure or 
-        # simplify the dataset to 2 variables for this version.
-        # "GDP = Density + Foreign %" is decent.
-        
+        config = get_multiple_config("cantons")
         return MultipleRegressionDataResult(
             x1=x1, x2=x2, y=y,
-            x1_label="Bevölkerungsdichte (Einwohner/km²)",
-            x2_label="Ausländeranteil (%)",
-            y_label="BIP pro Kopf (CHF)",
+            x1_label=config.x1_label,
+            x2_label=config.x2_label,
+            y_label=config.y_label,
             extra={
                 "true_b0": 55000, "true_b1": 5, "true_b2": 800,
-                "context": "Schweizer Kantone (Sozioökonomisch)"
+                "context": config.context_description
             }
         )
 
     def _generate_weather(self, n: int, noise: float) -> MultipleRegressionDataResult:
         """
-        Generate Swiss Weather stations data (Altitude, Sunshine -> Temperature).
+        Generiert Daten für Schweizer Wetterstationen (Höhe, Sonnendauer -> Temperatur).
         """
-        # x1: Altitude (meters) - 300 to 3500
+        # x1: Höhe über Meer (Meter) - 300 bis 3500m
         x1 = np.random.uniform(300, 2500, n)
         
-        # x2: Sunshine Hours (per year) - 1200 to 2500
-        # Higher altitude often more sun (above fog)
+        # x2: Sonnenscheindauer (h/Jahr) - 1200 bis 2500h
+        # Höhere Lagen haben oft mehr Sonne (über dem Nebel)
         x2 = 1500 + 0.1 * x1 + np.random.normal(0, 200, n)
         x2 = np.clip(x2, 1000, 3000)
         
-        # Temperature decreases with altitude (-0.65°C per 100m)
-        # Increases with sunshine
+        # Temperatur sinkt mit der Höhe (~ -0.65°C pro 100m) und steigt mit Sonne
         y = 15 - 0.0065 * x1 + 0.002 * x2 + np.random.normal(0, noise, n)
         
+        config = get_multiple_config("weather")
         return MultipleRegressionDataResult(
             x1=x1, x2=x2, y=y,
-            x1_label="Höhe über Meer (m)",
-            x2_label="Sonnenstunden (h/Jahr)",
-            y_label="Jahresmitteltemperatur (°C)",
+            x1_label=config.x1_label,
+            x2_label=config.x2_label,
+            y_label=config.y_label,
             extra={
                 "true_b0": 15, "true_b1": -0.0065, "true_b2": 0.002,
-                "context": "Schweizer Wetterstationen"
+                "context": config.context_description
             }
         )
     
     def _generate_electronics(
         self, n: int, noise: float, intercept: float, slope: float
     ) -> DataResult:
-        """Generate electronics market data (Verkaufsfläche vs Umsatz)."""
-        x = np.random.uniform(2, 10, n)  # Verkaufsfläche (100 qm)
+        """Generiert Daten für einen Elektronikmarkt (Verkaufsfläche vs. Umsatz)."""
+        x = np.random.uniform(2, 10, n)  # Verkaufsfläche in 100 qm
         y = intercept + slope * x + np.random.normal(0, noise, n)
         
+        config = get_simple_config("electronics")
         return DataResult(
             x=x, y=y,
-            x_label="Verkaufsfläche (100 qm)",
-            y_label="Umsatz (Mio. €)",
-            x_unit="100 qm",
-            y_unit="Mio. €",
-            context_title="🏪 Elektronikmarkt",
-            context_description="Analyse des Zusammenhangs zwischen Verkaufsfläche und Umsatz",
+            x_label=config.x_label,
+            y_label=config.y_label,
+            x_unit=config.x_unit,
+            y_unit=config.y_unit,
+            context_title=config.context_title,
+            context_description=config.context_description,
             extra={"true_intercept": intercept, "true_slope": slope}
         )
     
     def _generate_advertising(self, n: int, noise: float) -> DataResult:
-        """Generate advertising study data."""
-        x = np.random.uniform(1000, 10000, n)  # Werbeausgaben
+        """Generiert Daten für eine Werbestudie."""
+        x = np.random.uniform(1000, 10000, n)  # Werbeausgaben in $
         y = 50000 + 5.0 * x + np.random.normal(0, noise * 5000, n)
         
+        config = get_simple_config("advertising")
         return DataResult(
             x=x, y=y,
-            x_label="Werbeausgaben ($)",
-            y_label="Umsatz ($)",
-            x_unit="$",
-            y_unit="$",
-            context_title="📢 Werbestudie",
-            context_description="Zusammenhang zwischen Werbeausgaben und Umsatz"
+            x_label=config.x_label,
+            y_label=config.y_label,
+            x_unit=config.x_unit,
+            y_unit=config.y_unit,
+            context_title=config.context_title,
+            context_description=config.context_description
         )
     
     def _generate_temperature(self, n: int, noise: float) -> DataResult:
-        """Generate temperature vs ice cream sales data."""
-        x = np.random.uniform(15, 35, n)  # Temperatur
+        """Generiert Daten für Temperatur vs. Eisverkauf."""
+        x = np.random.uniform(15, 35, n)  # Temperatur in °C
         y = 20 + 3.0 * x + np.random.normal(0, noise * 10, n)
         
+        config = get_simple_config("temperature")
         return DataResult(
             x=x, y=y,
-            x_label="Temperatur (°C)",
-            y_label="Eisverkauf (Einheiten)",
-            x_unit="°C",
-            y_unit="Einheiten",
-            context_title="🍦 Eisverkauf",
-            context_description="Zusammenhang zwischen Temperatur und Eisverkauf"
+            x_label=config.x_label,
+            y_label=config.y_label,
+            x_unit=config.x_unit,
+            y_unit=config.y_unit,
+            context_title=config.context_title,
+            context_description=config.context_description
         )
     
     def _generate_synthetic(
         self, n: int, noise: float, intercept: float, slope: float
     ) -> DataResult:
-        """Generate generic synthetic data."""
+        """Generiert rein synthetische Daten zu Demonstrationszwecken."""
         x = np.random.uniform(0, 100, n)
         y = intercept + slope * x + np.random.normal(0, noise, n)
         
+        config = get_simple_config("synthetic")
         return DataResult(
             x=x, y=y,
-            x_label="X",
-            y_label="Y",
-            context_title="Synthetische Daten",
-            context_description="Generierte Daten für Demonstrationszwecke"
+            x_label=config.x_label,
+            y_label=config.y_label,
+            context_title=config.context_title,
+            context_description=config.context_description
         )
     
     def _generate_cities(self, n: int, noise: float) -> MultipleRegressionDataResult:
-        """Generate cities sales study data (Preis, Werbung → Umsatz)."""
-        # Preis (CHF) ~ N(5.69, 0.52)
+        """Generiert Daten für eine Städte-Marketingstudie (Preis, Werbung -> Umsatz)."""
         x1 = np.random.normal(5.69, 0.52, n)
-        x1 = np.clip(x1, 4.5, 7.0)
+        x1 = np.clip(x1, 4.5, 7.0) # Preis in CHF
         
-        # Werbung (1000 CHF) ~ N(1.84, 0.83)  
         x2 = np.random.normal(1.84, 0.83, n)
-        x2 = np.clip(x2, 0.5, 3.5)
+        x2 = np.clip(x2, 0.5, 3.5) # Werbung in 1000 CHF
         
         # Umsatz = 120 - 8*Preis + 4*Werbung + noise
         y = 120 - 8 * x1 + 4 * x2 + np.random.normal(0, noise, n)
         
+        config = get_multiple_config("cities")
         return MultipleRegressionDataResult(
             x1=x1, x2=x2, y=y,
-            x1_label="Preis (CHF)",
-            x2_label="Werbung (1000 CHF)",
-            y_label="Umsatz (1000 CHF)",
+            x1_label=config.x1_label,
+            x2_label=config.x2_label,
+            y_label=config.y_label,
             extra={"true_b0": 120, "true_b1": -8, "true_b2": 4}
         )
     
     def _generate_houses(self, n: int, noise: float) -> MultipleRegressionDataResult:
-        """Generate house prices data (Area, Pool → Price)."""
-        # Wohnfläche (sqft/10) ~ N(25, 3)
+        """Generiert Daten für Immobilienpreise (Wohnfläche, Pool -> Preis)."""
         x1 = np.random.normal(25.21, 2.92, n)
-        x1 = np.clip(x1, 18, 35)
+        x1 = np.clip(x1, 18, 35) # Wohnfläche (Einheit sqft/10)
         
-        # Pool (Dummy: 0 oder 1, ~20% haben Pool)
+        # Dummy-Variable für Pool (0 = Nein, 1 = Ja)
         x2 = (np.random.random(n) < 0.204).astype(float)
         
-        # Preis = 50 + 8*Fläche + 30*Pool + noise
         y = 50 + 8 * x1 + 30 * x2 + np.random.normal(0, noise, n)
         
+        config = get_multiple_config("houses")
         return MultipleRegressionDataResult(
             x1=x1, x2=x2, y=y,
-            x1_label="Wohnfläche (sqft/10)",
-            x2_label="Pool (0/1)",
-            y_label="Preis ($1000)",
+            x1_label=config.x1_label,
+            x2_label=config.x2_label,
+            y_label=config.y_label,
             extra={"true_b0": 50, "true_b1": 8, "true_b2": 30}
         )
     
     # =========================================================
-    # CLASSIFICATION DATASETS (Case Studies from Professor)
+    # KLASSIFIKATIONS-DATENSÄTZE
     # =========================================================
     
     def get_classification(
@@ -631,17 +649,9 @@ class DataFetcher:
         seed: int = 42,
     ) -> ClassificationDataResult:
         """
-        Get data for classification (KNN, Logistic Regression).
-        
-        Args:
-            dataset: "fruits", "digits", "binary_electronics", "binary_housing"
-            n: Number of samples
-            seed: Random seed
-            
-        Returns:
-            ClassificationDataResult with X matrix, y array, metadata
+        Beschafft Daten für Klassifikationsaufgaben (KNN, Logistische Regression).
         """
-        logger.info(f"Fetching classification data: {dataset}, n={n}")
+        logger.info(f"Abruf von Klassifikationsdaten: {dataset}, n={n}")
         np.random.seed(seed)
         
         if dataset == "fruits":
@@ -653,21 +663,19 @@ class DataFetcher:
         elif dataset == "binary_housing":
             return self._generate_binary_from_simple("houses", n, seed)
         
-        # External / Other Regression Datasets -> Convert to Binary Classification
-        # Try to fetch as multiple regression first
+        # Rückfall: Konvertierung von Regressionsdaten in binäre Klassifikation (High vs Low)
         try:
             reg_data = self.get_multiple(dataset, n=n, seed=seed)
             if reg_data:
-                 # Create binary target (High vs Low)
                  threshold = np.median(reg_data.y)
                  y_binary = (reg_data.y > threshold).astype(int)
                  return ClassificationDataResult(
                     X=np.column_stack([reg_data.x1, reg_data.x2]), 
                     y=y_binary,
                     feature_names=[reg_data.x1_label, reg_data.x2_label],
-                    target_names=["Low " + reg_data.y_label.split('(')[0].strip(), "High " + reg_data.y_label.split('(')[0].strip()],
-                    context_title=reg_data.extra.get("context", dataset) + " (Binary)",
-                    context_description=f"Predict High/Low {reg_data.y_label} based on {reg_data.x1_label} & {reg_data.x2_label}"
+                    target_names=["Niedrig " + reg_data.y_label.split('(')[0].strip(), "Hoch " + reg_data.y_label.split('(')[0].strip()],
+                    context_title=reg_data.extra.get("context", dataset) + " (Binär)",
+                    context_description=f"Vorhersage Hoch/Niedrig {reg_data.y_label} basierend auf {reg_data.x1_label} & {reg_data.x2_label}"
                  )
         except Exception:
             pass
@@ -676,16 +684,13 @@ class DataFetcher:
     
     def _generate_fruits(self, n: int) -> ClassificationDataResult:
         """
-        Fruits dataset (Professor's KNN Case Study).
-        
-        Features: height, width, mass, color_score
-        Classes: apple, mandarin, orange, lemon
+        Früchte-Datensatz (KNN-Fallbeispiel aus der Vorlesung).
+        Merkmale: Höhe, Breite, Masse, Farbskala. Klassen: Apfel, Mandarine, Orange, Zitrone.
         """
         n_per_class = n // 4
-        
         classes, heights, widths, masses, colors = [], [], [], [], []
         
-        # Apple: round, medium, red
+        # Äpfel: rund, mittelgroß, eher rot
         for _ in range(n_per_class):
             classes.append(0)
             heights.append(np.random.normal(7.5, 0.8))
@@ -693,7 +698,7 @@ class DataFetcher:
             masses.append(np.random.normal(175, 25))
             colors.append(np.random.normal(0.75, 0.1))
         
-        # Mandarin: small, round, orange
+        # Mandarinen: klein, rundlich, orange
         for _ in range(n_per_class):
             classes.append(1)
             heights.append(np.random.normal(4.5, 0.5))
@@ -701,7 +706,7 @@ class DataFetcher:
             masses.append(np.random.normal(85, 15))
             colors.append(np.random.normal(0.82, 0.08))
         
-        # Orange: round, larger
+        # Orangen: rund, größer
         for _ in range(n_per_class):
             classes.append(2)
             heights.append(np.random.normal(7.0, 0.6))
@@ -709,7 +714,7 @@ class DataFetcher:
             masses.append(np.random.normal(155, 20))
             colors.append(np.random.normal(0.78, 0.07))
         
-        # Lemon: elongated, yellow
+        # Zitronen: länglich, gelb
         for _ in range(n - 3 * n_per_class):
             classes.append(3)
             heights.append(np.random.normal(8.5, 0.9))
@@ -720,22 +725,19 @@ class DataFetcher:
         X = np.column_stack([heights, widths, masses, colors])
         y = np.array(classes)
         
-        # Shuffle
         idx = np.random.permutation(len(y))
         
         return ClassificationDataResult(
             X=X[idx], y=y[idx],
             feature_names=["height", "width", "mass", "color_score"],
             target_names=["apple", "mandarin", "orange", "lemon"],
-            context_title="🍎 Fruit Classification",
-            context_description="KNN Case Study: Classify fruits by physical properties",
+            context_title="🍎 Früchte-Klassifikation",
+            context_description="KNN Fallbeispiel: Klassifizierung von Früchten anhand physischer Merkmale",
             extra={"source": "Professor's Lecture"}
         )
     
     def _generate_digits(self, n: int) -> ClassificationDataResult:
-        """
-        Digits dataset (8x8 handwritten digits, Professor's Case Study).
-        """
+        """Handgeschriebene Ziffern (8x8 Pixel, Fallbeispiel aus der Vorlesung)."""
         n_per_class = max(1, n // 10)
         X_list, y_list = [], []
         
@@ -743,7 +745,7 @@ class DataFetcher:
             for _ in range(n_per_class if digit < 9 else n - 9 * n_per_class):
                 img = np.zeros((8, 8))
                 
-                # Simplified digit patterns
+                # Vereinfachte Muster für Ziffern
                 if digit == 0:
                     img[1:7, 2:6] = np.random.uniform(8, 16, (6, 4))
                     img[2:6, 3:5] = 0
@@ -753,11 +755,10 @@ class DataFetcher:
                     img[1:3, 2:6] = np.random.uniform(8, 14, (2, 4))
                     img[5:7, 2:6] = np.random.uniform(8, 14, (2, 4))
                 elif digit == 3:
-                    img[1:2, 2:6] = np.random.uniform(8, 14, (1, 4))
-                    img[3:4, 2:6] = np.random.uniform(8, 14, (1, 4))
-                    img[6:7, 2:6] = np.random.uniform(8, 14, (1, 4))
+                     img[1:2, 2:6] = np.random.uniform(8, 14, (1, 4))
+                     img[3:4, 2:6] = np.random.uniform(8, 14, (1, 4))
+                     img[6:7, 2:6] = np.random.uniform(8, 14, (1, 4))
                 else:
-                    # Generic pattern for 4-9
                     img[digit % 3:(digit % 3) + 4, 2:6] = np.random.uniform(8, 16, (4, 4))
                 
                 img += np.random.uniform(0, 2, (8, 8))
@@ -771,13 +772,13 @@ class DataFetcher:
             X=X[idx], y=y[idx],
             feature_names=[f"pixel_{i}" for i in range(64)],
             target_names=[str(d) for d in range(10)],
-            context_title="🔢 Handwritten Digits",
-            context_description="Digits Case Study: Classify 8x8 images of digits 0-9",
+            context_title="🔢 Handgeschriebene Ziffern",
+            context_description="Ziffern Fallbeispiel: Klassifizierung von 8x8 Pixel-Bildern (0-9)",
             extra={"image_shape": (8, 8)}
         )
     
     def _generate_binary_from_simple(self, base: str, n: int, seed: int) -> ClassificationDataResult:
-        """Create binary classification from regression data."""
+        """Erzeugt eine binäre Klassifikation aus Regressionsdaten (Umsatz hoch/niedrig)."""
         if base == "electronics":
             data = self.get_simple("electronics", n=n, seed=seed)
             y_binary = (data.y > np.median(data.y)).astype(int)
@@ -785,8 +786,8 @@ class DataFetcher:
                 X=data.x.reshape(-1, 1), y=y_binary,
                 feature_names=[data.x_label],
                 target_names=["low_sales", "high_sales"],
-                context_title="🏪 Electronics Binary",
-                context_description="Predict high/low sales from store size"
+                context_title="🏪 Elektronikmarkt (Binär)",
+                context_description="Vorhersage hoher/niedriger Umsatz basierend auf Ladengröße"
             )
         else:
             data = self.get_multiple("houses", n=n, seed=seed)
@@ -795,6 +796,6 @@ class DataFetcher:
                 X=np.column_stack([data.x1, data.x2]), y=y_binary,
                 feature_names=[data.x1_label, data.x2_label],
                 target_names=["standard", "premium"],
-                context_title="🏠 Housing Binary",
-                context_description="Predict premium/standard housing"
+                context_title="🏠 Immobilien (Binär)",
+                context_description="Vorhersage Premium- oder Standard-Immobilien"
             )

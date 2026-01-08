@@ -1,7 +1,7 @@
 """
 Domain Interfaces (Ports).
-Using Protocols for structural subtyping.
-Single Responsibility Principle - each interface has ONE job.
+Definition der Schnittstellen mittels 'Protocols' für strukturelles Subtyping.
+Single Responsibility Principle - Jedes Interface hat GENAU EINE Aufgabe.
 """
 from typing import Protocol, List, Dict, Any, Optional
 from .entities import RegressionModel
@@ -9,58 +9,58 @@ from .value_objects import DatasetMetadata, RegressionType, Result
 
 
 # =============================================================================
-# Data Provider Interfaces (Single Responsibility Split)
+# Data Provider Interfaces (Trennung nach Aufgabenbereichen)
 # =============================================================================
 
 class IDatasetFetcher(Protocol):
-    """Interface for fetching a single dataset."""
+    """Schnittstelle zum Abrufen eines einzelnen Datensatzes."""
     
     def fetch(self, dataset_id: str, n: int, **kwargs) -> Result:
         """
-        Fetch raw data.
-        Returns Success(Dict) or Failure(error_message).
+        Ruft Rohdaten ab.
+        Gibt Success(Dict) oder Failure(Fehlermeldung) zurück.
         """
         ...
 
 
 class IDatasetLister(Protocol):
-    """Interface for listing available datasets."""
+    """Schnittstelle zum Auflisten verfügbarer Datensätze."""
     
     def list_all(self) -> List[DatasetMetadata]:
-        """List all available datasets."""
+        """Listet alle verfügbaren Datensätze auf."""
         ...
 
 
 class IDataProvider(IDatasetFetcher, IDatasetLister, Protocol):
-    """Combined interface for data operations (backward compatible)."""
+    """Kombiniertes Interface für Datenoperationen (Abwärtskompatibel)."""
     
     def get_dataset(self, dataset_id: str, n: int, **kwargs) -> Dict[str, Any]:
-        """Legacy method - use fetch() for Result-based error handling."""
+        """Legacy-Methode - intern sollte 'fetch()' für Result-basiertes Error-Handling genutzt werden."""
         ...
         
     def get_all_datasets(self) -> Dict[str, List[Dict[str, str]]]:
-        """List all datasets grouped by type."""
+        """Gibt alle Datensätze gruppiert nach Typ zurück."""
         ...
         
     def get_raw_data(self, dataset_id: str) -> Dict[str, Any]:
-        """Get raw tabular data for a dataset."""
+        """Gibt rohe tabellarische Daten für einen Datensatz zurück (für den Explorer)."""
         ...
 
 
 # =============================================================================
-# Regression Service Interfaces (Single Responsibility Split)
+# Regression Service Interfaces (Trennung der Trainings-Verantwortlichkeiten)
 # =============================================================================
 
 class ISimpleRegressionTrainer(Protocol):
-    """Interface for training simple regression models."""
+    """Schnittstelle für das Training einfacher Regressionsmodelle."""
     
     def train(self, x: List[float], y: List[float]) -> RegressionModel:
-        """Train simple regression: y = β₀ + β₁x."""
+        """Trainiert eine einfache Regression: y = β₀ + β₁x."""
         ...
 
 
 class IMultipleRegressionTrainer(Protocol):
-    """Interface for training multiple regression models."""
+    """Schnittstelle für das Training multipler Regressionsmodelle."""
     
     def train(
         self, 
@@ -68,15 +68,15 @@ class IMultipleRegressionTrainer(Protocol):
         y: List[float], 
         variable_names: List[str]
     ) -> RegressionModel:
-        """Train multiple regression: y = β₀ + β₁x₁ + β₂x₂ + ..."""
+        """Trainiert eine multiple Regression: y = β₀ + β₁x₁ + β₂x₂ + ..."""
         ...
 
 
 class IRegressionService(Protocol):
-    """Combined interface for regression operations (backward compatible)."""
+    """Kombiniertes Interface für Regressionsoperationen (Abwärtskompatibel)."""
     
     def train_simple(self, x: List[float], y: List[float]) -> RegressionModel:
-        """Train simple regression model."""
+        """Trainiert ein einfaches Regressionsmodell."""
         ...
         
     def train_multiple(
@@ -85,52 +85,52 @@ class IRegressionService(Protocol):
         y: List[float], 
         variable_names: List[str]
     ) -> RegressionModel:
-        """Train multiple regression model."""
+        """Trainiert ein multiples Regressionsmodell."""
         ...
 
 
 # =============================================================================
-# Model Repository Interface
+# Model Repository Interface (Persistierung)
 # =============================================================================
 
 class IModelRepository(Protocol):
-    """Interface for persisting and retrieving models."""
+    """Schnittstelle für das Speichern und Abrufen von Modellen."""
     
     def save(self, model: RegressionModel) -> str:
-        """Save model, return model_id."""
+        """Speichert ein Modell und gibt die model_id zurück."""
         ...
     
     def get(self, model_id: str) -> Optional[RegressionModel]:
-        """Retrieve model by ID."""
+        """Ruft ein Modell anhand seiner ID ab."""
         ...
     
     def delete(self, model_id: str) -> bool:
-        """Delete model, return success status."""
+        """Löscht ein Modell und gibt den Erfolgsstatus zurück."""
         ...
 
 
 # =============================================================================
-# Prediction Interface
+# Prediction Interface (Vorhersagen)
 # =============================================================================
 
 class IPredictor(Protocol):
-    """Protocol for making predictions."""
+    """Protokoll für das Erstellen von Vorhersagen."""
     def predict(self, model: RegressionModel, data: Dict[str, Any]) -> float:
-        """Make a prediction using the model."""
+        """Erstellt eine Vorhersage basierend auf dem Modell und neuen Daten."""
         ...
 
 
 class IClassificationService(Protocol):
-    """Protocol for classification operations."""
+    """Protokoll für Klassifikationsoperationen (Logistic Regression, KNN)."""
     
-    def train_logistic(self, X: np.ndarray, y: np.ndarray) -> ClassificationResult:
-        """Train a logistic regression model."""
+    def train_logistic(self, X: Any, y: Any) -> Any: # Typen als Any für Domain-Purity
+        """Trainiert ein Logistisches Regressionsmodell."""
         ...
         
-    def train_knn(self, X: np.ndarray, y: np.ndarray, k: int) -> ClassificationResult:
-        """Train a K-Nearest Neighbors model."""
+    def train_knn(self, X: Any, y: Any, k: int) -> Any:
+        """Trainiert ein K-Nearest Neighbors Modell."""
         ...
         
-    def calculate_metrics(self, y_true: np.ndarray, y_pred: np.ndarray, y_prob: np.ndarray) -> ClassificationMetrics:
-        """Calculate classification performance metrics."""
+    def calculate_metrics(self, y_true: Any, y_pred: Any, y_prob: Any) -> Any:
+        """Berechnet Performance-Metriken für die Klassifikation."""
         ...

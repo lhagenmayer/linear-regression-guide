@@ -83,10 +83,59 @@ gunicorn -w 4 -b 0.0.0.0:5000 "run:create_app()"
 
 ## 🌐 Environment Variables
 
-| Variable | Description |
-|----------|-------------|
-| `PORT` | Port to bind (default: 8000/5000/8501) |
-| `PERPLEXITY_API_KEY` | Optional. API Key for AI features. |
-| `RUN_API` | Set to `true` to force API mode. |
-| `FLASK_APP` | Set to `true` to force Flask mode. |
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PORT` | Port to bind | 8000/5000/8501 |
+| `PERPLEXITY_API_KEY` | Optional. API Key for AI features. | - |
+| `RUN_API` | Set to `true` to force API mode. | - |
+| `FLASK_APP` | Set to `true` to force Flask mode. | - |
+| `DISABLE_LOGGING` | Set to `1` to disable file logging | - |
+| `LOG_LEVEL` | Logging level (DEBUG, INFO, WARNING, ERROR) | INFO |
+
+## 📊 Logging & Monitoring
+
+### Log-Konfiguration
+
+Die Anwendung erstellt automatisch Log-Dateien im `logs/` Verzeichnis:
+
+- `logs/app.log`: Alle Logs (mit Rotation)
+- `logs/errors.log`: Nur Errors (mit Rotation)
+- `logs/performance.log`: Performance-Metriken
+
+**Log-Rotation:**
+- Max. Dateigröße: 10 MB
+- Backup-Dateien: 5
+- Automatische Rotation bei Überschreitung
+
+### Log-Analyse
+
+```bash
+# Letzte 50 Fehler anzeigen
+tail -n 50 logs/errors.log
+
+# Fehler nach Error-ID suchen
+grep "ERROR_ID=a1b2c3d4" logs/errors.log
+
+# Fehler-Statistiken
+grep "ERROR" logs/errors.log | wc -l
+```
+
+### Monitoring
+
+Für Produktionsumgebungen empfehlen wir:
+
+1. **Log-Aggregation**: ELK Stack, Splunk, oder CloudWatch
+2. **Error-Alerting**: Benachrichtigungen bei kritischen Fehlern
+3. **Performance-Monitoring**: Überwachung der `performance.log`
+4. **Health Checks**: Regelmäßige `/api/health` Checks
+
+### Docker Logging
+
+```dockerfile
+# Logs in Volume mounten
+VOLUME ["/app/logs"]
+
+# Oder Logs nach stdout/stderr
+ENV DISABLE_LOGGING=1
+```
 

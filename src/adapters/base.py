@@ -1,5 +1,5 @@
 """
-Base Renderer - Abstract interface for framework-agnostic rendering.
+Basis-Renderer - Abstraktes Interface für framework-agnostisches Rendering.
 """
 
 from abc import ABC, abstractmethod
@@ -15,35 +15,35 @@ from ..infrastructure import PlotCollection
 @dataclass
 class RenderContext:
     """
-    Framework-agnostic context for rendering.
+    Framework-agnostischer Kontext für das Rendering.
     
-    Contains all data needed to render the regression analysis
-    without any framework-specific dependencies.
+    Enthält alle Daten, die zur Darstellung einer Regressionsanalyse benötigt werden,
+    ohne Abhängigkeiten zu spezifischen UI-Frameworks (Modularität).
     """
-    # Analysis type
-    analysis_type: str  # "simple" or "multiple"
+    # Analysetyp ("simple" oder "multiple")
+    analysis_type: str
     
-    # Data
-    data: Any  # DataResult or MultipleRegressionDataResult
-    stats: Any  # RegressionResult or MultipleRegressionResult
+    # Daten- und Statistik-Objekte aus der Domäne/Infrastruktur
+    data: Any  # DataResult oder MultipleRegressionDataResult
+    stats: Any  # RegressionResult oder MultipleRegressionResult
     
-    # Plots as JSON (Plotly figures serialized)
+    # Plots als JSON (serialisierte Plotly-Figuren für den Transport)
     plots_json: Dict[str, str] = field(default_factory=dict)
     
-    # Display options
+    # Anzeige-Optionen für das UI
     show_formulas: bool = True
     show_true_line: bool = False
     compact_mode: bool = False
     
-    # Dynamic content
+    # Dynamische Inhalte und Formeln
     content: Dict[str, Any] = field(default_factory=dict)
     formulas: Dict[str, str] = field(default_factory=dict)
     
-    # Metadata
+    # Metadaten
     dataset_name: str = ""
     
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary for template rendering."""
+        """Konvertiert den Kontext in ein Dictionary für Template-Engines (z.B. Jinja2)."""
         return {
             "analysis_type": self.analysis_type,
             "dataset_name": self.dataset_name,
@@ -57,7 +57,7 @@ class RenderContext:
         }
     
     def _stats_to_dict(self) -> Dict[str, Any]:
-        """Convert stats to dictionary."""
+        """Überführt Statistik-Domain-Objekte in ein flaches Dictionary-Format."""
         if isinstance(self.stats, RegressionResult):
             return {
                 "type": "simple",
@@ -92,7 +92,7 @@ class RenderContext:
         return {}
     
     def _data_to_dict(self) -> Dict[str, Any]:
-        """Convert data to dictionary."""
+        """Überführt Datensatz-Informationen in ein Dictionary-Format."""
         if isinstance(self.data, DataResult):
             return {
                 "type": "simple",
@@ -117,56 +117,45 @@ class RenderContext:
 
 class BaseRenderer(ABC):
     """
-    Abstract base class for framework-specific renderers.
+    Abstrakte Basisklasse für framework-spezifische Renderer.
     
-    Subclasses implement the actual rendering logic for
-    Streamlit, Flask, or other frameworks.
+    Subklassen implementieren die tatsächliche Darstellungslogik für
+    Streamlit, Flask oder andere UI-Technologien.
     """
     
     @abstractmethod
     def render(self, context: RenderContext) -> Any:
         """
-        Render the regression analysis.
-        
-        Args:
-            context: RenderContext with all data and options
-            
-        Returns:
-            Framework-specific response (None for Streamlit, Response for Flask)
+        Führt das Rendering der Regressionsanalyse aus.
         """
         pass
     
     @abstractmethod
     def render_simple_regression(self, context: RenderContext) -> Any:
-        """Render simple regression analysis."""
+        """Spezifisches Rendering für einfache Regression."""
         pass
     
     @abstractmethod
     def render_multiple_regression(self, context: RenderContext) -> Any:
-        """Render multiple regression analysis."""
+        """Spezifisches Rendering für multiple Regression."""
         pass
     
     @abstractmethod
     def run(self, host: str = "0.0.0.0", port: int = 8501, debug: bool = False) -> None:
         """
-        Run the application server.
-        
-        Args:
-            host: Host to bind to
-            port: Port to listen on
-            debug: Enable debug mode
+        Startet den Applikations-Server des jeweiligen Frameworks.
         """
         pass
     
     def serialize_plots(self, plots: PlotCollection) -> Dict[str, str]:
         """
-        Serialize Plotly figures to JSON for framework-agnostic transport.
+        Serialisiert Plotly-Figuren in JSON-Strings für den framework-agnostischen Transport.
         
         Args:
-            plots: PlotCollection from pipeline
+            plots: PlotCollection Objekt aus der Pipeline.
             
         Returns:
-            Dictionary of plot names to JSON strings
+            Dictionary mit Plot-Namen als Key und JSON-Strings als Value.
         """
         result = {}
         
@@ -177,6 +166,7 @@ class BaseRenderer(ABC):
         if plots.diagnostics is not None:
             result["diagnostics"] = plots.diagnostics.to_json()
         
+        # Iteration über zusätzliche/benutzerdefinierte Plots
         for name, fig in plots.extra.items():
             if fig is not None:
                 result[name] = fig.to_json()

@@ -1,18 +1,18 @@
 """
 Data Splitter Service.
-Handles data splitting logic for preview and training.
+Verwaltet die Logik zur Aufteilung von Daten in Trainings- und Test-Sets.
 """
 import numpy as np
 from typing import Tuple, Dict, Any
 from src.core.domain.value_objects import SplitConfig, SplitStats
 
 class DataSplitterService:
-    """Service to handle data splitting calculations."""
+    """Service zur Durchführung von Datensplits (Train/Test)."""
     
     def preview_split(self, y: np.ndarray, config: SplitConfig) -> SplitStats:
         """
-        Preview the statistics of a split without actually copying data.
-        Returns indices stats.
+        Erzeugt eine Vorschau der Split-Statistiken, ohne die Daten tatsächlich zu kopieren.
+        Gibt Verteilungsstatistiken zurück (wichtig für das UI-Feedback).
         """
         n_samples = len(y)
         indices = np.arange(n_samples)
@@ -20,8 +20,8 @@ class DataSplitterService:
         np.random.seed(config.seed)
         
         if config.stratify:
-            # Simple Stratified Split implementation
-            # Group indices by class
+            # Implementierung eines stratifizierten Splits (Klassenverhältnisse beibehalten)
+            # Gruppierung der Indizes nach Klassen
             classes, y_indices = np.unique(y, return_inverse=True)
             train_indices = []
             test_indices = []
@@ -41,13 +41,13 @@ class DataSplitterService:
             test_indices = np.array(test_indices)
             
         else:
-            # Random Split
+            # Einfacher Zufalls-Split
             np.random.shuffle(indices)
             n_train = int(n_samples * config.train_size)
             train_indices = indices[:n_train]
             test_indices = indices[n_train:]
             
-        # Calculate Distributions
+        # Verteilungen berechnen
         y_train = y[train_indices]
         y_test = y[test_indices]
         
@@ -57,7 +57,7 @@ class DataSplitterService:
         dist_train = dict(zip(unique_train, counts_train))
         dist_test = dict(zip(unique_test, counts_test))
         
-        # Normalize keys to standard python types if numpy
+        # Konvertierung von NumPy-Typen in Python-Standardtypen für die Serialisierung
         dist_train = {k.item() if hasattr(k, "item") else k: int(v) for k, v in dist_train.items()}
         dist_test = {k.item() if hasattr(k, "item") else k: int(v) for k, v in dist_test.items()}
         
@@ -75,7 +75,7 @@ class DataSplitterService:
         config: SplitConfig
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
-        Split arrays into train and test sets based on config.
+        Teilt Arrays basierend auf der Konfiguration in Trainings- und Test-Sets auf.
         Returns: X_train, X_test, y_train, y_test
         """
         n_samples = len(y)
@@ -102,7 +102,7 @@ class DataSplitterService:
             train_indices = np.array(train_indices)
             test_indices = np.array(test_indices)
             
-            # Shuffle the resulting sets to avoid class ordering
+            # Die resultierenden Sets mischen, um Klassen-Sortierung zu vermeiden
             np.random.shuffle(train_indices)
             np.random.shuffle(test_indices)
             

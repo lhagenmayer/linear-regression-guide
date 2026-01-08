@@ -1,20 +1,20 @@
 """
-Unified Dataset Registry - Clean Architecture.
+Vereinheitlichte Datensatz-Registry - Clean Architecture.
 
-Provides a single interface for accessing all datasets across all analysis types,
-enabling students to explore the same data through progressively complex methods.
+Bietet eine zentrale Schnittstelle für den Zugriff auf alle Datensätze über alle Analysetypen hinweg.
+Dies ermöglicht es Studierenden, denselben Datensatz durch progressiv komplexere Methoden zu untersuchen.
 
-Architecture:
+Architektur:
     DatasetRegistry (Infrastructure)
         ├── get_for_simple_regression()
         ├── get_for_multiple_regression()
         ├── get_for_classification()
-        └── list_all() → metadata for UI
+        └── list_all() → Metadaten für die UI
 
-Usage:
+Nutzung:
     registry = DatasetRegistry()
     
-    # Same dataset, different analysis levels
+    # Derselbe Datensatz, verschiedene Analyseebenen
     simple = registry.get_for_simple_regression("electronics")
     multiple = registry.get_for_multiple_regression("electronics")
     binary = registry.get_for_classification("electronics", binary=True)
@@ -35,7 +35,7 @@ from .generators import (
 
 
 class AnalysisType(Enum):
-    """Types of analysis a dataset supports."""
+    """Arten der Analyse, die ein Datensatz unterstützt."""
     SIMPLE_REGRESSION = "simple_regression"
     MULTIPLE_REGRESSION = "multiple_regression"
     BINARY_CLASSIFICATION = "binary_classification"
@@ -44,7 +44,7 @@ class AnalysisType(Enum):
 
 @dataclass
 class DatasetMeta:
-    """Metadata about a dataset and its capabilities."""
+    """Metadaten über einen Datensatz und dessen Fähigkeiten."""
     name: str
     display_name: str
     description: str
@@ -52,10 +52,10 @@ class DatasetMeta:
     capabilities: Set[AnalysisType]
     feature_count: int
     typical_n: int
-    domain: str  # e.g., "business", "science", "education"
+    domain: str  # z.B. "business", "science", "education"
     
     def supports(self, analysis_type: AnalysisType) -> bool:
-        """Check if dataset supports given analysis type."""
+        """Prüft, ob der Datensatz den gegebenen Analysetyp unterstützt."""
         return analysis_type in self.capabilities
 
 
@@ -65,15 +65,15 @@ class DatasetMeta:
 
 class DatasetRegistry:
     """
-    Unified interface for all datasets across all analysis types.
+    Vereinheitlichtes Interface für alle Datensätze über alle Analysetypen hinweg.
     
-    This is the recommended entry point for accessing data in the application.
-    It ensures datasets are available consistently across the learning journey.
+    Dies ist der empfohlene Einstiegspunkt für den Datenzugriff in der Anwendung.
+    Es stellt sicher, dass Datensätze konsistent über die gesamte "Learning Journey" verfügbar sind.
     
-    Example:
+    Beispiel:
         registry = DatasetRegistry()
         
-        # Student explores electronics data through the full journey
+        # Ein Studierender erkundet die Elektronikmarkt-Daten durch die gesamte Reise
         for level in ["simple", "multiple", "binary", "multiclass"]:
             data = registry.get("electronics", level)
             print(f"{level}: {data}")
@@ -225,15 +225,15 @@ class DatasetRegistry:
     # =========================================================================
     
     def list_all(self) -> List[DatasetMeta]:
-        """List all available datasets with their metadata."""
+        """Listet alle verfügbaren Datensätze mit ihren Metadaten auf."""
         return list(self._metadata.values())
     
     def list_by_capability(self, analysis_type: AnalysisType) -> List[DatasetMeta]:
-        """List datasets that support a specific analysis type."""
+        """Listet Datensätze auf, die einen spezifischen Analysetyp unterstützen."""
         return [m for m in self._metadata.values() if m.supports(analysis_type)]
     
     def get_metadata(self, name: str) -> Optional[DatasetMeta]:
-        """Get metadata for a specific dataset."""
+        """Gibt Metadaten für einen spezifischen Datensatz zurück."""
         return self._metadata.get(name)
     
     def get_for_simple_regression(
@@ -243,15 +243,15 @@ class DatasetRegistry:
         seed: Optional[int] = None
     ) -> DataResult:
         """
-        Get dataset for simple linear regression (one X, one Y).
+        Ruft einen Datensatz für die einfache lineare Regression ab (ein X, ein Y).
         
         Args:
-            name: Dataset name
-            n: Number of observations
-            seed: Random seed (uses registry default if not specified)
+            name: Name des Datensatzes
+            n: Anzahl der Beobachtungen
+            seed: Zufalls-Seed (nutzt Registry-Standard, falls nicht angegeben)
             
         Returns:
-            DataResult with x, y arrays and metadata
+            DataResult mit x, y Arrays und Metadaten
         """
         seed = seed or self._seed
         return self._fetcher.get_simple(name, n=n, seed=seed)
@@ -263,15 +263,15 @@ class DatasetRegistry:
         seed: Optional[int] = None
     ) -> MultipleRegressionDataResult:
         """
-        Get dataset for multiple regression (X1, X2, Y).
+        Ruft einen Datensatz für die multiple Regression ab (X1, X2, Y).
         
         Args:
-            name: Dataset name
-            n: Number of observations
-            seed: Random seed
+            name: Name des Datensatzes
+            n: Anzahl der Beobachtungen
+            seed: Zufalls-Seed
             
         Returns:
-            MultipleRegressionDataResult with x1, x2, y arrays
+            MultipleRegressionDataResult mit x1, x2, y Arrays
         """
         seed = seed or self._seed
         return self._fetcher.get_multiple(name, n=n, seed=seed)
@@ -285,25 +285,25 @@ class DatasetRegistry:
         seed: Optional[int] = None
     ) -> ClassificationDataResult:
         """
-        Get dataset for classification (KNN, Logistic Regression).
+        Ruft einen Datensatz für Klassifikationsaufgaben ab (KNN, Logistische Regression).
         
         Args:
-            name: Dataset name
-            n: Number of samples
-            binary: If True, convert to binary classification
-            n_classes: Number of classes for multi-class (if not binary)
-            seed: Random seed
+            name: Name des Datensatzes
+            n: Anzahl der Stichproben
+            binary: Falls True, wird in binäre Klassifikation konvertiert
+            n_classes: Anzahl der Klassen für Multi-Class (falls nicht binär)
+            seed: Zufalls-Seed
             
         Returns:
-            ClassificationDataResult with X matrix, y array, metadata
+            ClassificationDataResult mit X-Matrix, y-Array und Metadaten
         """
         seed = seed or self._seed
         
-        # Native classification datasets
+        # Native Klassifikations-Datensätze
         if name in ["fruits", "digits"]:
             return self._fetcher.get_classification(name, n=n, seed=seed)
         
-        # Convert regression datasets to classification
+        # Konvertierung von Regressions-Datensätzen in Klassifikation
         return self._convert_to_classification(name, n, binary, n_classes, seed)
     
     # =========================================================================
@@ -318,7 +318,7 @@ class DatasetRegistry:
         n_classes: int,
         seed: int
     ) -> ClassificationDataResult:
-        """Convert regression dataset to classification."""
+        """Konvertiert einen Regressions-Datensatz in eine Klassifikations-Aufgabe."""
         # Get regression data
         try:
             multi_data = self._fetcher.get_multiple(name, n=n, seed=seed)
@@ -364,13 +364,13 @@ class DatasetRegistry:
         seed: Optional[int] = None
     ) -> Dict[str, Any]:
         """
-        Get all applicable analysis types for a dataset.
+        Gibt alle anwendbaren Analysetypen für einen Datensatz zurück.
         
-        Perfect for demonstrating progression from simple to complex.
+        Ideal zur Demonstration der Progression von einfach zu komplex.
         
         Returns:
-            Dict with keys: 'simple', 'multiple', 'binary', 'multiclass'
-            Each contains the data if applicable, None otherwise.
+            Dict mit den Schlüsseln: 'simple', 'multiple', 'binary', 'multiclass'
+            Enthält die Daten, falls anwendbar, andernfalls None.
         """
         seed = seed or self._seed
         meta = self._metadata.get(name)

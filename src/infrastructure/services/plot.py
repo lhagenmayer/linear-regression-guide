@@ -1,8 +1,8 @@
 """
-Step 3: PLOT
+Schritt 3: ZEICHNEN (PLOT)
 
-This module creates all visualizations.
-It generates Plotly figures from data and calculation results.
+Dieses Modul erstellt alle Visualisierungen.
+Es generiert Plotly-Figuren aus Daten und Berechnungsergebnissen.
 """
 
 from dataclasses import dataclass
@@ -22,7 +22,7 @@ logger = get_logger(__name__)
 
 @dataclass
 class PlotCollection:
-    """Collection of plots for display."""
+    """Sammlung von Diagrammen für die Anzeige."""
     scatter: go.Figure
     residuals: go.Figure
     diagnostics: Optional[go.Figure] = None
@@ -35,25 +35,25 @@ class PlotCollection:
 
 class PlotBuilder:
     """
-    Step 3: PLOT
+    Schritt 3: ZEICHNEN (PLOT)
     
-    Creates visualizations from data and regression results.
+    Erstellt Visualisierungen aus Daten und Regressionsergebnissen.
     
-    Example:
+    Beispiel:
         plotter = PlotBuilder()
         plots = plotter.simple_regression_plots(data, regression_result)
     """
     
-    # Modern, professional color scheme for teaching
+    # Modernes, professionelles Farbschema für didaktische Zwecke
     COLORS = {
-        "data": "#1f77b4",       # Distinct Blue
-        "data_marker": "#155a8a", # Darker outline
-        "model": "#ff7f0e",      # Safety Orange (High visibility)
-        "true_model": "#2ca02c", # Green for "Truth"
-        "residual_pos": "#d62728", # Red for error
+        "data": "#1f77b4",       # Markantes Blau
+        "data_marker": "#155a8a", # Dunklere Umrandung
+        "model": "#ff7f0e",      # Sicherheits-Orange (hohe Sichtbarkeit)
+        "true_model": "#2ca02c", # Grün für die "Wahrheit" (Simulation)
+        "residual_pos": "#d62728", # Rot für Fehler
         "residual_neg": "#d62728",
-        "plane": "Blues",        # Surface colorscale
-        "shadow": "rgba(0, 0, 0, 0.15)", # For floor projections
+        "plane": "Blues",        # Farbskala für Oberflächen
+        "shadow": "rgba(0, 0, 0, 0.15)", # Für Bodenprojektionen
         "grid": "#E5E5E5",
     }
     
@@ -69,7 +69,7 @@ class PlotBuilder:
         true_slope: float = 0,
     ) -> PlotCollection:
         """
-        Create all plots for simple regression.
+        Erstellt alle Diagramme für die einfache Regression.
         """
         logger.info("Creating simple regression plots")
         
@@ -94,7 +94,7 @@ class PlotBuilder:
         result: MultipleRegressionResult,
     ) -> PlotCollection:
         """
-        Create all plots for multiple regression.
+        Erstellt alle Diagramme für die multiple Regression.
         """
         logger.info("Creating multiple regression plots")
         

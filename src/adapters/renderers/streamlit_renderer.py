@@ -1,8 +1,8 @@
 """
-Streamlit Content Renderer - Interprets ContentStructure for Streamlit.
+Streamlit-Content-Renderer - Interpretiert die ContentStructure für Streamlit.
 
-This renderer takes framework-agnostic ContentStructure and renders it
-using Streamlit's API (st.markdown, st.metric, st.plotly_chart, etc.)
+Dieser Renderer transformiert die framework-agnostische ContentStructure unter Nutzung
+der Streamlit-API (st.markdown, st.metric, st.plotly_chart, etc.) in eine interaktive UI.
 """
 
 import streamlit as st
@@ -22,16 +22,16 @@ from ...content.structure import (
 
 class StreamlitContentRenderer:
     """
-    Renders EducationalContent using Streamlit API.
+    Rendert EducationalContent-Objekte mittels Streamlit-API.
     """
     
-    # Consistent "Prof-Style" Colors
+    # Konsistente Farben für statistische Visualisierungen ("Prof-Style")
     COLORS = {
-        "data": "#1f77b4",       # Blue
-        "model": "#ff7f0e",      # Orange
-        "mean": "#7f7f7f",       # Gray
-        "residual": "#d62728",   # Red
-        "explained": "#2ca02c",  # Green
+        "data": "#1f77b4",       # Blau (Datenpunkte)
+        "model": "#ff7f0e",      # Orange (Regressionslinie)
+        "mean": "#7f7f7f",       # Grau (Mittelwert)
+        "residual": "#d62728",   # Rot (Residuen/Fehler)
+        "explained": "#2ca02c",  # Grün (Erklärte Varianz)
         "grid": "#E5E5E5",
     }
     
@@ -42,13 +42,13 @@ class StreamlitContentRenderer:
         stats: Dict[str, Any] = None
     ):
         """
-        Initialize renderer with plot figures and data.
+        Initialisiert den Renderer mit Plot-Daten und statistischen Werten.
         """
         self.plots = plots or {}
         self.data = data or {}
         self.stats = stats or {}
         
-        # Map of interactive plot generators
+        # Mapping von Plot-Keys auf interaktive Generator-Funktionen
         self._interactive_plots: Dict[str, Callable] = {
             "bivariate_normal_3d": self._render_bivariate_normal_3d,
             "covariance_3d": self._render_covariance_3d,
@@ -70,7 +70,7 @@ class StreamlitContentRenderer:
         }
     
     def render(self, content: EducationalContent) -> None:
-        """Render complete educational content."""
+        """Rendert den gesamten edukativen Inhalt in der Streamlit-Anwendung."""
         st.title(content.title)
         st.markdown(f"*{content.subtitle}*")
         
@@ -78,15 +78,15 @@ class StreamlitContentRenderer:
             self._render_chapter(chapter)
     
     def _render_chapter(self, chapter: Chapter) -> None:
-        """Render a chapter with its sections."""
+        """Rendert ein Kapitel inklusive seiner Sektionen."""
         st.markdown("---")
-        st.header(f"{chapter.icon} Chapter {chapter.number}: {chapter.title}")
+        st.header(f"{chapter.icon} Kapitel {chapter.number}: {chapter.title}")
         
         for section in chapter.sections:
             self._render_element(section)
     
     def _render_element(self, element: ContentElement) -> None:
-        """Render a single content element."""
+        """Dynamisches Routing: Rendert ein beliebiges Inhaltselement mittels Streamlit-API."""
         if isinstance(element, Markdown):
             st.markdown(element.text)
         
@@ -94,29 +94,34 @@ class StreamlitContentRenderer:
             st.metric(element.label, element.value, help=element.help_text or None)
         
         elif isinstance(element, MetricRow):
-            # Limit columns per row to avoid squeezing on smaller screens
+            # Spalten-Layout für Metriken (max. 3 pro Zeile für Lesbarkeit)
             MAX_COLS = 3
             metrics = element.metrics
             
-            # Process in chunks
             for i in range(0, len(metrics), MAX_COLS):
                 chunk = metrics[i:i + MAX_COLS]
                 cols = st.columns(len(chunk))
-                for col, metric in zip(cols, chunk):
+                for col, m in zip(cols, chunk):
                     with col:
-                        st.metric(metric.label, metric.value, help=metric.help_text or None)
+                        st.metric(m.label, m.value, help=m.help_text or None)
         
         elif isinstance(element, Formula):
             if element.inline:
-                st.markdown(f"${element.latex}$")
+                st.markdown(f"${element.latex}$") # Streamlit nutzt $ für Inline-LaTeX
             else:
                 st.latex(element.latex)
         
         elif isinstance(element, Plot):
-            self._render_plot(element)
+            self._render_plot_element(element)
         
         elif isinstance(element, Table):
-            self._render_table(element)
+            # Tabellen-Darstellung (statisch via st.table)
+            if element.rows:
+                import pandas as pd
+                df = pd.DataFrame(element.rows, columns=element.headers)
+                st.table(df) # st.table für statische Darstellung im "Papier-Look"
+            if element.caption:
+                st.caption(element.caption)
         
         elif isinstance(element, Columns):
             # Streamlit columns collapse on mobile automatically.

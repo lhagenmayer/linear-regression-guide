@@ -1,8 +1,8 @@
 """
-Serializers - Convert all data structures to JSON.
+Serializers - Konvertierung aller Datenstrukturen in JSON.
 
-100% platform agnostic. Pure Python, no framework dependencies.
-All outputs are JSON-serializable dictionaries.
+100% plattformunabhängig. Reines Python, keine Framework-Abhängigkeiten.
+Alle Ausgaben sind JSON-serialisierbare Dictionaries.
 """
 
 from typing import Dict, Any, List, Union, Optional
@@ -11,7 +11,7 @@ import numpy as np
 
 
 def _to_list(arr: Any) -> List:
-    """Convert numpy array or any iterable to list."""
+    """Konvertiert NumPy-Arrays oder Iterables in Standard-Listen."""
     if arr is None:
         return []
     if isinstance(arr, np.ndarray):
@@ -22,7 +22,7 @@ def _to_list(arr: Any) -> List:
 
 
 def _to_float(val: Any) -> Optional[float]:
-    """Convert to float, handle NaN."""
+    """Konvertiert Werte in Float und behandelt NaN/Inf."""
     if val is None:
         return None
     try:
@@ -36,21 +36,14 @@ def _to_float(val: Any) -> Optional[float]:
 
 class DataSerializer:
     """
-    Serialize DataResult to JSON.
-    
-    Converts numpy arrays to lists for JSON compatibility.
+    Serialisiert DataResult-Objekte für die API.
+    Konvertiert NumPy-Arrays in Listen für die JSON-Kompatibilität.
     """
     
     @staticmethod
     def serialize_simple(data) -> Dict[str, Any]:
         """
-        Serialize simple regression data.
-        
-        Args:
-            data: DataResult from pipeline
-            
-        Returns:
-            JSON-serializable dictionary
+        Serialisiert Daten der einfachen Regression.
         """
         return {
             "type": "simple_regression_data",
@@ -71,13 +64,7 @@ class DataSerializer:
     @staticmethod
     def serialize_multiple(data) -> Dict[str, Any]:
         """
-        Serialize multiple regression data.
-        
-        Args:
-            data: MultipleRegressionDataResult from pipeline
-            
-        Returns:
-            JSON-serializable dictionary
+        Serialisiert Daten der multiplen Regression.
         """
         return {
             "type": "multiple_regression_data",
@@ -94,44 +81,37 @@ class DataSerializer:
 
 class StatsSerializer:
     """
-    Serialize regression results to JSON.
-    
-    All statistics are converted to JSON-safe types.
+    Serialisiert Regressionsergebnisse für JSON.
+    Alle statistischen Kennzahlen werden in JSON-sichere Typen konvertiert.
     """
     
     @staticmethod
     def serialize_simple(result) -> Dict[str, Any]:
         """
-        Serialize simple regression result.
-        
-        Args:
-            result: RegressionResult from pipeline
-            
-        Returns:
-            JSON-serializable dictionary
+        Serialisiert Ergebnisse der einfachen Regression.
         """
         return {
             "type": "simple_regression_stats",
             
-            # Coefficients
+            # Koeffizienten (Intercept & Steigung)
             "coefficients": {
                 "intercept": _to_float(result.intercept),
                 "slope": _to_float(result.slope),
             },
             
-            # Model fit
+            # Modell-Güte (Bestimmtheitsmaß)
             "model_fit": {
                 "r_squared": _to_float(result.r_squared),
                 "r_squared_adj": _to_float(result.r_squared_adj),
             },
             
-            # Standard errors
+            # Standardfehler
             "standard_errors": {
                 "intercept": _to_float(result.se_intercept),
                 "slope": _to_float(result.se_slope),
             },
             
-            # Test statistics
+            # t-Tests für Signifikanz
             "t_tests": {
                 "intercept": {
                     "t_value": _to_float(result.t_intercept),
@@ -143,7 +123,7 @@ class StatsSerializer:
                 },
             },
             
-            # Sum of squares
+            # Quadratsummen (SSE, SST, SSR, MSE)
             "sum_of_squares": {
                 "sse": _to_float(result.sse),
                 "sst": _to_float(result.sst),
@@ -151,17 +131,17 @@ class StatsSerializer:
                 "mse": _to_float(result.mse),
             },
             
-            # Sample info
+            # Stichproben-Informationen
             "sample": {
                 "n": int(result.n),
                 "df": int(result.df),
             },
             
-            # Predictions & Residuals (can be large, optional)
+            # Vorhersagen & Residuen (Vektordaten)
             "predictions": _to_list(result.y_pred),
             "residuals": _to_list(result.residuals),
             
-            # Extra stats
+            # Zusätzliche Statistiken
             "extra": {
                 k: _to_float(v) if isinstance(v, (int, float, np.number)) else v
                 for k, v in (result.extra or {}).items()
@@ -171,24 +151,18 @@ class StatsSerializer:
     @staticmethod
     def serialize_multiple(result) -> Dict[str, Any]:
         """
-        Serialize multiple regression result.
-        
-        Args:
-            result: MultipleRegressionResult from pipeline
-            
-        Returns:
-            JSON-serializable dictionary
+        Serialisiert Ergebnisse der multiplen Regression.
         """
         return {
             "type": "multiple_regression_stats",
             
-            # Coefficients
+            # Koeffizienten-Vektor
             "coefficients": {
                 "intercept": _to_float(result.intercept),
                 "slopes": [_to_float(c) for c in result.coefficients],
             },
             
-            # Model fit
+            # Modell-Güte & F-Statistik
             "model_fit": {
                 "r_squared": _to_float(result.r_squared),
                 "r_squared_adj": _to_float(result.r_squared_adj),
@@ -196,33 +170,33 @@ class StatsSerializer:
                 "f_p_value": _to_float(result.f_pvalue),
             },
             
-            # Standard errors
+            # Standardfehler der Koeffizienten
             "standard_errors": [_to_float(se) for se in result.se_coefficients],
             
-            # Test statistics for each coefficient
+            # t-Tests für alle Koeffizienten
             "t_tests": {
                 "t_values": [_to_float(t) for t in result.t_values],
                 "p_values": [_to_float(p) for p in result.p_values],
             },
             
-            # Sum of squares
+            # Quadratsummen
             "sum_of_squares": {
                 "sse": _to_float(result.sse),
                 "sst": _to_float(result.sst),
                 "ssr": _to_float(result.ssr),
             },
             
-            # Sample info
+            # Stichproben-Info
             "sample": {
                 "n": int(result.n),
                 "k": int(result.k),
             },
             
-            # Predictions & Residuals
+            # Vorhersagen & Residuen
             "predictions": _to_list(result.y_pred),
             "residuals": _to_list(result.residuals),
             
-            # Extra
+            # Extra-Felder
             "extra": {
                 k: _to_float(v) if isinstance(v, (int, float, np.number)) else v
                 for k, v in (result.extra or {}).items()
@@ -232,15 +206,15 @@ class StatsSerializer:
     @staticmethod
     def to_flat_dict(result, data=None) -> Dict[str, Any]:
         """
-        Convert to flat dictionary for ContentBuilder.
-        
-        Returns all fields needed by SimpleRegressionContent/MultipleRegressionContent.
+        Konvertiert das Ergebnis in ein flaches Dictionary für den ContentBuilder.
+        Dieses Format wird von SimpleRegressionContent und MultipleRegressionContent 
+        erwartet, um edukative Texte zu generieren.
         """
-        # Lazy import to avoid circular dependencies if any
+        # Lazy Loading der Inhalts-Registry, um zirkuläre Abhängigkeiten zu vermeiden
         from ..data.content import get_simple_regression_content, get_multiple_regression_descriptions
         
         if hasattr(result, 'slope'):
-            # Simple regression
+            # Fall: Einfache Regression
             flat = {
                 "intercept": _to_float(result.intercept),
                 "slope": _to_float(result.slope),
@@ -262,20 +236,20 @@ class StatsSerializer:
                 "y_pred": _to_list(result.y_pred),
             }
             
-            # Add extra stats
+            # Zusätzliche Metriken hinzufügen
             if result.extra:
                 flat.update({
                     k: _to_float(v) if isinstance(v, (int, float, np.number)) else v
                     for k, v in result.extra.items()
                 })
             
-            # Add computed F-statistic
+            # Berechnete F-Statistik (für edukative Zwecke)
             msr = flat["ssr"] / 1 if flat["ssr"] else 0
             mse = flat["mse"] if flat["mse"] else 1
             flat["f_statistic"] = msr / mse if mse > 0 else 0
-            flat["p_f"] = flat["p_slope"]  # Same for simple regression
+            flat["p_f"] = flat["p_slope"] 
             
-            # Add data context and descriptive stats
+            # Datenkontext und deskriptive Statistiken hinzufügen
             if data:
                 x = np.array(data.x) if hasattr(data.x, '__iter__') else data.x
                 y = np.array(data.y) if hasattr(data.y, '__iter__') else data.y
@@ -285,26 +259,25 @@ class StatsSerializer:
                 flat["x_unit"] = str(getattr(data, 'x_unit', ''))
                 flat["y_unit"] = str(getattr(data, 'y_unit', ''))
                 
-                # Fetch rich content if dataset ID is present
+                # Versuch, reichhaltige Inhalte aus der Registry zu laden
                 dataset_id = getattr(data, 'extra', {}).get('dataset')
                 context_title = str(getattr(data, 'context_title', 'Regressionsanalyse'))
                 context_desc = str(getattr(data, 'context_description', ''))
                 
                 if dataset_id:
                     try:
-                        # Attempt to get rich content from legacy registry
                         rich_content = get_simple_regression_content(dataset_id, flat["x_label"])
                         if rich_content.get("context_title"):
                             context_title = rich_content["context_title"]
                         if rich_content.get("context_description"):
                             context_desc = rich_content["context_description"]
                     except Exception:
-                        pass # Fallback to existing metadata
+                        pass # Rückfall auf Basis-Metadaten
                 
                 flat["context_title"] = context_title
                 flat["context_description"] = context_desc
                 
-                # Descriptive statistics
+                # Deskriptive Statistiken (Mittelwert, Std-Abw, etc.)
                 if len(x) > 0:
                     flat["x_mean"] = float(np.mean(x))
                     flat["x_std"] = float(np.std(x, ddof=1)) if len(x) > 1 else 0
@@ -315,23 +288,23 @@ class StatsSerializer:
                     flat["y_min"] = float(np.min(y))
                     flat["y_max"] = float(np.max(y))
                     
-                    # Correlation
+                    # Korrelationskoeffizienten
                     if len(x) > 1:
                         flat["covariance"] = float(np.cov(x, y, ddof=1)[0, 1])
                         from scipy import stats as scipy_stats
                         corr = np.corrcoef(x, y)[0, 1]
                         flat["correlation"] = float(corr)
-                        # Correlation t-test
+                        # t-Test für Korrelation
                         if abs(corr) < 1:
                             t_corr = corr * np.sqrt((len(x) - 2) / (1 - corr**2))
                             flat["t_correlation"] = float(t_corr)
                             flat["p_correlation"] = float(2 * (1 - scipy_stats.t.cdf(abs(t_corr), df=len(x)-2)))
-                        # Spearman
+                        # Spearman-Rangkorrelation
                         spearman_r, spearman_p = scipy_stats.spearmanr(x, y)
                         flat["spearman_r"] = float(spearman_r)
                         flat["spearman_p"] = float(spearman_p)
         else:
-            # Multiple regression
+            # Fall: Multiple Regression
             coeffs = result.coefficients if result.coefficients else [0, 0]
             se_coeffs = result.se_coefficients if result.se_coefficients else [0, 0, 0]
             t_vals = result.t_values if result.t_values else [0, 0, 0]
@@ -339,24 +312,19 @@ class StatsSerializer:
             
             flat = {
                 "intercept": _to_float(result.intercept),
-                # Both naming conventions
                 "b1": _to_float(coeffs[0]) if len(coeffs) > 0 else 0,
                 "b2": _to_float(coeffs[1]) if len(coeffs) > 1 else 0,
                 "beta1": _to_float(coeffs[0]) if len(coeffs) > 0 else 0,
                 "beta2": _to_float(coeffs[1]) if len(coeffs) > 1 else 0,
-                # Standard errors
                 "se_intercept": _to_float(se_coeffs[0]) if len(se_coeffs) > 0 else 0,
                 "se_beta1": _to_float(se_coeffs[1]) if len(se_coeffs) > 1 else 0,
                 "se_beta2": _to_float(se_coeffs[2]) if len(se_coeffs) > 2 else 0,
-                # t-values
                 "t_intercept": _to_float(t_vals[0]) if len(t_vals) > 0 else 0,
                 "t_beta1": _to_float(t_vals[1]) if len(t_vals) > 1 else 0,
                 "t_beta2": _to_float(t_vals[2]) if len(t_vals) > 2 else 0,
-                # p-values
                 "p_intercept": _to_float(p_vals[0]) if len(p_vals) > 0 else 1,
                 "p_beta1": _to_float(p_vals[1]) if len(p_vals) > 1 else 1,
                 "p_beta2": _to_float(p_vals[2]) if len(p_vals) > 2 else 1,
-                # Model fit
                 "r_squared": _to_float(result.r_squared),
                 "r_squared_adj": _to_float(result.r_squared_adj),
                 "f_statistic": _to_float(result.f_statistic),
@@ -364,7 +332,6 @@ class StatsSerializer:
                 "n": int(result.n),
                 "k": int(result.k),
                 "df": int(result.n - result.k - 1),
-                # Sum of squares
                 "sse": _to_float(result.sse),
                 "sst": _to_float(result.sst),
                 "ssr": _to_float(result.ssr),
@@ -378,7 +345,7 @@ class StatsSerializer:
                     for k, v in result.extra.items()
                 })
             
-            # Add data context
+            # Datenkontext für multiple Regression
             if data:
                 x1 = np.array(data.x1) if hasattr(data.x1, '__iter__') else data.x1
                 x2 = np.array(data.x2) if hasattr(data.x2, '__iter__') else data.x2
@@ -387,7 +354,6 @@ class StatsSerializer:
                 flat["x2_label"] = str(data.x2_label)
                 flat["y_label"] = str(data.y_label)
                 
-                # Fetch rich content if dataset ID is present
                 dataset_id = getattr(data, 'extra', {}).get('dataset')
                 context_title = "Multiple Regression"
                 context_desc = f"Analyse von {data.y_label} mit {data.x1_label} und {data.x2_label}"
@@ -397,7 +363,7 @@ class StatsSerializer:
                         rich_info = get_multiple_regression_descriptions(dataset_id)
                         if rich_info.get("main"):
                             context_desc = rich_info["main"]
-                            # Also guess title based on dataset_id
+                            # Dynamische Titelvergabe basierend auf dataset_id
                             if "cantons" in dataset_id.lower() or "Schweizer" in context_desc:
                                 context_title = "Schweizer Kantone (Multipel)"
                             elif "weather" in dataset_id.lower():
@@ -423,7 +389,7 @@ class StatsSerializer:
                 flat["context_title"] = context_title
                 flat["context_description"] = context_desc
                 
-                # Multicollinearity
+                # Multikollinearität (VIF - Variance Inflation Factor)
                 if len(x1) > 1:
                     corr_x1_x2 = float(np.corrcoef(x1, x2)[0, 1])
                     flat["corr_x1_x2"] = corr_x1_x2
@@ -432,7 +398,7 @@ class StatsSerializer:
                     flat["vif_x1"] = vif
                     flat["vif_x2"] = vif
                 
-                # Durbin-Watson placeholder
+                # Durbin-Watson Platzhalter (für zukünftige Autokorrelations-Tests)
                 flat["durbin_watson"] = 2.0
         
         return flat
@@ -440,52 +406,35 @@ class StatsSerializer:
 
 class PlotSerializer:
     """
-    Serialize Plotly figures to JSON.
-    
-    Plotly figures are natively JSON-serializable.
-    Any frontend can render them using plotly.js.
+    Serialisiert Plotly-Figuren für JSON.
+    Plotly-Figuren sind von Natur aus JSON-serialisierbar.
+    Jedes Frontend kann sie mittels plotly.js rendern.
     """
     
     @staticmethod
     def serialize_figure(fig) -> Dict[str, Any]:
-        """
-        Serialize a single Plotly figure.
-        
-        Args:
-            fig: plotly.graph_objects.Figure
-            
-        Returns:
-            JSON-serializable dictionary (Plotly JSON format)
-        """
+        """Konvertiert eine einzelne Plotly-Figur in ein Dictionary."""
         if fig is None:
-            return None
-        return json.loads(fig.to_json())
+            return {}
+        return fig.to_dict()
     
     @staticmethod
     def serialize_collection(plots) -> Dict[str, Any]:
         """
-        Serialize PlotCollection to JSON.
-        
-        Args:
-            plots: PlotCollection from pipeline
-            
-        Returns:
-            Dictionary of JSON-serialized plots
+        Serialisiert eine komplette Sammlung von Plots.
         """
-        result = {
+        serialized = {
             "scatter": PlotSerializer.serialize_figure(plots.scatter),
             "residuals": PlotSerializer.serialize_figure(plots.residuals),
             "diagnostics": PlotSerializer.serialize_figure(plots.diagnostics),
         }
         
-        # Add extra plots
+        # Zusätzliche Plots hinzufügen, falls vorhanden
         if plots.extra:
-            result["extra"] = {
-                key: PlotSerializer.serialize_figure(fig)
-                for key, fig in plots.extra.items()
-            }
-        
-        return result
+            for k, v in plots.extra.items():
+                serialized[k] = PlotSerializer.serialize_figure(v)
+                
+        return serialized
 
 
 class ContentSerializer:

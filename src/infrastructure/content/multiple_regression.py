@@ -1,7 +1,8 @@
 """
-Multiple Regression Educational Content - Framework Agnostic.
+Multiple Regression - Edukativer Content (Framework-agnostisch).
 
-This module defines ALL educational content for multiple regression as DATA STRUCTURES.
+Dieses Modul definiert den Inhalt für die multiple Regressionsanalyse
+als REINE DATENSTRUKTUR.
 NO UI imports, NO framework dependencies.
 """
 

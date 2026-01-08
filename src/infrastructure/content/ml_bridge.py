@@ -1,8 +1,9 @@
 """
-Machine Learning Bridge Educational Content - Framework Agnostic.
+ML-Brücke - Edukativer Content (Framework-agnostisch).
 
-This module bridges from Statistical Regression to Machine Learning concepts.
-Covers: Loss Functions, Gradient Descent, Train/Val/Test, Bias-Variance, Cross-Validation.
+Dieses Modul definiert den Inhalt für die Brücke zwischen Statistik und ML
+als REINE DATENSTRUKTUR.
+Es behandelt: Loss Functions, Gradient Descent, Train/Val/Test, Bias-Variance, Cross-Validation.
 """
 
 from typing import Dict, Any, List

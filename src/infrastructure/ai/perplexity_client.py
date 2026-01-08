@@ -1,12 +1,12 @@
 """
-Perplexity AI Client - 100% Platform Agnostic.
+Perplexity AI Client - 100% Plattform-agnostisch.
 
-Pure Python implementation with NO framework dependencies.
-Can be used by ANY frontend: Flask, Streamlit, Next.js, Vite, etc.
+Reine Python-Implementierung OHNE Framework-Abhängigkeiten.
+Kann von JEDEM Frontend genutzt werden: Flask, Streamlit, Next.js, Vite, etc.
 
-All interaction happens via:
-1. Direct Python calls (for Python backends)
-2. REST API (for any frontend via /api/interpret)
+Die gesamte Interaktion erfolgt über:
+1. Direkte Python-Aufrufe (für Python-Backends)
+2. REST-API (für beliebige Frontends via /api/interpret)
 """
 
 import os
@@ -21,11 +21,12 @@ import requests
 
 # Use standard logging - no framework dependencies
 import logging
-logger = logging.getLogger(__name__)
+from ...config.logger import get_logger, log_error_with_context
+logger = get_logger(__name__)
 
 
 class PerplexityModel(Enum):
-    """Available Perplexity models."""
+    """Verfügbare Perplexity-Modelle."""
     SONAR_SMALL = "llama-3.1-sonar-small-128k-online"
     SONAR_LARGE = "llama-3.1-sonar-large-128k-online"
     SONAR_HUGE = "llama-3.1-sonar-huge-128k-online"
@@ -33,7 +34,7 @@ class PerplexityModel(Enum):
 
 @dataclass
 class PerplexityConfig:
-    """Configuration for Perplexity API - no framework dependencies."""
+    """Konfiguration für die Perplexity-API - framework-unabhängig."""
     api_key: Optional[str] = None
     model: PerplexityModel = PerplexityModel.SONAR_SMALL
     temperature: float = 0.3
@@ -41,7 +42,7 @@ class PerplexityConfig:
     timeout: int = 60
     
     def __post_init__(self):
-        """Load API key from environment only - framework agnostic."""
+        """Lädt den API-Key ausschließlich aus der Umgebungsvariablen."""
         if self.api_key is None:
             self.api_key = os.environ.get("PERPLEXITY_API_KEY")
 
@@ -49,9 +50,9 @@ class PerplexityConfig:
 @dataclass
 class PerplexityResponse:
     """
-    Response from Perplexity API - serializable to JSON.
+    Antwort von der Perplexity-API - serialisierbar zu JSON.
     
-    Can be directly returned via REST API to any frontend.
+    Kann direkt via REST-API an jedes Frontend zurückgegeben werden.
     """
     content: str
     model: str
@@ -81,10 +82,10 @@ class PerplexityResponse:
 @dataclass
 class ROutputData:
     """
-    Structured R-Output data - platform agnostic.
+    Strukturierte R-Output-Daten - plattformagnostisch.
     
-    This is the data structure that any frontend can send
-    to request an interpretation.
+    Dies ist die Datenstruktur, die jedes Frontend senden kann,
+    um eine Interpretation anzufordern.
     """
     # Required fields
     x_label: str
@@ -143,22 +144,22 @@ class ROutputData:
 
 class PerplexityClient:
     """
-    Platform-Agnostic Perplexity AI Client.
+    Plattformagnostischer Perplexity AI Client.
     
-    100% framework independent - works with:
+    100% framework-unabhängig - funktioniert mit:
     - Flask
     - Streamlit  
     - FastAPI
     - Next.js (via REST API)
     - Vite/React (via REST API)
-    - Any HTTP client
+    - Jedem HTTP-Client
     
-    Usage (Python):
+    Nutzung (Python):
         client = PerplexityClient()
         response = client.interpret_r_output(stats_dict)
         print(response.content)
     
-    Usage (REST API - any frontend):
+    Nutzung (REST API - beliebiges Frontend):
         POST /api/ai/interpret
         Body: { "stats": { ... } }
         Response: { "content": "...", "model": "...", ... }
@@ -215,17 +216,9 @@ Regeln:
         use_cache: bool = True
     ) -> PerplexityResponse:
         """
-        Interpret R-output comprehensively.
+        Interpretiert den R-Output umfassend.
         
-        This is the main method - works with any frontend.
-        
-        Args:
-            stats: Dictionary with regression statistics
-                   (can come from JSON request body)
-            use_cache: Whether to use cached responses
-            
-        Returns:
-            PerplexityResponse that can be serialized to JSON
+        Dies ist die Hauptmethode - funktioniert mit jedem Frontend.
         """
         if not self.is_configured:
             return PerplexityResponse(
@@ -447,14 +440,45 @@ Bitte gib eine vollständige, gesamtheitliche Interpretation."""
             logger.info(f"Perplexity interpretation in {latency:.0f}ms")
             return result
             
-        except requests.exceptions.Timeout:
+        except requests.exceptions.Timeout as e:
+            error_id = log_error_with_context(
+                logger=logger,
+                error=e,
+                context="Perplexity API request timeout",
+                service="PerplexityClient",
+                operation="query",
+                model=model.value if isinstance(model, PerplexityModel) else str(model),
+                timeout_seconds=timeout
+            )
+            logger.warning(f"[ERROR_ID={error_id}] Perplexity API timeout")
             return PerplexityResponse(
                 content="⚠️ Zeitüberschreitung bei der API-Anfrage.",
                 model="error",
                 error=True
             )
+        except requests.exceptions.RequestException as e:
+            error_id = log_error_with_context(
+                logger=logger,
+                error=e,
+                context="Perplexity API request error",
+                service="PerplexityClient",
+                operation="query",
+                model=model.value if isinstance(model, PerplexityModel) else str(model),
+                status_code=getattr(e.response, 'status_code', None) if hasattr(e, 'response') else None
+            )
+            return PerplexityResponse(
+                content=f"❌ API-Fehler: {str(e)}",
+                model="error",
+                error=True
+            )
         except Exception as e:
-            logger.error(f"Perplexity API error: {e}")
+            error_id = log_error_with_context(
+                logger=logger,
+                error=e,
+                context="Perplexity API unexpected error",
+                service="PerplexityClient",
+                operation="query"
+            )
             return PerplexityResponse(
                 content=f"❌ API-Fehler: {str(e)}",
                 model="error",

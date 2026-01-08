@@ -1,13 +1,13 @@
 """
-Streamlit Application - 100% Platform Agnostic.
+Streamlit-Anwendung - 100% Plattform-Agnostisch.
 
-Uses the same API layer as external frontends (Next.js, Vite, etc.)
-This ensures consistency across all frontends.
+Nutzt dieselbe API-Schicht wie externe Frontends (Next.js, Vite, etc.).
+Dies stellt eine konsistente Logik über alle Benutzeroberflächen sicher.
 
-Architecture:
+Architektur:
     Streamlit App → API Layer → Core Pipeline
     
-    Same as:
+    Identisch zu:
     Next.js App → HTTP → API Layer → Core Pipeline
 """
 
@@ -17,136 +17,118 @@ from typing import Dict, Any, Optional
 
 from ...config import get_logger
 from ...api import RegressionAPI, ContentAPI, AIInterpretationAPI
-from ...core.domain.value_objects import SplitConfig # Added import for SplitConfig
+from ...core.domain.value_objects import SplitConfig
 
 logger = get_logger(__name__)
 
 
 def run_streamlit_app():
-    """Main Streamlit application entry point."""
-    # Page configuration
+    """Haupt-Einstiegspunkt für die Streamlit-Anwendung."""
+    # Seiten-Konfiguration
     st.set_page_config(
-        page_title="Regression & Classification",
+        page_title="Regression & Klassifikation",
         page_icon="🧠",
         layout="wide",
         initial_sidebar_state="expanded"
     )
     
-    # Custom CSS
+    # Custom CSS für modernes UI/UX Design
     from .styles import inject_custom_css, render_hero
     inject_custom_css()
     
-    # Initialize APIs
+    # Initalisierung der APIs
     regression_api = RegressionAPI()
     content_api = ContentAPI()
     ai_api = AIInterpretationAPI()
     
-    # Sidebar
+    # Sidebar (Seitenleiste)
     with st.sidebar:
         st.markdown("""
         <div style="margin-bottom: 2rem;">
-            <div class="api-badge">API-POWERED</div>
+            <div class="api-badge">API-GESTÜTZT</div>
             <h1 style="font-size: 1.5rem; margin: 0;">RegAnalysis</h1>
-            <p style="color: #94a3b8; font-size: 0.9rem;">Interactive Learning Platform</p>
+            <p style="color: #94a3b8; font-size: 0.9rem;">Interaktive Lernplattform</p>
         </div>
         """, unsafe_allow_html=True)
         
         analysis_type = st.radio(
-            "Analysis Type",
-            ["Simple Regression", "Multiple Regression", "Binary Classification"],
+            "Analysetyp",
+            ["Einfache Regression", "Multiple Regression", "Binäre Klassifikation"],
             key="analysis_type",
             label_visibility="collapsed"
         )
         
-        # Data Split Config moved below dataset selection
-
         st.markdown("---")
         
-        # Dataset selection
+        # Datensatz-Auswahl
         datasets_response = regression_api.get_datasets()
-        st.markdown("### 📊 Dataset")
+        st.markdown("### 📊 Datensatz")
         
-        # Default params
+        # Standard-Parameter
         method = "logistic"
         k_neighbors = 3
         
-        if analysis_type == "Simple Regression":
+        if analysis_type == "Einfache Regression":
             dataset_options = {d["name"]: d["id"] for d in datasets_response["data"]["simple"]}
-            dataset_name = st.selectbox("Select Dataset:", list(dataset_options.keys()), key="dataset_simple")
+            dataset_name = st.selectbox("Wähle Datensatz:", list(dataset_options.keys()), key="dataset_simple")
             dataset_id = dataset_options[dataset_name]
-            n_points = st.slider("Samples", 20, 200, 50, key="n_simple")
+            n_points = st.slider("Stichprobengröße", 20, 200, 50, key="n_simple")
             
         elif analysis_type == "Multiple Regression":
             dataset_options = {d["name"]: d["id"] for d in datasets_response["data"]["multiple"]}
-            dataset_name = st.selectbox("Select Dataset:", list(dataset_options.keys()), key="dataset_multiple")
+            dataset_name = st.selectbox("Wähle Datensatz:", list(dataset_options.keys()), key="dataset_multiple")
             dataset_id = dataset_options[dataset_name]
-            n_points = st.slider("Samples", 30, 200, 75, key="n_multiple")
+            n_points = st.slider("Stichprobengröße", 30, 200, 75, key="n_multiple")
             
-        else: # Binary Classification
-            # Hardcoded options for now or fetch via API if endpoint exists?
-            # We reuse simple/multiple datasets + special ones
-            # For "native" classification support we should probably have an endpoint get_classification_datasets
-            # But generators.py handles conversion.
-            
-            # Mix of dedicated classification + convertibles
+        else: # Binäre Klassifikation
+            # Auswahl an Datensätzen für die Klassifikation
             cls_options = {
-                "🍎 Fruits (2D)": "fruits",
-                "🔢 Digits (64D)": "digits",
-                "📱 Electronics (Simple->Binary)": "binary_electronics",
-                "🏠 Housing (Simple->Binary)": "binary_housing",
-                "🏥 WHO Health (External)": "who_health",
-                "🏦 World Bank (External)": "world_bank",
+                "🍎 Früchte (2D)": "fruits",
+                "🔢 Ziffern (64D)": "digits",
+                "📱 Elektronik (Binär-Verschneidung)": "binary_electronics",
+                "🏠 Immobilien (Binär-Verschneidung)": "binary_housing",
+                "🏥 WHO Health (Extern)": "who_health",
+                "🏦 Weltbank (Extern)": "world_bank",
             }
-            dataset_name = st.selectbox("Select Dataset:", list(cls_options.keys()), key="dataset_cls")
+            dataset_name = st.selectbox("Wähle Datensatz:", list(cls_options.keys()), key="dataset_cls")
             dataset_id = cls_options[dataset_name]
-            n_points = st.slider("Samples", 50, 500, 100, step=10, key="n_cls")
+            n_points = st.slider("Stichprobengröße", 50, 500, 100, step=10, key="n_cls")
             
-            st.markdown("### 🧠 Model")
-            method_display = st.selectbox("Method", ["Logistic Regression", "K-Nearest Neighbors"], key="method_select")
-            method = "logistic" if "Logistic" in method_display else "knn"
+            st.markdown("### 🧠 Modell")
+            method_display = st.selectbox("Methode", ["Logistische Regression", "K-Nearest Neighbors"], key="method_select")
+            method = "logistic" if "Logistische" in method_display else "knn"
             
             if method == "knn":
-                k_neighbors = st.slider("Neighbors (k)", 1, 25, 3, key="k_knn")
+                k_neighbors = st.slider("Nachbarn (k)", 1, 25, 3, key="k_knn")
                 
-            # Data Split Configuration (Only for Classification)
+            # Konfiguration des Data-Splits (Nur bei Klassifikation relevant)
             with st.expander("Data Split & Stratification", expanded=True):
-                st.markdown("Configure Training/Test split.")
+                st.markdown("Konfiguriere das Verhältnis von Trainings- zu Testdaten.")
                 
                 col1, col2 = st.columns(2)
                 with col1:
                     train_size = st.slider(
-                        "Training Size", 
+                        "Trainings-Anteil", 
                         min_value=0.1, 
                         max_value=0.9, 
                         value=0.8, 
                         step=0.05,
-                        key="train_size_slider",
-                        help="Proportion of data used for training."
+                        key="train_size_slider"
                     )
                 with col2:
                     stratify = st.checkbox(
-                        "Stratify Split", 
+                        "Stratifizierung", 
                         value=False,
                         key="stratify_checkbox",
-                        help="Maintain class proportions."
+                        help="Hält die Klassenverhältnisse in beiden Splits gleich."
                     )
                     
-                # Live Preview
+                # Live-Vorschau der Klassenverteilung via API
                 try:
-                    # Look up dataset_id from current selection
-                    # n_points is defined above
-                    # noise/seed defined below, need defaults or move
-                    # To avoid circular dep, we assume defaults for preview if vars not ready?
-                    # But n_points is ready. dataset_id is ready.
-                    # noise/seed are below. Let's assume defaults for PREVIEW or move them up.
-                    # Moving noise/seed up is better UI practice anyway (Global params).
-                    # But let's just use defaults for preview 
-                    
                     preview_noise_val = 0.2
                     preview_seed_val = 42
                     
-                    api = ContentAPI()
-                    preview = api.get_split_preview(
+                    preview = content_api.get_split_preview(
                         dataset=dataset_id, 
                         train_size=train_size,
                         stratify=stratify, 
@@ -157,69 +139,62 @@ def run_streamlit_app():
                     
                     if preview["success"]:
                         stats = preview["stats"]
-                        # Compact display
-                        # st.caption(f"Train: {stats['train_count']} | Test: {stats['test_count']}")
-                        
                         import pandas as pd
                         import plotly.express as px
                         
                         dist_data = []
                         for k, v in stats["train_distribution"].items():
-                            dist_data.append({"Class": str(k), "Count": v, "Set": "Train"})
+                            dist_data.append({"Klasse": str(k), "Anzahl": v, "Set": "Train"})
                         for k, v in stats["test_distribution"].items():
-                            dist_data.append({"Class": str(k), "Count": v, "Set": "Test"})
+                            dist_data.append({"Klasse": str(k), "Anzahl": v, "Set": "Test"})
                             
                         df_dist = pd.DataFrame(dist_data)
                         fig_dist = px.bar(
-                            df_dist, 
-                            x="Set", 
-                            y="Count", 
-                            color="Class", 
-                            barmode="group",
-                            height=150,
-                            title=None
+                            df_dist, x="Set", y="Anzahl", color="Klasse", barmode="group",
+                            height=150, title=None
                         )
                         fig_dist.update_layout(margin=dict(l=0, r=0, t=0, b=0), showlegend=False)
                         st.plotly_chart(fig_dist, use_container_width=True)
-                except Exception as e:
+                except Exception:
                     pass
         
-        st.markdown("### ⚙️ Parameters")
-        noise = st.slider("Noise Level", 0.0, 2.0, 0.2 if analysis_type == "Binary Classification" else 0.4, 0.1, key="noise")
-        seed = st.number_input("Random Seed", 1, 9999, 42, key="seed")
+        st.markdown("### ⚙️ Parameter")
+        noise = st.slider("Rausch-Niveau", 0.0, 2.0, 0.2 if analysis_type == "Binäre Klassifikation" else 0.4, 0.1, key="noise")
+        seed = st.number_input("Zufalls-Seed", 1, 9999, 42, key="seed")
         
         st.markdown("---")
         
-        # API Status
+        # API Statusanzeige
         status = ai_api.get_status()
         if status["status"]["configured"]:
-            st.success("✅ AI Connected")
+            st.success("✅ KI verbunden")
         else:
-            st.warning("⚠️ AI Fallback")
+            st.warning("⚠️ KI Fallback")
             
-    # Main Content
+    # Hauptinhalt
     if "hero_shown" not in st.session_state:
         st.session_state.hero_shown = True
         
-    # Tabs for Content vs Data
-    tab_analysis, tab_data = st.tabs(["📊 Analysis", "🗃️ Data Explorer"])
+    # Tabs für Analyse vs. Datenexplorer
+    tab_analysis, tab_data = st.tabs(["📊 Analyse", "🗃️ Daten-Explorer"])
     
     with tab_analysis:
-        if analysis_type == "Simple Regression":
-            render_hero("Simple Regression", "Explore relationships, analyze residuals, and master statistical modeling.")
+        if analysis_type == "Einfache Regression":
+            render_hero("Einfache Regression", "Erkunde Zusammenhänge, analysiere Residuen und meistere statistische Modellierung.")
             render_simple_regression(content_api, ai_api, dataset_id, n_points, noise, seed)
         elif analysis_type == "Multiple Regression":
-            render_hero("Multiple Regression", "Multivariate analysis with 3D visualizations.")
+            render_hero("Multiple Regression", "Multivariate Analyse mit interaktiven 3D-Visualisierungen.")
             render_multiple_regression(content_api, ai_api, dataset_id, n_points, noise, seed)
         else:
-            render_hero("Machine Learning", "From Logistic Regression to KNN classification.")
+            render_hero("Machine Learning", "Von der logistischen Regression bis hin zur KNN-Klassifikation.")
             render_classification(content_api, ai_api, dataset_id, n_points, noise, seed, method, k_neighbors, train_size, stratify)
 
     with tab_data:
-        st.markdown(f"### 🗃️ Raw Data: {dataset_name}")
+        st.markdown(f"### 🗃️ Rohdaten: {dataset_name}")
         st.markdown(f"**ID:** `{dataset_id}` | **Samples:** {n_points}")
         
         try:
+             # Rohdaten via API laden
              raw_resp = content_api.get_dataset_raw(dataset_id)
              if raw_resp.get("success"):
                  data = raw_resp["data"]["data"]
@@ -227,7 +202,7 @@ def run_streamlit_app():
                  
                  import pandas as pd
                  df = pd.DataFrame(data)
-                 # Reorder columns to put Target last if generic dict didn't preserve
+                 # Spalten sortieren, Target nach hinten
                  if "Target" in columns and "Target" in df.columns:
                       cols = [c for c in df.columns if c != "Target"] + ["Target"]
                       df = df[cols]
@@ -236,16 +211,16 @@ def run_streamlit_app():
                  
                  csv = df.to_csv(index=False).encode('utf-8')
                  st.download_button(
-                     "📥 Download CSV",
+                     "📥 CSV Herunterladen",
                      csv,
                      f"{dataset_id}.csv",
                      "text/csv",
                      key='download-csv'
                  )
              else:
-                 st.error(f"Could not load data: {raw_resp.get('error')}")
+                 st.error(f"Daten konnten nicht geladen werden: {raw_resp.get('error')}")
         except Exception as e:
-            st.error(f"Data Explorer Error: {e}")
+            st.error(f"Fehler im Daten-Explorer: {e}")
 
 
 def render_simple_regression(
@@ -256,9 +231,9 @@ def render_simple_regression(
     noise: float,
     seed: int
 ):
-    """Render simple regression analysis using API."""
+    """Rendert die einfache Regressionsanalyse unter Nutzung der API."""
     
-    # Call API (same as external frontend would)
+    # API-Aufruf (identisch zu einem externen Frontend)
     with st.spinner("📊 Lade Daten via API..."):
         response = content_api.get_simple_content(
             dataset=dataset,
@@ -268,23 +243,23 @@ def render_simple_regression(
         )
     
     if not response["success"]:
-        st.error(f"API Fehler: {response.get('error', 'Unknown error')}")
+        st.error(f"API Fehler: {response.get('error', 'Unbekannter Fehler')}")
         return
     
-    # Extract data from API response
+    # Daten aus dem API-Response extrahieren
     content = response["content"]
     plots = response["plots"]
     stats = response["stats"]
     data = response["data"]
     
-    # Build stats dict for renderer
+    # Statistiken für den Renderer aufbereiten
     stats_dict = _flatten_stats(stats, data)
     
-    # Render content using StreamlitContentRenderer
+    # Inhalte mittels StreamlitContentRenderer visualisieren
     from ..renderers import StreamlitContentRenderer
     
     renderer = StreamlitContentRenderer(
-        plots={},  # Interactive plots generated on-demand
+        plots={},  # Interaktive Plots werden on-demand generiert
         data={
             "x": np.array(data["x"]),
             "y": np.array(data["y"]),
@@ -294,15 +269,15 @@ def render_simple_regression(
         stats=stats_dict
     )
     
-    # Build content structure from API response
+    # Inhaltsstruktur aus der API rekonstruieren
     from ...content import SimpleRegressionContent
     content_builder = SimpleRegressionContent(stats_dict, {})
     content_obj = content_builder.build()
     
-    # Render
+    # Rendern des edukativen Inhalts
     renderer.render(content_obj)
     
-    # AI Interpretation
+    # KI-Interpretation am Ende hinzufügen
     _render_ai_interpretation(ai_api, stats_dict)
 
 
@@ -314,9 +289,9 @@ def render_multiple_regression(
     noise: float,
     seed: int
 ):
-    """Render multiple regression analysis using API."""
+    """Rendert die multiple Regressionsanalyse."""
     
-    # Call API
+    # API-Aufruf
     with st.spinner("📊 Lade Daten via API..."):
         response = content_api.get_multiple_content(
             dataset=dataset,
@@ -326,19 +301,19 @@ def render_multiple_regression(
         )
     
     if not response["success"]:
-        st.error(f"API Fehler: {response.get('error', 'Unknown error')}")
+        st.error(f"API Fehler: {response.get('error', 'Unbekannter Fehler')}")
         return
     
-    # Extract data
+    # Daten extrahieren
     content = response["content"]
     plots = response["plots"]
     stats = response["stats"]
     data = response["data"]
     
-    # Build stats dict
+    # Statistiken flach klopfen
     stats_dict = _flatten_multiple_stats(stats, data)
     
-    # Render
+    # Rendering
     from ..renderers import StreamlitContentRenderer
     from ...content import MultipleRegressionContent
     
@@ -360,14 +335,14 @@ def render_multiple_regression(
     
     renderer.render(content_obj)
     
-    # AI Interpretation
+    # KI-Interpretation
     _render_ai_interpretation(ai_api, stats_dict)
 
 
 def _render_ai_interpretation(ai_api: AIInterpretationAPI, stats_dict: Dict[str, Any]):
-    """Render AI interpretation section using API."""
+    """Rendert die KI-gestützte Interpretation der Statistiken."""
     
-    st.subheader("🤖 AI-Interpretation des R-Outputs")
+    st.subheader("🤖 KI-Interpretation des R-Outputs")
     st.markdown("""
     <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); 
                 padding: 1.5rem; border-radius: 1rem; color: white; margin: 1rem 0;">
@@ -377,7 +352,7 @@ def _render_ai_interpretation(ai_api: AIInterpretationAPI, stats_dict: Dict[str,
     </div>
     """, unsafe_allow_html=True)
     
-    # Status from API
+    # Statusabfrage über die API
     status = ai_api.get_status()
     if status["status"]["configured"]:
         st.success("✅ Perplexity API verbunden")
@@ -405,33 +380,33 @@ def _render_ai_interpretation(ai_api: AIInterpretationAPI, stats_dict: Dict[str,
             key="ai_interpret_btn"
         )
     
-    # Show R-Output
+    # R-Output anzeigen (Summary Statistik)
     with st.expander("📄 R-Output anzeigen"):
         r_output_response = ai_api.get_r_output(stats_dict)
         if r_output_response["success"]:
             st.code(r_output_response["r_output"], language="r")
     
-    # Session state
+    # Management des Session States für die API-Antwort
     if "ai_interpretation_result" not in st.session_state:
         st.session_state.ai_interpretation_result = None
     
     if interpret_clicked:
         with st.spinner("🤖 AI analysiert via API..."):
-            # Call API (same as HTTP request from external frontend)
+            # API-Aufruf (identisch zum HTMX-Vorgehen im Flask-Frontend)
             response = ai_api.interpret(stats=stats_dict, use_cache=True)
             st.session_state.ai_interpretation_result = response
     
-    # Display interpretation
+    # Anzeige der Interpretation
     if st.session_state.ai_interpretation_result:
         response = st.session_state.ai_interpretation_result
         
         st.markdown("### 📊 Interpretation")
         
-        # Main content
+        # Hauptinhalt (Markdown von der KI)
         interpretation = response.get("interpretation", {})
         st.markdown(interpretation.get("content", "Keine Interpretation verfügbar."))
         
-        # Metadata
+        # Metadaten zur Anfrage
         if response.get("success"):
             meta_cols = st.columns(4)
             meta_cols[0].caption(f"📡 {interpretation.get('model', 'N/A')}")
@@ -443,7 +418,7 @@ def _render_ai_interpretation(ai_api: AIInterpretationAPI, stats_dict: Dict[str,
             
             meta_cols[3].caption(f"💾 {'Cached' if interpretation.get('cached') else 'Live'}")
         
-        # Citations
+        # Quellenangaben/Zitate
         citations = response.get("citations", [])
         if citations:
             with st.expander("📚 Quellen"):
@@ -469,9 +444,9 @@ def render_classification(
     train_size: float,
     stratify: bool
 ):
-    """Render classification analysis (Machine Learning)."""
+    """Rendert die Klassifikationsanalyse (Machine Learning)."""
     
-    with st.spinner(f"🧠 Trainiere {method.upper()} Modell..."):
+    with st.spinner(f"🧠 Trainiere {method.upper()} Modell via API..."):
         response = content_api.get_classification_content(
             dataset=dataset,
             n=n_points,
@@ -484,10 +459,10 @@ def render_classification(
         )
         
     if not response["success"]:
-        st.error(f"ML Fehler: {response.get('error')}")
+        st.error(f"ML API Fehler: {response.get('error')}")
         return
         
-    # Extract
+    # Extraktion der Daten
     content_dict = response["content"]
     plots_dict = response["plots"]
     stats_dict = response["stats"]
@@ -495,22 +470,22 @@ def render_classification(
     results_dict = response.get("results", {})
     test_metrics = results_dict.get("test_metrics")
     
-    # Display Metrics (Train vs Test)
-    st.markdown("### 📉 Model Performance")
+    # Anzeige der Performance-Metriken (Train vs Test)
+    st.markdown("### 📉 Modell-Performance")
     m_col1, m_col2, m_col3, m_col4 = st.columns(4)
     
-    metrics = stats_dict # Train metrics
+    metrics = stats_dict # Trainings-Metriken
     
     with m_col1:
-        st.metric("Accuracy (Train)", f"{metrics.get('accuracy',0):.2%}")
+        st.metric("Genauigkeit (Train)", f"{metrics.get('accuracy',0):.2%}")
         if test_metrics:
-            st.metric("Accuracy (Test)", f"{test_metrics.get('accuracy',0):.2%}", 
+            st.metric("Genauigkeit (Test)", f"{test_metrics.get('accuracy',0):.2%}", 
                      delta=f"{test_metrics.get('accuracy',0) - metrics.get('accuracy',0):.2%}")
             
     with m_col2:
-        st.metric("Precision (Train)", f"{metrics.get('precision',0):.2f}")
+        st.metric("Präzision (Train)", f"{metrics.get('precision',0):.2f}")
         if test_metrics:
-            st.metric("Precision (Test)", f"{test_metrics.get('precision',0):.2f}")
+            st.metric("Präzision (Test)", f"{test_metrics.get('precision',0):.2f}")
 
     with m_col3:
         st.metric("Recall (Train)", f"{metrics.get('recall',0):.2f}")
@@ -518,13 +493,13 @@ def render_classification(
             st.metric("Recall (Test)", f"{test_metrics.get('recall',0):.2f}")
             
     with m_col4:
-        st.metric("F1 Score (Train)", f"{metrics.get('f1',0):.2f}") # Note: 'f1' key from API check
+        st.metric("F1 Score (Train)", f"{metrics.get('f1',0):.2f}")
         if test_metrics:
             st.metric("F1 Score (Test)", f"{test_metrics.get('f1',0):.2f}")
             
     st.markdown("---")
     
-    # Reconstruct Content Object
+    # Rekonstruktion des Inhalts-Objekts
     from ...infrastructure.content.structure import EducationalContent
     try:
         content_obj = EducationalContent.from_dict(content_dict)
@@ -532,26 +507,26 @@ def render_classification(
         st.error(f"Fehler beim Laden des Inhalts: {e}")
         return
     
-    # Reconstruct Plots (Flatten for renderer: scatter, residuals, diagnostics, + extras)
+    # Rekonstruktion der Plots (Umwandlung von JSON in Plotly-Objekte)
     import plotly.graph_objects as go
     renderer_plots = {}
     
     if plots_dict:
-        # Standard keys from PlotCollection
+        # Standard-Plots aus der PlotCollection
         for key in ["scatter", "residuals", "diagnostics"]:
            if plots_dict.get(key):
                renderer_plots[key] = go.Figure(plots_dict[key])
         
-        # Extra keys
+        # Zusätzliche Plots
         if plots_dict.get("extra"):
             for k, v in plots_dict["extra"].items():
                 if v:
                     renderer_plots[k] = go.Figure(v)
                 
-    # Initialize Renderer
+    # Initialisierung des Renderers
     from ..renderers import StreamlitContentRenderer
     
-    # Prepare data dict for interactive plots
+    # Vorbereitung der Daten für interaktive Plots
     renderer_data = {
         "x": np.array(data_dict.get("X", [])),
         "y": np.array(data_dict.get("y", [])),
@@ -565,11 +540,8 @@ def render_classification(
         stats=stats_dict
     )
     
+    # Rendern des Inhalts und der KI-Interpretation
     renderer.render(content_obj)
-    
-    renderer.render(content_obj)
-    
-    # AI Interpretation
     _render_ai_interpretation(ai_api, stats_dict)
 
 

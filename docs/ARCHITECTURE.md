@@ -386,19 +386,99 @@ class RegressionRequestDTO:
 
 ## 🧪 Testing
 
+### Test-Strategie
+
+Die Anwendung verwendet eine umfassende Test-Strategie:
+
 ```bash
-# Unit Tests (alle Layer)
-pytest tests/unit/ -v
+# Alle Tests ausführen
+pytest tests/ -v
 
-# Use Case Test
-pytest tests/unit/test_pipeline.py::TestCleanArchitectureUseCase -v
+# Mit Coverage
+pytest tests/ --cov=src --cov-report=html
 
-# Validation: No external deps in domain
-grep -r "import numpy\|import pandas" src/core/
-# Should return nothing!
+# Spezifische Test-Suites
+pytest tests/unit/ -v                    # Unit Tests
+pytest tests/integration/ -v              # Integration Tests
+pytest tests/unit/infrastructure/test_regression_validation_sklearn.py -v  # Scikit-learn Validierung
+pytest tests/unit/ai/test_r_output_validation.py -v  # R-Output Validierung
+```
+
+### Test-Kategorien
+
+1. **Unit Tests**: Testen einzelner Komponenten isoliert
+   - Services (Regression, Classification, Plot)
+   - Formatters (R-Output)
+   - Data Generators
+   - Domain Value Objects
+
+2. **Integration Tests**: Testen des vollständigen Pipeline-Flows
+   - RegressionPipeline (Data → Calculate → Plot)
+   - InterpretationAPI (Stats → AI → Response)
+
+3. **Validation Tests**: Vergleich mit etablierten Bibliotheken
+   - **Scikit-learn**: Alle Regression-Berechnungen werden gegen scikit-learn validiert
+   - **R (rpy2)**: R-Output-Formatierung wird gegen echte R-Berechnungen validiert
+
+4. **Boundary Tests**: Edge Cases
+   - Minimal data points (n=2)
+   - Constant features
+   - Extreme values
+   - Singular matrices
+
+### Validation: No external deps in domain
+
+```bash
+# Prüfe dass Domain-Layer keine externen Dependencies hat
+grep -r "import numpy\|import pandas\|import scipy\|import plotly" src/core/
+# Sollte nichts zurückgeben!
 ```
 
 ---
+
+## 🔍 Error Logging & Monitoring
+
+### Strukturiertes Error-Logging
+
+Die Anwendung verwendet ein umfassendes Error-Logging-System:
+
+**Logging-Funktionen** (`src/config/logger.py`):
+
+- `log_error_with_context()`: Allgemeines Error-Logging mit automatischer Error-ID
+- `log_domain_error()`: Spezialisiert für DomainError mit Error-Codes
+- `log_api_error()`: Für API-Fehler mit Request-Kontext
+- `log_service_error()`: Für Service-Layer-Fehler mit Operation-Kontext
+- `error_handler()`: Decorator für automatisches Error-Logging
+
+**Features:**
+
+- ✅ Automatische Error-ID-Generierung (UUID-basiert, 8 Zeichen)
+- ✅ Strukturierte Log-Messages mit Kontext
+- ✅ Vollständige Stacktraces
+- ✅ Error-Code-Extraktion für DomainError
+- ✅ Zusätzliche Metadaten im Log-Record
+
+**Log-Dateien:**
+
+- `logs/app.log`: Alle Logs (DEBUG-Level)
+- `logs/errors.log`: Nur Errors (ERROR-Level)
+- `logs/performance.log`: Performance-Metriken
+
+**Beispiel-Log-Output:**
+
+```
+ERROR - [ERROR_ID=a1b2c3d4] Error in API POST /api/regression/simple | 
+Type: DomainError | Code: SINGULAR_MATRIX | 
+Message: Die Datenmatrix ist singulär | 
+Details: endpoint=/api/regression/simple, method=POST, dataset=electronics, n=2
+```
+
+**Error-Tracking:**
+
+Die `ErrorTracker`-Klasse ermöglicht:
+- Fehlerverfolgung über die Zeit
+- Fehlerstatistiken (Anzahl pro Typ)
+- Fehleranalyse und Monitoring
 
 ## 📚 Weiterführende Dokumentation
 

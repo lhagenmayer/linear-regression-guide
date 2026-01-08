@@ -191,7 +191,131 @@ print(r.json()["interpretation"]["content"])
 
 ---
 
-## 4️⃣ Response-Struktur verstehen
+## 4️⃣ Error-Handling
+
+### Error-Response-Struktur
+
+Alle API-Endpunkte geben bei Fehlern folgendes Format zurück:
+
+```json
+{
+  "success": false,
+  "error": "Beschreibung des Fehlers",
+  "error_id": "a1b2c3d4",
+  "error_code": "VALIDATION_ERROR",
+  "details": {
+    "validation_errors": [
+      {
+        "loc": ["n"],
+        "msg": "ensure this value is greater than or equal to 2",
+        "type": "value_error.number.not_ge"
+      }
+    ]
+  }
+}
+```
+
+### Error-Handling in verschiedenen Frameworks
+
+**Next.js / React:**
+
+```typescript
+async function runRegression(params: { dataset?: string; n?: number }) {
+  try {
+    const res = await fetch(`${API_URL}/api/regression/simple`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    });
+    
+    const data = await res.json();
+    
+    if (!data.success) {
+      // Log error for debugging
+      console.error(`Error ID: ${data.error_id}`, data);
+      
+      // Show user-friendly message
+      throw new Error(data.error || 'Unknown error occurred');
+    }
+    
+    return data.data;
+  } catch (error) {
+    // Handle network errors
+    console.error('Network error:', error);
+    throw error;
+  }
+}
+```
+
+**Vue 3:**
+
+```vue
+<script setup>
+import { ref } from 'vue';
+
+const error = ref(null);
+const errorId = ref(null);
+
+async function loadData() {
+  try {
+    error.value = null;
+    const res = await fetch('http://localhost:8000/api/regression/simple', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dataset: 'electronics', n: 50 })
+    });
+    
+    const data = await res.json();
+    
+    if (!data.success) {
+      error.value = data.error;
+      errorId.value = data.error_id;
+      console.error(`Error ID: ${errorId.value}`, data);
+      return;
+    }
+    
+    // Process data...
+  } catch (e) {
+    error.value = e.message;
+  }
+}
+</script>
+
+<template>
+  <div v-if="error" class="error">
+    <p>{{ error }}</p>
+    <p v-if="errorId" class="text-sm">Error ID: {{ errorId }}</p>
+  </div>
+</template>
+```
+
+**Python:**
+
+```python
+import requests
+
+def run_regression(dataset='electronics', n=50):
+    try:
+        response = requests.post(
+            'http://localhost:8000/api/regression/simple',
+            json={'dataset': dataset, 'n': n}
+        )
+        data = response.json()
+        
+        if not data.get('success'):
+            error_id = data.get('error_id')
+            error_code = data.get('error_code')
+            print(f"Error ID: {error_id}, Code: {error_code}")
+            print(f"Error: {data.get('error')}")
+            raise Exception(data.get('error', 'Unknown error'))
+        
+        return data['data']
+    except requests.exceptions.RequestException as e:
+        print(f"Network error: {e}")
+        raise
+```
+
+## 5️⃣ Response-Struktur verstehen
 
 ### Stats
 
@@ -224,7 +348,7 @@ Strukturierte Kapitel mit Elements:
 
 ---
 
-## 5️⃣ AI Interpretation
+## 6️⃣ AI Interpretation
 
 ```bash
 curl -X POST http://localhost:8000/api/ai/interpret \

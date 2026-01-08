@@ -15,6 +15,7 @@ from .value_objects import (
     ClassificationResult,
     ClassificationMetrics,
     RegressionResult,
+    DomainError,
 )
 
 from .entities import (
@@ -51,6 +52,8 @@ __all__ = [
     "Success",
     "Failure",
     "Result",
+    # Exceptions
+    "DomainError",
     # Entities
     "RegressionModel",
     # Interfaces

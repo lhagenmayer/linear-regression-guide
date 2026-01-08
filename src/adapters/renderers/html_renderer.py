@@ -1,8 +1,8 @@
 """
-HTML Content Renderer - Interprets ContentStructure for Flask/Jinja2.
+HTML-Content-Renderer - Interpretiert die ContentStructure für Flask/Jinja2.
 
-This renderer takes framework-agnostic ContentStructure and renders it
-as HTML that can be used in Flask templates or standalone.
+Dieser Renderer transformiert die framework-agnostische ContentStructure in natives HTML,
+welches in Flask-Templates oder als fertiges Content-Fragment genutzt werden kann.
 """
 
 import json
@@ -20,10 +20,10 @@ from ...content.structure import (
 
 class HTMLContentRenderer:
     """
-    Renders EducationalContent as HTML.
+    Rendert EducationalContent-Objekte als HTML.
     
-    The same ContentStructure can be rendered by different renderers
-    (StreamlitContentRenderer, HTMLContentRenderer, etc.)
+    Das Prinzip der Modularität erlaubt es, dieselbe Inhaltsstruktur durch verschiedene 
+    Renderer (Streamlit, HTML, etc.) unterschiedlich darzustellen.
     """
     
     def __init__(
@@ -33,18 +33,18 @@ class HTMLContentRenderer:
         stats: Dict[str, Any] = None
     ):
         """
-        Initialize renderer with plot figures and data.
+        Initialisiert den Renderer mit Plot-Daten und statistischen Werten.
         
         Args:
-            plots: Dictionary of plot_key -> Plotly figure JSON
-            data: Dictionary with x, y arrays and metadata
-            stats: Dictionary with regression statistics
+            plots: Mapping von Plot-Keys zu Plotly-Figuren oder JSON.
+            data: Rohdaten und Metadaten (Labels, Units).
+            stats: Die berechneten Regressions-Statistiken.
         """
         self.plots = plots or {}
         self.data = data or {}
         self.stats_data = stats or {}
         
-        # Counter for unique IDs
+        # Zähler für eindeutige HTML-IDs
         self._id_counter = 0
     
     def _get_unique_id(self, prefix: str = "elem") -> str:
@@ -53,7 +53,7 @@ class HTMLContentRenderer:
         return f"{prefix}_{self._id_counter}"
     
     def render(self, content: EducationalContent) -> str:
-        """Render complete educational content as HTML."""
+        """Rendert den gesamten edukativen Inhalt als strukturiertes HTML."""
         html_parts = [
             f'<div class="educational-content">',
             f'<h1>{content.title}</h1>',
@@ -68,7 +68,7 @@ class HTMLContentRenderer:
         return '\n'.join(html_parts)
     
     def _render_chapter(self, chapter: Chapter) -> str:
-        """Render a chapter with its sections."""
+        """Rendert ein Kapitel inklusive seiner Sektionen/Elemente."""
         html_parts = [
             f'<div class="chapter fade-in" id="chapter-{chapter.number.replace(".", "-")}">',
             f'''<div class="chapter-header">
@@ -85,7 +85,7 @@ class HTMLContentRenderer:
         return '\n'.join(html_parts)
     
     def _render_element(self, element: ContentElement) -> str:
-        """Render a single content element as HTML."""
+        """Dynamisches Routing: Rendert ein beliebiges Inhaltselement basierend auf seinem Typ."""
         if isinstance(element, Markdown):
             return self._render_markdown(element)
         
@@ -128,45 +128,44 @@ class HTMLContentRenderer:
         elif isinstance(element, Section):
             return self._render_section(element)
         
-        return f'<!-- Unknown element type: {type(element).__name__} -->'
+        return f'<!-- Unbekannter Element-Typ: {type(element).__name__} -->'
     
     def _render_markdown(self, element: Markdown) -> str:
-        """Render markdown as HTML."""
-        # For simplicity, just wrap in div with markdown class
-        # In production, use a markdown library
+        """Rendert Markdown-Content als HTML."""
+        # Einfaches Wrapper-Div; in der Praxis sollte eine Library wie 'markdown' genutzt werden.
         return f'<div class="markdown-content">{self._simple_md_to_html(element.text)}</div>'
     
     def _simple_md_to_html(self, text: str) -> str:
-        """Simple markdown to HTML conversion."""
+        """Basale Markdown-zu-HTML Konvertierung (Regex-basiert)."""
         import re
         
-        # Headers
+        # Überschriften
         text = re.sub(r'^### (.+)$', r'<h4>\1</h4>', text, flags=re.MULTILINE)
         text = re.sub(r'^## (.+)$', r'<h3>\1</h3>', text, flags=re.MULTILINE)
         text = re.sub(r'^# (.+)$', r'<h2>\1</h2>', text, flags=re.MULTILINE)
         
-        # Bold and italic
+        # Fett und Kursiv
         text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
         text = re.sub(r'\*(.+?)\*', r'<em>\1</em>', text)
         
-        # Lists
+        # Listen
         text = re.sub(r'^- (.+)$', r'<li>\1</li>', text, flags=re.MULTILINE)
         text = re.sub(r'(<li>.+</li>\n)+', r'<ul>\g<0></ul>', text)
         
-        # Numbered lists
+        # Nummerierte Listen
         text = re.sub(r'^\d+\. (.+)$', r'<li>\1</li>', text, flags=re.MULTILINE)
         
-        # Checkboxes
+        # Checkboxen
         text = re.sub(r'\[ \]', '☐', text)
         text = re.sub(r'\[x\]', '☑', text)
         
-        # Paragraphs
+        # Absätze
         text = re.sub(r'\n\n', '</p><p>', text)
         
         return f'<p>{text}</p>'
     
     def _render_metric(self, element: Metric) -> str:
-        """Render a metric display."""
+        """Rendert eine einzelne Kennzahl (Metric Card)."""
         help_attr = f'title="{element.help_text}"' if element.help_text else ''
         delta_html = f'<div class="metric-delta">{element.delta}</div>' if element.delta else ''
         
@@ -179,12 +178,12 @@ class HTMLContentRenderer:
         '''
     
     def _render_metric_row(self, element: MetricRow) -> str:
-        """Render a row of metrics."""
+        """Rendert eine horizontale Reihe von Kennzahlen."""
         metrics_html = '\n'.join(self._render_metric(m) for m in element.metrics)
         return f'<div class="metrics-grid">{metrics_html}</div>'
     
     def _render_formula(self, element: Formula) -> str:
-        """Render LaTeX formula."""
+        """Rendert eine LaTeX-Formel."""
         if element.inline:
             return f'<span class="math-inline">\\({element.latex}\\)</span>'
         else:
@@ -613,10 +612,10 @@ class HTMLContentRenderer:
     
     def render_to_dict(self, content: EducationalContent) -> Dict[str, Any]:
         """
-        Render content structure to a dictionary for template use.
+        Rendert die Inhaltsstruktur in ein Dictionary zur direkten Template-Nutzung.
         
-        This is useful when you want to pass the content to a Jinja2 template
-        that does the final HTML rendering.
+        Dies ist nützlich, wenn das Jinja2-Template nur Fragmente des gerenderten 
+        Inhalts (z.B. einzelne Kapitel) benötigt.
         """
         return {
             "title": content.title,

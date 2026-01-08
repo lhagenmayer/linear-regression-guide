@@ -1,6 +1,6 @@
 """
-Infrastructure: Data Provider Implementation.
-Implements IDataProvider using the existing DataFetcher (which uses numpy/pandas).
+Infrastructure: Implementierung des Data Providers.
+Implementiert IDataProvider und nutzt den DataFetcher für die tatsächliche Datengenerierung.
 """
 from typing import Dict, Any, List
 from ...core.domain.interfaces import IDataProvider
@@ -9,15 +9,16 @@ from .generators import DataFetcher
 
 
 class DataProviderImpl(IDataProvider):
-    """Concrete implementation of IDataProvider using existing DataFetcher."""
+    """Konkrete Implementierung von IDataProvider, die den DataFetcher kapselt."""
     
     def __init__(self):
+        # Initialisierung des internen Fetchers (NumPy/Pandas basiert)
         self._fetcher = DataFetcher()
     
     def get_dataset(self, dataset_id: str, n: int, **kwargs) -> Dict[str, Any]:
         """
-        Fetch data and convert to dictionary suitable for Use Case.
-        Converts numpy arrays to lists for domain layer compatibility.
+        Ruft Daten ab und konvertiert sie in ein Dictionary für den Use Case.
+        Konvertiert NumPy-Arrays in Listen, um die Reinheit des Domain-Layers zu wahren.
         """
         noise = kwargs.get("noise", 0.4)
         seed = kwargs.get("seed", 42)
@@ -26,6 +27,7 @@ class DataProviderImpl(IDataProvider):
         regression_type = kwargs.get("regression_type", "simple")
         analysis_type = kwargs.get("analysis_type", "regression")
         
+        # Fallunterscheidung: Klassifikation vs. Regression
         if analysis_type == "classification":
             result = self._fetcher.get_classification(dataset_id, n=n, seed=seed)
             return {
@@ -33,7 +35,7 @@ class DataProviderImpl(IDataProvider):
                 "y": result.y.tolist(),
                 "feature_names": result.feature_names,
                 "target_names": result.target_names,
-                "name": result.context_title, # mapped to 'dataset_name' in DTO
+                "name": result.context_title, 
                 "description": result.context_description,
                 "extra": result.extra,
                 "metadata": DatasetMetadata(
@@ -46,6 +48,7 @@ class DataProviderImpl(IDataProvider):
                 )
             }
         
+        # Fallunterscheidung innerhalb der Regression: Multipel vs. Einfach
         if regression_type == "multiple":
             result = self._fetcher.get_multiple(dataset_id, n=n, noise=noise, seed=seed)
             return {
@@ -56,7 +59,7 @@ class DataProviderImpl(IDataProvider):
                 "x2_label": result.x2_label,
                 "y_label": result.y_label,
                 "context_title": result.extra.get("context", "Multiple Regression"),
-                "context_description": f"Dataset: {dataset_id}",
+                "context_description": f"Datensatz: {dataset_id}",
                 "extra": result.extra,
                 "metadata": DatasetMetadata(
                     id=dataset_id,
@@ -68,6 +71,7 @@ class DataProviderImpl(IDataProvider):
                 )
             }
         else:
+            # Einfache lineare Regression
             result = self._fetcher.get_simple(
                 dataset_id, n=n, noise=noise, seed=seed,
                 true_intercept=true_intercept, true_slope=true_slope
@@ -91,16 +95,15 @@ class DataProviderImpl(IDataProvider):
             }
     
     def get_all_datasets(self) -> Dict[str, List[Dict[str, str]]]:
-        """List all datasets grouped by type."""
-        # Using registry if available or hardcoded list mapping
+        """Gibt eine Liste aller verfügbaren Datensätze zurück, gruppiert nach Analyse-Typ."""
         datasets = {
             "simple": [
-                {"id": "electronics", "name": "Elektronikmarkt (Sales)"},
-                {"id": "advertising", "name": "Werbebudget (Sales)"},
-                {"id": "temperature", "name": "Temperatur (Ice Cream)"},
+                {"id": "electronics", "name": "Elektronikmarkt (Umsatz)"},
+                {"id": "advertising", "name": "Werbebudget (Umsatz)"},
+                {"id": "temperature", "name": "Temperatur (Eisverkauf)"},
                 {"id": "productivity", "name": "Produktivität"},
                 {"id": "learning_time", "name": "Lernzeit"},
-                {"id": "cantons", "name": "Schweizer Kantone (Income)"},
+                {"id": "cantons", "name": "Schweizer Kantone (Einkommen)"},
                 {"id": "linear_growth", "name": "Lineares Wachstum"},
                 {"id": "exponential_growth", "name": "Exponentielles Wachstum"},
                 {"id": "seasonal", "name": "Saisonale Daten"},
@@ -116,44 +119,41 @@ class DataProviderImpl(IDataProvider):
                 {"id": "cantons", "name": "Schweizer Kantone (Multipel)"},
                 {"id": "weather", "name": "Schweizer Wetter"},
                 {"id": "world_bank", "name": "World Bank Dev"},
-                {"id": "fred_economic", "name": "US Economy (FRED)"},
-                {"id": "who_health", "name": "WHO Global Health"},
+                {"id": "fred_economic", "name": "US Wirtschaft (FRED)"},
+                {"id": "who_health", "name": "WHO Gesundheit"},
                 {"id": "eurostat", "name": "Eurostat EU"},
-                {"id": "nasa_weather", "name": "NASA Agro-Climatology"},
+                {"id": "nasa_weather", "name": "NASA Agrar-Klima"},
             ],
             "classification": [
                 {"id": "fruits", "name": "Früchte (Logistic/KNN)"},
                 {"id": "ad_click", "name": "Werbeklick (Logistic)"},
                 {"id": "loan_approval", "name": "Kreditvergabe"},
-                {"id": "iris", "name": "Iris (Multi-class)"},
-                {"id": "wine", "name": "Wine Quality"},
-                {"id": "cancer", "name": "Breast Cancer"},
+                {"id": "iris", "name": "Iris Schwertlilien"},
+                {"id": "wine", "name": "Weinqualität"},
+                {"id": "cancer", "name": "Brustkrebs Diagnostik"},
             ]
         }
         return datasets
 
     def get_raw_data(self, dataset_id: str) -> Dict[str, Any]:
-        """Get raw tabular data for a dataset."""
-        # Try to infer type or search all types
-        # Default n=100 for preview
+        """Gibt rohe tabellarische Daten für einen Datensatz zurück (für den Data Explorer)."""
+        # Wir laden standardmäßig 100 Zeilen für die Vorschau
         n = 100
         
-        # Heuristic to determine type based on ID
+        # Logik zur Bestimmung des Datensatz-Typs anhand der ID
         if dataset_id in [d["id"] for d in self.get_all_datasets()["classification"]]:
              result = self._fetcher.get_classification(dataset_id, n=n)
-             # Convert to list of dicts for Table view
+             # Konvertierung in eine Liste von Dictionaries für die Tabellenansicht
              data = []
              for i in range(len(result.y)):
                  row = {name: result.X[i, j] for j, name in enumerate(result.feature_names)}
                  row["Target"] = int(result.y[i])
-                 # Map target to name if possible
                  if result.target_names and int(result.y[i]) < len(result.target_names):
                      row["Target Name"] = result.target_names[int(result.y[i])]
                  data.append(row)
              return {"data": data, "columns": result.feature_names + ["Target", "Target Name"]}
              
         elif dataset_id in [d["id"] for d in self.get_all_datasets()["multiple"]]:
-             # Multiple
              result = self._fetcher.get_multiple(dataset_id, n=n)
              data = []
              for i in range(len(result.y)):
@@ -165,7 +165,7 @@ class DataProviderImpl(IDataProvider):
              return {"data": data, "columns": [result.x1_label, result.x2_label, result.y_label]}
              
         else:
-             # Simple (Default)
+             # Standard: Einfache Regression
              result = self._fetcher.get_simple(dataset_id, n=n)
              data = []
              for i in range(len(result.y)):
@@ -176,5 +176,5 @@ class DataProviderImpl(IDataProvider):
              return {"data": data, "columns": [result.x_label, result.y_label]}
 
     def list_datasets(self) -> List[DatasetMetadata]:
-        """Legacy list - kept for compatibility."""
+        """Legacy-Methode (für Kompatibilität beibehalten)."""
         return []

@@ -1,11 +1,11 @@
 """
-Regression Pipeline - Simple 4-step data processing.
+Regressions-Pipeline - Einfache 4-stufige Datenverarbeitung.
 
-This module provides a unified pipeline that orchestrates:
-    1. GET      → Fetch data
-    2. CALCULATE → Compute statistics
-    3. PLOT     → Create visualizations
-    4. DISPLAY  → Render in UI
+Dieses Modul bietet eine vereinheitlichte Pipeline, die folgende Schritte orchestriert:
+    1. GET      → Daten abrufen
+    2. CALCULATE → Statistiken berechnen
+    3. PLOT     → Visualisierungen erstellen
+    4. DISPLAY  → In der UI rendern
 """
 
 from dataclasses import dataclass
@@ -22,38 +22,38 @@ logger = get_logger(__name__)
 @dataclass
 class PipelineResult:
     """
-    Complete result from pipeline execution.
+    Vollständiges Ergebnis einer Pipeline-Ausführung.
     
-    Contains all data, calculations, and plots for display.
+    Enthält alle Daten, Berechnungen und Plots für die Anzeige.
     """
-    # Step 1: Data
+    # Schritt 1: Daten
     data: Union[DataResult, MultipleRegressionDataResult]
     
-    # Step 2: Calculations
+    # Schritt 2: Berechnungen
     stats: Union[RegressionResult, MultipleRegressionResult]
     
-    # Step 3: Plots
+    # Schritt 3: Plots
     plots: PlotCollection
     
-    # Metadata
-    pipeline_type: str  # "simple" or "multiple"
+    # Metadaten
+    pipeline_type: str  # "simple" oder "multiple"
     params: Dict[str, Any]
 
 
 class RegressionPipeline:
     """
-    Simple 4-step regression analysis pipeline.
+    Einfache 4-stufige Regressions-Pipeline.
     
-    The pipeline follows a clear, linear flow:
+    Die Pipeline folgt einem klaren, linearen Fluss:
     
         ┌─────────┐    ┌───────────┐    ┌──────┐    ┌─────────┐
         │   GET   │ → │ CALCULATE │ → │ PLOT │ → │ DISPLAY │
         └─────────┘    └───────────┘    └──────┘    └─────────┘
     
-    Example:
+    Beispiel:
         pipeline = RegressionPipeline()
         
-        # Run complete pipeline
+        # Komplette Pipeline ausführen
         result = pipeline.run_simple(
             dataset="electronics",
             n=50,
@@ -61,24 +61,24 @@ class RegressionPipeline:
             seed=42
         )
         
-        # Display in Streamlit
+        # In Streamlit anzeigen
         pipeline.display(result)
     """
     
     def __init__(self):
-        """Initialize pipeline with all components."""
+        """Initialisiert die Pipeline mit allen notwendigen Komponenten."""
         self.fetcher = DataFetcher()
         self.calculator = StatisticsCalculator()
         self.plotter = PlotBuilder()
         
-        # Import display lazily to avoid Streamlit import issues
+        # Der Renderer wird verzögert geladen, um Streamlit-Import-Probleme zu vermeiden
         self._renderer = None
         
-        logger.info("RegressionPipeline initialized")
+        logger.info("RegressionPipeline initialisiert")
     
     @property
     def renderer(self):
-        """Lazy load UIRenderer to avoid import issues."""
+        """Lazy Load für den UIRenderer."""
         if self._renderer is None:
             from .display import UIRenderer
             self._renderer = UIRenderer()
@@ -95,23 +95,23 @@ class RegressionPipeline:
         show_true_line: bool = True,
     ) -> PipelineResult:
         """
-        Run complete simple regression pipeline.
+        Führt die komplette Pipeline für die einfache Regression aus.
         
         Args:
-            dataset: Dataset name
-            n: Sample size
-            noise: Noise level
-            seed: Random seed
-            true_intercept: True β₀ (for simulated data)
-            true_slope: True β₁ (for simulated data)
-            show_true_line: Show true regression line
+            dataset: Name des Datensatzes
+            n: Stichprobengröße
+            noise: Rausch-Niveau
+            seed: Zufalls-Seed
+            true_intercept: Wahrer Achsenabschnitt (für synthetische Daten)
+            true_slope: Wahre Steigung (für synthetische Daten)
+            show_true_line: Wahre Regressionslinie anzeigen
         
         Returns:
-            PipelineResult with data, stats, and plots
+            PipelineResult mit Daten, Statistiken und Plots
         """
-        logger.info(f"Running simple regression pipeline: {dataset}, n={n}")
+        logger.info(f"Starte einfache Regressions-Pipeline: {dataset}, n={n}")
         
-        # Step 1: GET DATA
+        # Schritt 1: DATEN ABRUFEN
         data = self.fetcher.get_simple(
             dataset=dataset,
             n=n,
@@ -121,10 +121,10 @@ class RegressionPipeline:
             true_slope=true_slope,
         )
         
-        # Step 2: CALCULATE
+        # Schritt 2: BERECHNEN
         stats = self.calculator.simple_regression(data.x, data.y)
         
-        # Step 3: PLOT
+        # Schritt 3: PLOTS ERSTELLEN
         plots = self.plotter.simple_regression_plots(
             data=data,
             result=stats,
@@ -159,20 +159,11 @@ class RegressionPipeline:
         seed: int = 42,
     ) -> PipelineResult:
         """
-        Run complete multiple regression pipeline.
-        
-        Args:
-            dataset: Dataset name ("cities" or "houses")
-            n: Sample size
-            noise: Noise level
-            seed: Random seed
-        
-        Returns:
-            PipelineResult with data, stats, and plots
+        Führt die komplette Pipeline für die multiple Regression aus.
         """
-        logger.info(f"Running multiple regression pipeline: {dataset}, n={n}")
+        logger.info(f"Starte multiple Regressions-Pipeline: {dataset}, n={n}")
         
-        # Step 1: GET DATA
+        # Schritt 1: DATEN ABRUFEN
         data = self.fetcher.get_multiple(
             dataset=dataset,
             n=n,
@@ -180,10 +171,10 @@ class RegressionPipeline:
             seed=seed,
         )
         
-        # Step 2: CALCULATE
+        # Schritt 2: BERECHNEN
         stats = self.calculator.multiple_regression(data.x1, data.x2, data.y)
         
-        # Step 3: PLOT
+        # Schritt 3: PLOTS ERSTELLEN
         plots = self.plotter.multiple_regression_plots(data=data, result=stats)
         
         params = {
@@ -207,11 +198,7 @@ class RegressionPipeline:
         show_formulas: bool = True,
     ) -> None:
         """
-        Step 4: DISPLAY - Render results in Streamlit.
-        
-        Args:
-            result: PipelineResult from run_simple or run_multiple
-            show_formulas: Whether to show mathematical formulas
+        Schritt 4: DISPLAY - Rendert die Ergebnisse in Streamlit.
         """
         if result.pipeline_type == "simple":
             self.renderer.simple_regression(
@@ -229,25 +216,25 @@ class RegressionPipeline:
             )
     
     # =========================================================
-    # Convenience methods for individual steps
+    # Hilfsmethoden für einzelne Schritte
     # =========================================================
     
     def get_data(self, regression_type: str = "simple", **kwargs):
-        """Step 1: Get data only."""
+        """Schritt 1: Nur Daten abrufen."""
         if regression_type == "simple":
             return self.fetcher.get_simple(**kwargs)
         else:
             return self.fetcher.get_multiple(**kwargs)
     
     def calculate(self, data, regression_type: str = "simple"):
-        """Step 2: Calculate only."""
+        """Schritt 2: Nur Berechnungen ausführen."""
         if regression_type == "simple":
             return self.calculator.simple_regression(data.x, data.y)
         else:
             return self.calculator.multiple_regression(data.x1, data.x2, data.y)
     
     def plot(self, data, stats, regression_type: str = "simple", **kwargs):
-        """Step 3: Plot only."""
+        """Schritt 3: Nur Plots erstellen."""
         if regression_type == "simple":
             return self.plotter.simple_regression_plots(data, stats, **kwargs)
         else:

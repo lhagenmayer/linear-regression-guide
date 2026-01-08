@@ -1,8 +1,8 @@
 """
-Content Structure - Data classes for educational content.
+Content Structure - Datenklassen für edukative Inhalte.
 
-These are pure DATA STRUCTURES with no UI dependencies.
-They describe WHAT to render, not HOW to render it.
+Dies sind reine DATENSTRUKTUREN ohne UI-Abhängigkeiten.
+Sie beschreiben, WAS gerendert werden soll, nicht WIE es gerendert wird.
 """
 
 from dataclasses import dataclass, field

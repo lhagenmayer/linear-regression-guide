@@ -1,14 +1,9 @@
 """
-API Endpoints - Platform Agnostic Business Logic.
+API Endpoints - Framework-agnostische Business-Logik.
 
-These classes provide the core API logic WITHOUT any framework dependency.
-They can be wrapped by any web framework:
-- Flask
-- FastAPI
-- Django REST Framework
-- Or served directly
-
-All methods return JSON-serializable dictionaries.
+Diese Klassen enthalten die Kernlogik der API, OHNE Abhängigkeit von einem Web-Framework 
+(wie Flask oder FastAPI). Sie können von jedem Framework gekapselt werden.
+Alle Methoden geben JSON-serialisierbare Dictionaries zurück.
 """
 
 from typing import Dict, Any, Optional, List
@@ -24,7 +19,9 @@ from .serializers import (
 
 from pydantic import ValidationError
 from ..config.logging import configure_logging
+from ..config.logger import log_api_error, log_domain_error, log_error_with_context
 from .schemas import SimpleRegressionRequest, MultipleRegressionRequest, AIInterpretationRequest, DatasetType
+from ..core.domain.value_objects import DomainError
 
 logger = logging.getLogger(__name__)
 configure_logging()
@@ -32,10 +29,10 @@ configure_logging()
 
 class RegressionAPI:
     """
-    Regression Analysis API.
+    API für Regressionsanalysen.
     
-    Provides endpoints for running regression analysis.
-    100% framework agnostic - returns pure dictionaries.
+    Bietet Endpunkte zur Durchführung von Berechnungen.
+    Komplett framework-agnostisch - gibt reine Python-Dictionaries zurück.
     
     Usage (direct):
         api = RegressionAPI()
@@ -53,12 +50,12 @@ class RegressionAPI:
     """
     
     def __init__(self):
-        """Initialize with lazy-loaded pipeline."""
+        """Initialisierung mit Lazy-Loading der Pipeline."""
         self._pipeline = None
     
     @property
     def pipeline(self):
-        """Lazy load pipeline to avoid import issues."""
+        """Lädt die RegressionPipeline erst bei Bedarf (Lazy Loading)."""
         if self._pipeline is None:
             from ..infrastructure import RegressionPipeline
             self._pipeline = RegressionPipeline()
@@ -75,12 +72,12 @@ class RegressionAPI:
         include_predictions: bool = True,
     ) -> Dict[str, Any]:
         """
-        Run simple regression analysis.
+        Führt eine einfache lineare Regression aus.
         """
         logger.info(f"API: run_simple({dataset}, n={n})")
         
         try:
-            # Validate input using Pydantic
+            # Validierung der Eingabeparameter mittels Pydantic
             request = SimpleRegressionRequest(
                 dataset=dataset,
                 n=n,
@@ -91,6 +88,7 @@ class RegressionAPI:
                 include_predictions=include_predictions
             )
             
+            # Ausführung über die Infrastruktur-Pipeline
             result = self.pipeline.run_simple(
                 dataset=request.dataset.value,
                 n=request.n,
@@ -99,22 +97,54 @@ class RegressionAPI:
                 true_intercept=request.true_intercept,
                 true_slope=request.true_slope,
             )
+            # Rückgabe des serialisierten Ergebnisses
             return {
                 "success": True,
                 "data": PipelineSerializer.serialize(result, request.include_predictions),
             }
         except ValidationError as e:
-            logger.warning(f"Validation error: {e}")
+            error_id = log_error_with_context(
+                logger=logger,
+                error=e,
+                context="run_simple validation",
+                endpoint="/api/regression/simple",
+                method="POST",
+                validation_errors=e.errors()
+            )
+            logger.warning(f"[ERROR_ID={error_id}] Validierungsfehler in run_simple: {e}")
             return {
                 "success": False,
-                "error": "Validation Error",
+                "error": "Validierungsfehler",
+                "error_id": error_id,
                 "details": e.errors()
             }
+        except DomainError as e:
+            error_id = log_domain_error(
+                logger=logger,
+                error=e,
+                context="run_simple domain validation",
+                endpoint="/api/regression/simple",
+                dataset=dataset,
+                n=n
+            )
+            return {
+                "success": False,
+                "error": e.message,
+                "error_code": e.code,
+                "error_id": error_id
+            }
         except Exception as e:
-            logger.error(f"API error: {e}", exc_info=True)
+            error_id = log_api_error(
+                logger=logger,
+                error=e,
+                endpoint="/api/regression/simple",
+                method="POST",
+                request_data={"dataset": dataset, "n": n, "noise": noise, "seed": seed}
+            )
             return {
                 "success": False,
                 "error": str(e),
+                "error_id": error_id
             }
     
     def run_multiple(
@@ -126,12 +156,12 @@ class RegressionAPI:
         include_predictions: bool = True,
     ) -> Dict[str, Any]:
         """
-        Run multiple regression analysis.
+        Führt eine multiple lineare Regression aus.
         """
         logger.info(f"API: run_multiple({dataset}, n={n})")
         
         try:
-            # Validate
+            # Validierung des Requests
             request = MultipleRegressionRequest(
                 dataset=dataset,
                 n=n,
@@ -140,28 +170,61 @@ class RegressionAPI:
                 include_predictions=include_predictions
             )
             
+            # Ausführung über die Pipeline
             result = self.pipeline.run_multiple(
                 dataset=request.dataset.value,
                 n=request.n,
                 noise=request.noise,
                 seed=request.seed,
             )
+            
             return {
                 "success": True,
                 "data": PipelineSerializer.serialize(result, request.include_predictions),
             }
         except ValidationError as e:
-            logger.warning(f"Validation error: {e}")
+            error_id = log_error_with_context(
+                logger=logger,
+                error=e,
+                context="run_multiple validation",
+                endpoint="/api/regression/multiple",
+                method="POST",
+                validation_errors=e.errors()
+            )
+            logger.warning(f"[ERROR_ID={error_id}] Validierungsfehler in run_multiple: {e}")
             return {
                 "success": False,
-                "error": "Validation Error",
+                "error": "Validierungsfehler",
+                "error_id": error_id,
                 "details": e.errors()
             }
+        except DomainError as e:
+            error_id = log_domain_error(
+                logger=logger,
+                error=e,
+                context="run_multiple domain validation",
+                endpoint="/api/regression/multiple",
+                dataset=dataset,
+                n=n
+            )
+            return {
+                "success": False,
+                "error": e.message,
+                "error_code": e.code,
+                "error_id": error_id
+            }
         except Exception as e:
-            logger.error(f"API error: {e}", exc_info=True)
+            error_id = log_api_error(
+                logger=logger,
+                error=e,
+                endpoint="/api/regression/multiple",
+                method="POST",
+                request_data={"dataset": dataset, "n": n, "noise": noise, "seed": seed}
+            )
             return {
                 "success": False,
                 "error": str(e),
+                "error_id": error_id
             }
     
     def get_datasets(self) -> Dict[str, Any]:
@@ -374,10 +437,10 @@ class RegressionAPI:
 
 class ContentAPI:
     """
-    Educational Content API.
+    API für edukative Inhalte.
     
-    Returns framework-agnostic content structures.
-    Any frontend can render these using their own components.
+    Gibt framework-agnostische Inhaltsstrukturen zurück, die vom Frontend 
+    (z.B. React oder Streamlit) gerendert werden können.
     """
     
     def __init__(self):
@@ -385,6 +448,7 @@ class ContentAPI:
     
     @property
     def pipeline(self):
+        """Lädt die RegressionPipeline erst bei Bedarf (Lazy Loading)."""
         if self._pipeline is None:
             from ..infrastructure import RegressionPipeline
             self._pipeline = RegressionPipeline()
@@ -398,65 +462,29 @@ class ContentAPI:
         seed: int = 42,
     ) -> Dict[str, Any]:
         """
-        Get educational content for simple regression.
-        
-        Returns complete content structure that can be rendered
-        by any frontend framework.
-        
-        Args:
-            dataset: Dataset name
-            n: Sample size
-            noise: Noise level
-            seed: Random seed
-            
-        Returns:
-            {
-                "success": True,
-                "content": { ... educational content ... },
-                "plots": { ... plotly figures ... },
-                "stats": { ... statistics ... },
-            }
+        Liefert edukative Inhalte für die einfache Regression.
         """
         logger.info(f"API: get_simple_content({dataset}, n={n})")
         
         try:
-            # Run pipeline
-            result = self.pipeline.run_simple(
+            # Generierung des Inhalts über den ContentBuilder in der Pipeline
+            content = self.pipeline.get_simple_content(
                 dataset=dataset, n=n, noise=noise, seed=seed
             )
-            
-            # Build content
-            from ..content import SimpleRegressionContent
-            
-            # Get flat stats for content builder
-            stats_dict = StatsSerializer.to_flat_dict(result.stats, result.data)
-            
-            # Build content
-            plot_keys = {
-                "scatter": "scatter",
-                "residuals": "residuals",
-                "diagnostics": "diagnostics",
-            }
-            if result.plots.extra:
-                plot_keys.update({k: k for k in result.plots.extra.keys()})
-            
-            builder = SimpleRegressionContent(stats_dict, plot_keys)
-            content = builder.build()
-            
+            # Serialisierung für den Transport über die API
             return {
                 "success": True,
-                "content": ContentSerializer.serialize(content),
-                "plots": PlotSerializer.serialize_collection(result.plots),
-                "stats": StatsSerializer.serialize_simple(result.stats),
-                "data": DataSerializer.serialize_simple(result.data),
+                "data": ContentSerializer.serialize(content)
             }
-            
         except Exception as e:
-            logger.error(f"Content API error: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-            }
+            error_id = log_api_error(
+                logger=logger,
+                error=e,
+                endpoint="/api/content/simple",
+                method="GET",
+                request_data={"dataset": dataset, "n": n, "noise": noise, "seed": seed}
+            )
+            return {"success": False, "error": str(e), "error_id": error_id}
     
     def get_multiple_content(
         self,
@@ -466,47 +494,27 @@ class ContentAPI:
         seed: int = 42,
     ) -> Dict[str, Any]:
         """
-        Get educational content for multiple regression.
-        
-        Returns:
-            Complete content structure for any frontend
+        Liefert edukative Inhalte für die multiple Regression.
         """
         logger.info(f"API: get_multiple_content({dataset}, n={n})")
         
         try:
-            # Run pipeline
-            result = self.pipeline.run_multiple(
+            content = self.pipeline.get_multiple_content(
                 dataset=dataset, n=n, noise=noise, seed=seed
             )
-            
-            # Build content
-            from ..content import MultipleRegressionContent
-            
-            stats_dict = StatsSerializer.to_flat_dict(result.stats, result.data)
-            
-            plot_keys = {
-                "scatter": "scatter",
-                "residuals": "residuals",
-                "diagnostics": "diagnostics",
-            }
-            
-            builder = MultipleRegressionContent(stats_dict, plot_keys)
-            content = builder.build()
-            
             return {
                 "success": True,
-                "content": ContentSerializer.serialize(content),
-                "plots": PlotSerializer.serialize_collection(result.plots),
-                "stats": StatsSerializer.serialize_multiple(result.stats),
-                "data": DataSerializer.serialize_multiple(result.data),
+                "data": ContentSerializer.serialize(content)
             }
-            
         except Exception as e:
-            logger.error(f"Content API error: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-            }
+            error_id = log_api_error(
+                logger=logger,
+                error=e,
+                endpoint="/api/content/simple",
+                method="GET",
+                request_data={"dataset": dataset, "n": n, "noise": noise, "seed": seed}
+            )
+            return {"success": False, "error": str(e), "error_id": error_id}
     
     def get_content_schema(self) -> Dict[str, Any]:
         """
@@ -712,10 +720,17 @@ class ContentAPI:
             }
 
         except Exception as e:
-            logger.error(f"Content API error: {e}")
+            error_id = log_api_error(
+                logger=logger,
+                error=e,
+                endpoint="/api/ai/interpret",
+                method="POST",
+                request_data={"stats": stats, "dataset": dataset, "regression_type": regression_type}
+            )
             return {
                 "success": False,
                 "error": str(e),
+                "error_id": error_id
             }
 
     def get_split_preview(
@@ -753,8 +768,14 @@ class ContentAPI:
             }
             
         except Exception as e:
-            logger.error(f"Split Preview error: {e}", exc_info=True)
-            return {"success": False, "error": str(e)}
+            error_id = log_api_error(
+                logger=logger,
+                error=e,
+                endpoint="/api/data/split-preview",
+                method="GET",
+                request_data={"dataset": dataset, "train_size": train_size, "seed": seed}
+            )
+            return {"success": False, "error": str(e), "error_id": error_id}
 
     def get_datasets_list(self) -> Dict[str, Any]:
         """List all available datasets."""
@@ -778,8 +799,13 @@ class ContentAPI:
                 "datasets": provider.get_all_datasets()
             }
         except Exception as e:
-            logger.error(f"Error listing datasets: {e}")
-            return {"success": False, "error": str(e)}
+            error_id = log_api_error(
+                logger=logger,
+                error=e,
+                endpoint="/api/data/datasets",
+                method="GET"
+            )
+            return {"success": False, "error": str(e), "error_id": error_id}
 
     def get_dataset_raw(self, dataset_id: str) -> Dict[str, Any]:
         """Get raw data for preview table."""
@@ -792,8 +818,14 @@ class ContentAPI:
                 "data": raw_data
             }
         except Exception as e:
-            logger.error(f"Error getting raw dataset {dataset_id}: {e}")
-            return {"success": False, "error": str(e)}
+            error_id = log_api_error(
+                logger=logger,
+                error=e,
+                endpoint=f"/api/data/datasets/{dataset_id}",
+                method="GET",
+                request_data={"dataset_id": dataset_id}
+            )
+            return {"success": False, "error": str(e), "error_id": error_id}
 
 
 
@@ -1025,18 +1057,17 @@ class UnifiedAPI:
 
 class ClassificationAPI:
     """
-    Classification Analysis API.
-    
-    Provides endpoints for running classification analysis (Logistic, KNN).
+    API für Klassifikationsanalysen (Logistische Regression, KNN).
     """
     
     def __init__(self):
-        # Lazy loading components
+        # Lazy Loading der Komponenten
         self._use_case = None
         self._plot_builder = None
         
     @property
     def use_case(self):
+        """Initialisiert den Use Case für Klassifikation."""
         if self._use_case is None:
             from ..core.application.use_cases import RunClassificationUseCase
             from ..infrastructure.data.provider import DataProviderImpl
@@ -1050,6 +1081,7 @@ class ClassificationAPI:
         
     @property
     def plot_builder(self):
+        """Initialisiert den PlotBuilder."""
         if self._plot_builder is None:
             from ..infrastructure.services.plot import PlotBuilder
             self._plot_builder = PlotBuilder()
@@ -1066,13 +1098,13 @@ class ClassificationAPI:
         train_size: float = 0.8,
         stratify: bool = False
     ) -> Dict[str, Any]:
-        """Run classification analysis."""
+        """Führt eine Klassifikationsanalyse aus (Training & Evaluation)."""
         logger.info(f"API: run_classification({method}, {dataset})")
         
         try:
             from ..core.application.dtos import ClassificationRequestDTO
             
-            # 1. Create Request
+            # 1. Request-DTO erstellen
             request_dto = ClassificationRequestDTO(
                 dataset_id=dataset,
                 n_observations=n,
@@ -1080,30 +1112,28 @@ class ClassificationAPI:
                 seed=seed,
                 method=method,
                 k_neighbors=k,
-                train_size=train_size, # New
-                stratify=stratify      # New
+                train_size=train_size,
+                stratify=stratify
             )
             
-            # 2. Execute Use Case
+            # 2. Use Case ausführen (Business Logik)
             response = self.use_case.execute(request_dto)
             
-            # 3. Generate Plots
-            # ... (Existing logic) ...
+            # 3. Plots generieren (Infrastruktur-Service)
             from ..infrastructure.data.generators import ClassificationDataResult
             import numpy as np
             
             data_res = ClassificationDataResult(
-                X=np.array(response.X_data), # Convert back to numpy for Plotly
+                X=np.array(response.X_data), 
                 y=np.array(response.y_data),
                 target_names=list(response.target_names) if response.target_names else None,
                 feature_names=list(response.feature_names) if response.feature_names else None
             )
             
-            # We also need ClassificationResult object for PlotBuilder
-            # ...
+            # Rekonstruktion der Domain-Objekte für den PlotBuilder
             from ..core.domain.value_objects import ClassificationResult, ClassificationMetrics
             
-            # Reconstruct Metrics
+            # Metriken für Trainingsdaten
             cm = np.array(response.metrics['confusion_matrix']) if response.metrics.get('confusion_matrix') else None
             metrics_obj = ClassificationMetrics(
                 accuracy=response.metrics['accuracy'],
@@ -1114,7 +1144,7 @@ class ClassificationAPI:
                 auc=None
             )
 
-            # Reconstruct Test Metrics
+            # Metriken für Testdaten
             test_metrics_obj = None
             if response.test_metrics:
                  cm_test = np.array(response.test_metrics['confusion_matrix']) if response.test_metrics.get('confusion_matrix') else None
@@ -1127,7 +1157,7 @@ class ClassificationAPI:
                     auc=None
                 )
             
-            # Reconstruct Result
+            # Komplettes Klassifikations-Resultat
             class_result = ClassificationResult(
                 is_success=response.success,
                 classes=list(response.classes),
@@ -1138,9 +1168,10 @@ class ClassificationAPI:
                 probabilities=np.array(response.probabilities) if response.probabilities else None
             )
             
+            # Erstellung der Plots (z.B. Decision Boundaries)
             plot_collection = self.plot_builder.classification_plots(data_res, class_result)
             
-            # 4. Serialize Everything
+            # 4. Alles serialisieren und zurückgeben
             from .serializers import PlotSerializer
             
             return {
@@ -1153,7 +1184,7 @@ class ClassificationAPI:
                 },
                 "results": {
                     "metrics": response.metrics,
-                    "test_metrics": response.test_metrics, # Return test metrics
+                    "test_metrics": response.test_metrics,
                     "params": response.parameters,
                     "method": response.method
                 },
@@ -1165,8 +1196,15 @@ class ClassificationAPI:
             }
             
         except Exception as e:
-            logger.error(f"Classification API Error: {e}", exc_info=True)
+            error_id = log_api_error(
+                logger=logger,
+                error=e,
+                endpoint="/api/ml/classify",
+                method="POST",
+                request_data={"dataset": dataset, "n": n, "k": k, "seed": seed}
+            )
             return {
                 "success": False,
-                "error": str(e)
+                "error": str(e),
+                "error_id": error_id
             }

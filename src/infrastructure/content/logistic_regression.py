@@ -1,9 +1,10 @@
 """
-Logistic Regression Educational Content - Framework Agnostic.
+Logistische Regression - Edukativer Content (Framework-agnostisch).
 
-This module covers binary classification using logistic regression.
-Covers: Sigmoid, Log-odds, Confusion Matrix, Precision/Recall/F1, ROC/AUC.
+Dieses Modul definiert den edukativen Inhalt für die Klassifikation
+als REINE DATENSTRUKTUR.
 """
+# Deckt ab: Sigmoid, Log-Odds, Konfusionsmatrix, Precision/Recall/F1, ROC/AUC.
 
 from typing import Dict, Any, List
 from dataclasses import dataclass

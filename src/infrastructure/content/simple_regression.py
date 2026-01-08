@@ -1,10 +1,10 @@
 """
-Simple Regression Educational Content - Framework Agnostic.
+Einfache Regression - Edukativer Content (Framework-agnostisch).
 
-This module defines ALL educational content as DATA STRUCTURES.
-NO UI imports, NO framework dependencies.
+Dieses Modul definiert den GESAMTEN edukativen Inhalt als REINE DATENSTRUKTUR.
+KEINE UI-Abhängigkeiten, KEINE Framework-Importe.
 
-The content is then interpreted by Renderers (Streamlit, Flask, etc.)
+Der Inhalt wird anschließend von Renderern (Streamlit, Flask, etc.) interpretiert.
 """
 
 import numpy as np
