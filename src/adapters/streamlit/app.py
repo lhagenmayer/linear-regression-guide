@@ -26,14 +26,14 @@ def run_streamlit_app():
     # Page configuration
     st.set_page_config(
         page_title="Regression Analysis",
-        page_icon="�",
+        page_icon="📈",
         layout="wide",
         initial_sidebar_state="expanded"
     )
     
-    # Custom CSS
-    from .styles import inject_custom_css, render_hero
-    inject_custom_css()
+    # Custom CSS - Removed for native look
+    # from .styles import inject_custom_css, render_hero
+    # inject_custom_css()
     
     # Initialize APIs
     regression_api = RegressionAPI()
@@ -42,14 +42,10 @@ def run_streamlit_app():
     
     # Sidebar
     with st.sidebar:
-        st.markdown("""
-        <div style="margin-bottom: 2rem;">
-            <div class="api-badge">API-POWERED</div>
-            <h1 style="font-size: 1.5rem; margin: 0;">RegAnalysis</h1>
-            <p style="color: #94a3b8; font-size: 0.9rem;">Interactive Learning Platform</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.title("RegAnalysis")
+        st.caption("Interactive Learning Platform")
         
+        st.markdown("### 📊 Analyse")
         analysis_type = st.radio(
             "Analysis Type",
             ["Simple Regression", "Multiple Regression"],
@@ -57,14 +53,11 @@ def run_streamlit_app():
             label_visibility="collapsed"
         )
         
-        st.markdown("---")
+        st.divider()
         
         # Dataset selection
         datasets_response = regression_api.get_datasets()
-        st.markdown("### 📊 Dataset")
-        
-        # Map German names to API response (if needed) or direct use
-        # Adapting to English/International structure
+        st.subheader("Dataset")
         
         if analysis_type == "Simple Regression":
             dataset_options = {d["name"]: d["id"] for d in datasets_response["data"]["simple"]}
@@ -85,11 +78,11 @@ def run_streamlit_app():
             dataset_id = dataset_options[dataset_name]
             n_points = st.slider("Samples", 30, 200, 75, key="n_multiple")
         
-        st.markdown("### ⚙️ Parameters")
+        st.subheader("Parameters")
         noise = st.slider("Noise Level", 0.1, 2.0, 0.4, 0.1, key="noise")
         seed = st.number_input("Random Seed", 1, 9999, 42, key="seed")
         
-        st.markdown("---")
+        st.divider()
         
         # API Status in Sidebar
         status = ai_api.get_status()
@@ -105,10 +98,9 @@ def run_streamlit_app():
         st.session_state.hero_shown = True
         
     title_suffix = "Simple" if analysis_type == "Simple Regression" else "Multiple"
-    render_hero(
-        f"{title_suffix} Regression", 
-        "Explore relationships, analyze residuals, and master statistical modeling."
-    )
+    
+    st.title(f"{title_suffix} Regression")
+    st.caption("Explore relationships, analyze residuals, and master statistical modeling.")
     
     if analysis_type == "Simple Regression":
         render_simple_regression(content_api, ai_api, dataset_id, n_points, noise, seed)
@@ -235,23 +227,16 @@ def render_multiple_regression(
 def _render_ai_interpretation(ai_api: AIInterpretationAPI, stats_dict: Dict[str, Any]):
     """Render AI interpretation section using API."""
     
-    st.markdown("---")
-    st.markdown("""
-    <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); 
-                padding: 1.5rem; border-radius: 1rem; color: white; margin: 1rem 0;">
-        <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
-            🤖 AI-Interpretation des R-Outputs
-        </h3>
-        <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">
-            Lass dir alle statistischen Werte gesamtheitlich von Perplexity AI erklären.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.divider()
+    
+    # Use native container/info instead of HTML
+    st.subheader("🤖 AI-Interpretation des R-Outputs")
+    st.info("Lass dir alle statistischen Werte gesamtheitlich von Perplexity AI erklären.")
     
     # Status from API
     status = ai_api.get_status()
     if status["status"]["configured"]:
-        st.success("✅ Perplexity API verbunden")
+        st.caption("✅ Perplexity API verbunden")
     else:
         st.warning("⚠️ Kein API-Key - Fallback-Interpretation wird verwendet")
         st.caption("Setze `PERPLEXITY_API_KEY` als Umgebungsvariable")

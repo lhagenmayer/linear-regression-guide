@@ -1,34 +1,20 @@
 [theme]
-# Primary accent color for interactive elements
+base = "light"
 primaryColor = "#FF4B4B"
-# Background color for the main content area
 backgroundColor = "#FFFFFF"
-# Background color for sidebar and most interactive widgets
 secondaryBackgroundColor = "#F0F2F6"
-# Color used for almost all text
 textColor = "#262730"
-# Font family for all text in the app
 font = "sans serif"
 
 [server]
-# Set to true for better security, disable only if needed
 enableCORS = true
-# Set to false to disable XSRF protection
 enableXsrfProtection = true
-# Maximum size of messages that can be sent via the WebSocket connection (in MB)
 maxUploadSize = 200
 
 [browser]
-# Internet address where users should point their browsers to connect to the app
-# Leave empty to use the default behavior (auto-detected)
-serverAddress = ""
-# Whether to send usage statistics to Streamlit
-gatherUsageStats = true
-# Port where users should point their browsers to connect to the app
+gatherUsageStats = false
 serverPort = 8501
 
 [runner]
-# Allows you to type a variable or string by itself in a single line of Python code to write it to the app
 magicEnabled = true
-# Handle script exceptions by showing an error message in the app
 fastReruns = true

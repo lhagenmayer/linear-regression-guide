@@ -80,8 +80,7 @@ class StreamlitContentRenderer:
     def _render_chapter(self, chapter: Chapter) -> None:
         """Render a chapter with its sections."""
         st.markdown("---")
-        st.markdown(f'<p class="section-header">{chapter.icon} Kapitel {chapter.number}: {chapter.title}</p>', 
-                    unsafe_allow_html=True)
+        st.header(f"{chapter.icon} Kapitel {chapter.number}: {chapter.title}")
         
         for section in chapter.sections:
             self._render_element(section)
