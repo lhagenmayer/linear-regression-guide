@@ -34,6 +34,8 @@ from .structure import (
 from .builder import ContentBuilder
 from .simple_regression import SimpleRegressionContent
 from .multiple_regression import MultipleRegressionContent
+from .ml_bridge import MLBridgeContent
+from .logistic_regression import LogisticRegressionContent
 
 __all__ = [
     # Structure elements
@@ -56,4 +58,6 @@ __all__ = [
     "ContentBuilder",
     "SimpleRegressionContent",
     "MultipleRegressionContent",
+    "MLBridgeContent",
+    "LogisticRegressionContent",
 ]
