@@ -236,6 +236,9 @@ class StatsSerializer:
         
         Returns all fields needed by SimpleRegressionContent/MultipleRegressionContent.
         """
+        # Lazy import to avoid circular dependencies if any
+        from ..data.content import get_simple_regression_content, get_multiple_regression_descriptions
+        
         if hasattr(result, 'slope'):
             # Simple regression
             flat = {
@@ -281,8 +284,25 @@ class StatsSerializer:
                 flat["y_label"] = str(data.y_label)
                 flat["x_unit"] = str(getattr(data, 'x_unit', ''))
                 flat["y_unit"] = str(getattr(data, 'y_unit', ''))
-                flat["context_title"] = str(getattr(data, 'context_title', 'Regressionsanalyse'))
-                flat["context_description"] = str(getattr(data, 'context_description', ''))
+                
+                # Fetch rich content if dataset ID is present
+                dataset_id = getattr(data, 'extra', {}).get('dataset')
+                context_title = str(getattr(data, 'context_title', 'Regressionsanalyse'))
+                context_desc = str(getattr(data, 'context_description', ''))
+                
+                if dataset_id:
+                    try:
+                        # Attempt to get rich content from legacy registry
+                        rich_content = get_simple_regression_content(dataset_id, flat["x_label"])
+                        if rich_content.get("context_title"):
+                            context_title = rich_content["context_title"]
+                        if rich_content.get("context_description"):
+                            context_desc = rich_content["context_description"]
+                    except Exception:
+                        pass # Fallback to existing metadata
+                
+                flat["context_title"] = context_title
+                flat["context_description"] = context_desc
                 
                 # Descriptive statistics
                 if len(x) > 0:
@@ -340,7 +360,7 @@ class StatsSerializer:
                 "r_squared": _to_float(result.r_squared),
                 "r_squared_adj": _to_float(result.r_squared_adj),
                 "f_statistic": _to_float(result.f_statistic),
-                "p_f": _to_float(result.f_pvalue),
+                "f_p_value": _to_float(result.f_pvalue),
                 "n": int(result.n),
                 "k": int(result.k),
                 "df": int(result.n - result.k - 1),
@@ -366,8 +386,42 @@ class StatsSerializer:
                 flat["x1_label"] = str(data.x1_label)
                 flat["x2_label"] = str(data.x2_label)
                 flat["y_label"] = str(data.y_label)
-                flat["context_title"] = "Multiple Regression"
-                flat["context_description"] = f"Analyse von {data.y_label} mit {data.x1_label} und {data.x2_label}"
+                
+                # Fetch rich content if dataset ID is present
+                dataset_id = getattr(data, 'extra', {}).get('dataset')
+                context_title = "Multiple Regression"
+                context_desc = f"Analyse von {data.y_label} mit {data.x1_label} und {data.x2_label}"
+                
+                if dataset_id:
+                     try:
+                        rich_info = get_multiple_regression_descriptions(dataset_id)
+                        if rich_info.get("main"):
+                            context_desc = rich_info["main"]
+                            # Also guess title based on dataset_id
+                            if "cantons" in dataset_id.lower() or "Schweizer" in context_desc:
+                                context_title = "Schweizer Kantone (Multipel)"
+                            elif "weather" in dataset_id.lower():
+                                context_title = "Schweizer Wetter (Multipel)"
+                            elif "cities" in dataset_id.lower():
+                                context_title = "Städte-Umsatzstudie"
+                            elif "houses" in dataset_id.lower():
+                                context_title = "Häuserpreise"
+                            elif "world_bank" in dataset_id.lower():
+                                context_title = "World Bank Development"
+                            elif "fred" in dataset_id.lower():
+                                context_title = "US Economy (FRED)"
+                            elif "who" in dataset_id.lower():
+                                context_title = "WHO Global Health"
+                            elif "eurostat" in dataset_id.lower():
+                                context_title = "Eurostat Analysis"
+                            elif "nasa" in dataset_id.lower():
+                                context_title = "NASA Agro-Climatology"
+                                
+                     except Exception:
+                        pass
+                
+                flat["context_title"] = context_title
+                flat["context_description"] = context_desc
                 
                 # Multicollinearity
                 if len(x1) > 1:

@@ -103,37 +103,43 @@ class DataFetcher:
         logger.info(f"Fetching simple regression data: {dataset}, n={n}")
         np.random.seed(seed)
         
+        result = None
         if dataset == "electronics":
-            return self._generate_electronics(n, noise, true_intercept, true_slope)
+            result = self._generate_electronics(n, noise, true_intercept, true_slope)
         elif dataset == "advertising":
-            return self._generate_advertising(n, noise)
+            result = self._generate_advertising(n, noise)
         elif dataset == "temperature":
-            return self._generate_temperature(n, noise)
+            result = self._generate_temperature(n, noise)
         elif dataset == "cantons":
              res = self._generate_cantons(n, noise)
-             return DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="Swiss Cantons", context_description=res.extra.get("context", ""))
+             result = DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="Swiss Cantons", context_description=res.extra.get("context", ""))
         elif dataset == "weather":
              res = self._generate_weather(n, noise)
              # Map Altitude (x1) -> Temperature (y)
-             return DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="Swiss Weather", context_description="Altitude -> Temperature")
+             result = DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="Swiss Weather", context_description="Altitude -> Temperature")
         elif dataset == "world_bank":
              res = self._generate_world_bank(n, noise)
-             return DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="World Bank", context_description="GDP -> Life Exp")
+             result = DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="World Bank", context_description="GDP -> Life Exp")
         elif dataset == "fred_economic":
              res = self._generate_fred(n, noise)
-             return DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="FRED", context_description="Unemployment -> GDP")
+             result = DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="FRED", context_description="Unemployment -> GDP")
         elif dataset == "who_health":
              res = self._generate_who(n, noise)
-             return DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="WHO", context_description="Health Spend -> Life Exp")
+             result = DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="WHO", context_description="Health Spend -> Life Exp")
         elif dataset == "eurostat":
              res = self._generate_eurostat(n, noise)
-             return DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="Eurostat", context_description="Emp -> GDP")
+             result = DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="Eurostat", context_description="Emp -> GDP")
         elif dataset == "nasa_weather":
              res = self._generate_nasa(n, noise)
-             return DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="NASA", context_description="Temp -> Crop Yield")
+             result = DataResult(x=res.x1, y=res.y, x_label=res.x1_label, y_label=res.y_label, context_title="NASA", context_description="Temp -> Crop Yield")
         else:
             # Default synthetic data
-            return self._generate_synthetic(n, noise, true_intercept, true_slope)
+            result = self._generate_synthetic(n, noise, true_intercept, true_slope)
+            
+        if result:
+            result.extra["dataset"] = dataset
+            
+        return result
     
     def get_multiple(
         self,
@@ -150,33 +156,39 @@ class DataFetcher:
             n: Number of observations
             noise: Noise level
             seed: Random seed
-        
+            
         Returns:
             MultipleRegressionDataResult with x1, x2, y arrays
         """
         logger.info(f"Fetching multiple regression data: {dataset}, n={n}")
         np.random.seed(seed)
         
+        result = None
         if dataset == "cities":
-            return self._generate_cities(n, noise)
+            result = self._generate_cities(n, noise)
         elif dataset == "houses":
-            return self._generate_houses(n, noise)
+            result = self._generate_houses(n, noise)
         elif dataset == "cantons":
-             return self._generate_cantons(n, noise)
+             result = self._generate_cantons(n, noise)
         elif dataset == "weather":
-             return self._generate_weather(n, noise)
+             result = self._generate_weather(n, noise)
         elif dataset == "world_bank":
-            return self._generate_world_bank(n, noise)
+            result = self._generate_world_bank(n, noise)
         elif dataset == "fred_economic":
-            return self._generate_fred(n, noise)
+            result = self._generate_fred(n, noise)
         elif dataset == "who_health":
-            return self._generate_who(n, noise)
+            result = self._generate_who(n, noise)
         elif dataset == "eurostat":
-             return self._generate_eurostat(n, noise)
+             result = self._generate_eurostat(n, noise)
         elif dataset == "nasa_weather":
-             return self._generate_nasa(n, noise)
+             result = self._generate_nasa(n, noise)
         else:
-            return self._generate_cities(n, noise)
+            result = self._generate_cities(n, noise)
+            
+        if result:
+            result.extra["dataset"] = dataset
+            
+        return result
     
     # =========================================================
     # PRIVATE: External Data Fetchers (Mocked for Stability)
