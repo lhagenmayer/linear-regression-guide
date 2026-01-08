@@ -86,9 +86,22 @@ streamlit run run.py
 
 ---
 
-## 🔌 API Dokumentation
+## 📚 API Dokumentation
 
-### Endpoints
+### Interaktive Dokumentation
+
+Nach dem Start des API-Servers sind folgende Dokumentations-Seiten verfügbar:
+
+| URL | Beschreibung |
+|-----|--------------|
+| [/api/docs](http://localhost:8000/api/docs) | **📖 Swagger UI** - Interaktive API-Dokumentation mit "Try it out" |
+| [/api/redoc](http://localhost:8000/api/redoc) | **📕 ReDoc** - Alternative, übersichtliche Dokumentation |
+| [/api/openapi.json](http://localhost:8000/api/openapi.json) | **📄 OpenAPI 3.0** - JSON Specification |
+| [/api/openapi.yaml](http://localhost:8000/api/openapi.yaml) | **📄 OpenAPI 3.0** - YAML Specification |
+
+**Vollständige API-Dokumentation: [docs/API.md](docs/API.md)**
+
+### Endpoints Übersicht
 
 | Method | Endpoint | Beschreibung |
 |--------|----------|--------------|
@@ -98,9 +111,10 @@ streamlit run run.py
 | `POST` | `/api/content/multiple` | Educational Content (Multiple) |
 | `GET` | `/api/content/schema` | Content-Schema |
 | `POST` | `/api/ai/interpret` | AI Interpretation |
+| `POST` | `/api/ai/r-output` | R-Output generieren |
+| `GET` | `/api/ai/status` | AI Service Status |
 | `GET` | `/api/datasets` | Verfügbare Datensätze |
 | `GET` | `/api/health` | Health Check |
-| `GET` | `/api/openapi.json` | OpenAPI Spec |
 
 ### Beispiel: Simple Regression
 

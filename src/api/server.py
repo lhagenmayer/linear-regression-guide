@@ -6,15 +6,131 @@ Supports both Flask and FastAPI (if available).
 
 This is a PURE API server - no HTML templates, no UI rendering.
 All responses are JSON.
+
+API Documentation:
+- /api/docs - Interactive Swagger UI
+- /api/openapi.json - OpenAPI 3.0 Specification (JSON)
+- /api/openapi.yaml - OpenAPI 3.0 Specification (YAML)
 """
 
 import json
 import logging
+import os
+from pathlib import Path
 from typing import Dict, Any, Optional
 
 from .endpoints import UnifiedAPI, RegressionAPI, ContentAPI, AIInterpretationAPI
 
 logger = logging.getLogger(__name__)
+
+# Path to docs directory
+DOCS_DIR = Path(__file__).parent.parent.parent / "docs"
+
+
+def _get_full_openapi_spec() -> Dict[str, Any]:
+    """Load the full OpenAPI spec from YAML file if available."""
+    yaml_path = DOCS_DIR / "openapi.yaml"
+    
+    if yaml_path.exists():
+        try:
+            import yaml
+            with open(yaml_path, 'r', encoding='utf-8') as f:
+                return yaml.safe_load(f)
+        except ImportError:
+            # PyYAML not installed, use fallback
+            pass
+        except Exception as e:
+            logger.warning(f"Could not load OpenAPI YAML: {e}")
+    
+    # Fallback to generated spec
+    return UnifiedAPI().get_openapi_spec()
+
+
+def _get_swagger_ui_html(openapi_url: str = "/api/openapi.json") -> str:
+    """Generate Swagger UI HTML."""
+    return f'''<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regression Analysis API - Dokumentation</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
+    <style>
+        html {{ box-sizing: border-box; overflow-y: scroll; }}
+        *, *:before, *:after {{ box-sizing: inherit; }}
+        body {{ margin: 0; background: #fafafa; }}
+        .swagger-ui .topbar {{ display: none; }}
+        .swagger-ui .info hgroup.main h2 {{ font-size: 1.5em; }}
+        .custom-header {{
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }}
+        .custom-header h1 {{ margin: 0; font-size: 2em; }}
+        .custom-header p {{ margin: 10px 0 0; opacity: 0.9; }}
+        .custom-header a {{ color: white; text-decoration: underline; }}
+    </style>
+</head>
+<body>
+    <div class="custom-header">
+        <h1>📊 Regression Analysis API</h1>
+        <p>100% Platform-Agnostic REST API für Statistische Analysen</p>
+        <p style="font-size: 0.9em; margin-top: 15px;">
+            <a href="/api/openapi.json">OpenAPI JSON</a> |
+            <a href="/api/openapi.yaml">OpenAPI YAML</a> |
+            <a href="/">← Zurück zur App</a>
+        </p>
+    </div>
+    <div id="swagger-ui"></div>
+    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+    <script>
+        window.onload = function() {{
+            window.ui = SwaggerUIBundle({{
+                url: "{openapi_url}",
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout",
+                defaultModelsExpandDepth: 2,
+                defaultModelExpandDepth: 2,
+                docExpansion: "list",
+                filter: true,
+                showExtensions: true,
+                showCommonExtensions: true,
+                tryItOutEnabled: true,
+            }});
+        }};
+    </script>
+</body>
+</html>'''
+
+
+def _get_redoc_html(openapi_url: str = "/api/openapi.json") -> str:
+    """Generate ReDoc HTML for alternative documentation."""
+    return f'''<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regression Analysis API - ReDoc</title>
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
+    <style>
+        body {{ margin: 0; padding: 0; }}
+    </style>
+</head>
+<body>
+    <redoc spec-url="{openapi_url}"></redoc>
+    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+</body>
+</html>'''
 
 
 def create_api_server(framework: str = "auto", cors_origins: list = None):
@@ -140,12 +256,44 @@ def _create_flask_server(cors_origins: list):
         return jsonify(api.ai.clear_cache())
     
     # =========================================================================
-    # OpenAPI
+    # Documentation Endpoints
     # =========================================================================
     
     @app.route('/api/openapi.json', methods=['GET'])
-    def openapi():
-        return jsonify(api.get_openapi_spec())
+    def openapi_json():
+        """OpenAPI 3.0 Specification (JSON)."""
+        return jsonify(_get_full_openapi_spec())
+    
+    @app.route('/api/openapi.yaml', methods=['GET'])
+    def openapi_yaml():
+        """OpenAPI 3.0 Specification (YAML)."""
+        from flask import Response
+        yaml_path = DOCS_DIR / "openapi.yaml"
+        
+        if yaml_path.exists():
+            with open(yaml_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            return Response(content, mimetype='text/yaml')
+        
+        # Fallback: Generate from JSON
+        try:
+            import yaml
+            spec = _get_full_openapi_spec()
+            return Response(yaml.dump(spec, allow_unicode=True), mimetype='text/yaml')
+        except ImportError:
+            return Response("# PyYAML not installed\n# Use /api/openapi.json instead", mimetype='text/yaml')
+    
+    @app.route('/api/docs', methods=['GET'])
+    def swagger_ui():
+        """Interactive Swagger UI Documentation."""
+        from flask import Response
+        return Response(_get_swagger_ui_html(), mimetype='text/html')
+    
+    @app.route('/api/redoc', methods=['GET'])
+    def redoc():
+        """Alternative ReDoc Documentation."""
+        from flask import Response
+        return Response(_get_redoc_html(), mimetype='text/html')
     
     return app
 
@@ -240,12 +388,44 @@ def _create_fastapi_server(cors_origins: list):
         return api.ai.clear_cache()
     
     # =========================================================================
-    # OpenAPI
+    # Documentation Endpoints
     # =========================================================================
     
     @app.get("/api/openapi.json")
-    async def openapi():
-        return api.get_openapi_spec()
+    async def openapi_json():
+        """OpenAPI 3.0 Specification (JSON)."""
+        return _get_full_openapi_spec()
+    
+    @app.get("/api/openapi.yaml")
+    async def openapi_yaml():
+        """OpenAPI 3.0 Specification (YAML)."""
+        from fastapi.responses import PlainTextResponse
+        yaml_path = DOCS_DIR / "openapi.yaml"
+        
+        if yaml_path.exists():
+            with open(yaml_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            return PlainTextResponse(content, media_type='text/yaml')
+        
+        # Fallback
+        try:
+            import yaml
+            spec = _get_full_openapi_spec()
+            return PlainTextResponse(yaml.dump(spec, allow_unicode=True), media_type='text/yaml')
+        except ImportError:
+            return PlainTextResponse("# PyYAML not installed", media_type='text/yaml')
+    
+    @app.get("/api/docs")
+    async def swagger_ui():
+        """Interactive Swagger UI."""
+        from fastapi.responses import HTMLResponse
+        return HTMLResponse(_get_swagger_ui_html())
+    
+    @app.get("/api/redoc")
+    async def redoc():
+        """ReDoc Documentation."""
+        from fastapi.responses import HTMLResponse
+        return HTMLResponse(_get_redoc_html())
     
     return app
 
@@ -276,17 +456,30 @@ def run_api_server(
     
     app = create_api_server(framework, cors_origins)
     
+    print()
+    print("=" * 60)
+    print("📊 REGRESSION ANALYSIS API")
+    print("=" * 60)
+    
     if hasattr(app, 'run'):
         # Flask
-        print(f"🚀 Starting Flask API server on http://{host}:{port}")
-        print(f"📚 OpenAPI spec: http://{host}:{port}/api/openapi.json")
+        print(f"🚀 Server:      http://{host}:{port}")
+        print(f"📖 Swagger UI:  http://{host}:{port}/api/docs")
+        print(f"📕 ReDoc:       http://{host}:{port}/api/redoc")
+        print(f"📄 OpenAPI:     http://{host}:{port}/api/openapi.json")
+        print(f"📄 YAML Spec:   http://{host}:{port}/api/openapi.yaml")
+        print("=" * 60)
+        print()
         app.run(host=host, port=port, debug=debug)
     else:
         # FastAPI
         import uvicorn
-        print(f"🚀 Starting FastAPI server on http://{host}:{port}")
-        print(f"📚 OpenAPI spec: http://{host}:{port}/api/openapi.json")
-        print(f"📖 Swagger UI: http://{host}:{port}/docs")
+        print(f"🚀 Server:      http://{host}:{port}")
+        print(f"📖 Swagger UI:  http://{host}:{port}/api/docs")
+        print(f"📕 ReDoc:       http://{host}:{port}/api/redoc")
+        print(f"📄 OpenAPI:     http://{host}:{port}/api/openapi.json")
+        print("=" * 60)
+        print()
         uvicorn.run(app, host=host, port=port, log_level="info" if not debug else "debug")
 
 
