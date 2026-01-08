@@ -69,7 +69,7 @@ def run_streamlit_app():
         if analysis_type == "Simple Regression":
             dataset_options = {d["name"]: d["id"] for d in datasets_response["data"]["simple"]}
             dataset_name = st.selectbox(
-                "Select Dataset:",
+                "Select Simple Dataset:",
                 list(dataset_options.keys()),
                 key="dataset_simple"
             )
@@ -78,7 +78,7 @@ def run_streamlit_app():
         else:
             dataset_options = {d["name"]: d["id"] for d in datasets_response["data"]["multiple"]}
             dataset_name = st.selectbox(
-                "Select Dataset:",
+                "Select Multiple Dataset:",
                 list(dataset_options.keys()),
                 key="dataset_multiple"
             )
@@ -235,14 +235,11 @@ def render_multiple_regression(
 def _render_ai_interpretation(ai_api: AIInterpretationAPI, stats_dict: Dict[str, Any]):
     """Render AI interpretation section using API."""
     
-    st.markdown("---")
+    st.subheader("🤖 AI-Interpretation des R-Outputs")
     st.markdown("""
     <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); 
                 padding: 1.5rem; border-radius: 1rem; color: white; margin: 1rem 0;">
-        <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
-            🤖 AI-Interpretation des R-Outputs
-        </h3>
-        <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">
+        <p style="margin: 0; opacity: 0.9;">
             Lass dir alle statistischen Werte gesamtheitlich von Perplexity AI erklären.
         </p>
     </div>

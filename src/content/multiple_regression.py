@@ -28,8 +28,8 @@ class MultipleRegressionContent(ContentBuilder):
     def build(self) -> EducationalContent:
         """Build all chapters of multiple regression content."""
         return EducationalContent(
-            title="📊 Multiple Lineare Regression",
-            subtitle="Erweiterte Regressionsanalyse mit mehreren Prädiktoren",
+            title="📊 Multiple Linear Regression",
+            subtitle="Advanced regression analysis with multiple predictors",
             chapters=[
                 self._chapter_1_introduction(),
                 self._chapter_2_model(),
@@ -52,7 +52,7 @@ class MultipleRegressionContent(ContentBuilder):
         
         return Chapter(
             number="1.0",
-            title="Einleitung - Multiple Regression",
+            title="Introduction - Multiple Regression",
             icon="📖",
             sections=[
                 InfoBox(f"""
@@ -97,7 +97,7 @@ Nach Abschluss werden Sie verstehen:
         
         return Chapter(
             number="2.0",
-            title="Das Multiple Regressionsmodell",
+            title="The Multiple Regression Model",
             icon="📖",
             sections=[
                 Markdown("""
@@ -142,7 +142,7 @@ Mit:
         
         return Chapter(
             number="3.0",
-            title="OLS in Matrixform",
+            title="OLS in Matrix Form",
             icon="📖",
             sections=[
                 Markdown("""
@@ -194,7 +194,7 @@ Die Wurzeln sind die **Standardfehler** SE(βⱼ).
         
         return Chapter(
             number="4.0",
-            title="Interpretation der Koeffizienten",
+            title="Interpretation of Coefficients",
             icon="📖",
             sections=[
                 WarningBox("""
@@ -258,7 +258,7 @@ wenn Xⱼ um eine Standardabweichung steigt.
         
         return Chapter(
             number="5.0",
-            title="Modellgüte - R² und F-Test",
+            title="Model Quality - R² and F-Test",
             icon="📖",
             sections=[
                 Expander("📊 R² vs. Adjustiertes R²", [
@@ -312,7 +312,7 @@ wenn Xⱼ um eine Standardabweichung steigt.
         
         return Chapter(
             number="6.0",
-            title="Multikollinearität",
+            title="Multicollinearity",
             icon="📖",
             sections=[
                 WarningBox("""
@@ -364,7 +364,7 @@ Der **VIF** quantifiziert wie stark ein Prädiktor durch die anderen erklärt wi
         """Chapter 7: Dummy variables for categorical predictors."""
         return Chapter(
             number="7.0",
-            title="Dummy-Variablen",
+            title="Dummy Variables",
             icon="📖",
             sections=[
                 Markdown("""
@@ -421,7 +421,7 @@ Falsch: 3 Dummies → X'X ist singulär!
         
         return Chapter(
             number="8.0",
-            title="Residuendiagnostik",
+            title="Residual Diagnostics",
             icon="📖",
             sections=[
                 Markdown("""
@@ -468,7 +468,7 @@ Die **Residuenanalyse** prüft die Modellannahmen:
         
         return Chapter(
             number="9.0",
-            title="Prognose",
+            title="Prediction",
             icon="📖",
             sections=[
                 Markdown("""

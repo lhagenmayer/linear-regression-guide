@@ -31,8 +31,8 @@ class SimpleRegressionContent(ContentBuilder):
     def build(self) -> EducationalContent:
         """Build all chapters of simple regression content."""
         return EducationalContent(
-            title="📊 Einfache Lineare Regression",
-            subtitle="Statistisches Lernen mit interaktiven Visualisierungen",
+            title="📊 Simple Linear Regression",
+            subtitle="Statistical learning with interactive visualizations",
             chapters=[
                 self._chapter_1_introduction(),
                 self._chapter_1_5_multivariate_distributions(),
@@ -57,7 +57,7 @@ class SimpleRegressionContent(ContentBuilder):
         
         return Chapter(
             number="1.0",
-            title="Einleitung - Die Analyse von Zusammenhängen",
+            title="Introduction - Analyzing Relationships",
             icon="📖",
             sections=[
                 # Context info box
@@ -102,7 +102,7 @@ Nach Abschluss dieses Moduls werden Sie verstehen:
         """Chapter 1.5: Multivariate distributions."""
         return Chapter(
             number="1.5",
-            title="Mehrdimensionale Verteilungen",
+            title="Multivariate Distributions",
             icon="📖",
             sections=[
                 Markdown("""
@@ -166,7 +166,7 @@ impliziert **nicht** unbedingt Unabhängigkeit (es sei denn bei Normalverteilung
         
         return Chapter(
             number="2.0",
-            title="Das Fundament - Das einfache lineare Regressionsmodell",
+            title="The Foundation - Simple Linear Regression Model",
             icon="📖",
             sections=[
                 Columns([
@@ -246,7 +246,7 @@ eine Messung mit Werten für {s.get('x_label', 'X')} (x-Achse) und {s.get('y_lab
         
         return Chapter(
             number="2.5",
-            title="Kovarianz & Korrelation - Die Bausteine der Regression",
+            title="Covariance & Correlation - Building Blocks of Regression",
             icon="📖",
             sections=[
                 # Covariance section
@@ -337,7 +337,7 @@ monotone (nicht nur lineare) Zusammenhänge.
         
         return Chapter(
             number="3.0",
-            title="Die Methode - Schätzung mittels OLS",
+            title="The Method - OLS Estimation",
             icon="📖",
             sections=[
                 Markdown("""
@@ -382,7 +382,7 @@ zwischen den Datenpunkten und der Regressionsgerade.
         
         return Chapter(
             number="3.1",
-            title="Das Regressionsmodell im Detail - Anatomie & Unsicherheit",
+            title="Model Anatomy & Uncertainty",
             icon="📖",
             sections=[
                 Expander("🔍 Die Anatomie des Modells", [
@@ -417,7 +417,7 @@ Die Unsicherheit unserer Schätzung wird visualisiert durch:
         
         return Chapter(
             number="4.0",
-            title="Die Güteprüfung - Validierung des Regressionsmodells",
+            title="Model Validation - Goodness of Fit",
             icon="📖",
             sections=[
                 # Standard error of regression
@@ -501,7 +501,7 @@ wird durch {s.get('x_label', 'X')} erklärt.
         
         return Chapter(
             number="5.0",
-            title="Die Signifikanz - Statistische Inferenz und Hypothesentests",
+            title="Significance - Inference & Hypothesis Testing",
             icon="📖",
             sections=[
                 # Gauss-Markov assumptions
@@ -616,7 +616,7 @@ Der F-Test und t-Test führen zum selben Ergebnis!
         """Chapter 5.5: ANOVA for group comparisons."""
         return Chapter(
             number="5.5",
-            title="ANOVA für Gruppenvergleiche",
+            title="ANOVA - Group Comparisons",
             icon="📖",
             sections=[
                 Markdown("""
@@ -643,7 +643,7 @@ Die **Analysis of Variance (ANOVA)** erweitert den t-Test auf mehr als zwei Grup
         
         return Chapter(
             number="5.6",
-            title="Das grosse Problem - Heteroskedastizität",
+            title="The Big Problem - Heteroskedasticity",
             icon="📖",
             sections=[
                 WarningBox("""
@@ -694,7 +694,7 @@ Dies verletzt die Gauss-Markov Annahme 4 und führt zu:
         
         return Chapter(
             number="6.0",
-            title="Fazit und Ausblick",
+            title="Conclusion & Outlook",
             icon="📖",
             sections=[
                 Columns([

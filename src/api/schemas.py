@@ -9,6 +9,13 @@ class DatasetType(str, Enum):
     TEMPERATURE = "temperature"
     CITIES = "cities"
     HOUSES = "houses"
+    CANTONS = "cantons"
+    WEATHER = "weather"
+    WORLD_BANK = "world_bank"
+    FRED_ECONOMIC = "fred_economic"
+    WHO_HEALTH = "who_health"
+    EUROSTAT = "eurostat"
+    NASA_WEATHER = "nasa_weather"
 
 
 class BaseRegressionRequest(BaseModel):

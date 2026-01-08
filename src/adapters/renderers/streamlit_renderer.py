@@ -60,11 +60,11 @@ class StreamlitContentRenderer:
             "se_visualization": self._render_se_visualization,
             "variance_decomposition": self._render_variance_decomposition,
             "assumptions_4panel": self._render_assumptions_4panel,
-            "assumption_violation_demo": self._render_assumption_violation_demo,
+            "assumption_violation_demo": lambda: self._render_assumption_violation_demo(key_suffix="significance"),
             "t_test_plot": self._render_t_test_plot,
             "anova_interactive": self._render_anova_interactive,
             "anova_3d_landscape": self._render_anova_3d_landscape,
-            "heteroskedasticity_demo": self._render_heteroskedasticity_demo,
+            "heteroskedasticity_demo": lambda: self._render_assumption_violation_demo(key_suffix="hetero"),
             "conditional_distribution_3d": self._render_conditional_distribution_3d,
             "data_table": self._render_data_table,
         }
@@ -80,8 +80,7 @@ class StreamlitContentRenderer:
     def _render_chapter(self, chapter: Chapter) -> None:
         """Render a chapter with its sections."""
         st.markdown("---")
-        st.markdown(f'<p class="section-header">{chapter.icon} Kapitel {chapter.number}: {chapter.title}</p>', 
-                    unsafe_allow_html=True)
+        st.header(f"{chapter.icon} Chapter {chapter.number}: {chapter.title}")
         
         for section in chapter.sections:
             self._render_element(section)
@@ -95,10 +94,17 @@ class StreamlitContentRenderer:
             st.metric(element.label, element.value, help=element.help_text or None)
         
         elif isinstance(element, MetricRow):
-            cols = st.columns(len(element.metrics))
-            for col, metric in zip(cols, element.metrics):
-                with col:
-                    st.metric(metric.label, metric.value, help=metric.help_text or None)
+            # Limit columns per row to avoid squeezing on smaller screens
+            MAX_COLS = 3
+            metrics = element.metrics
+            
+            # Process in chunks
+            for i in range(0, len(metrics), MAX_COLS):
+                chunk = metrics[i:i + MAX_COLS]
+                cols = st.columns(len(chunk))
+                for col, metric in zip(cols, chunk):
+                    with col:
+                        st.metric(metric.label, metric.value, help=metric.help_text or None)
         
         elif isinstance(element, Formula):
             if element.inline:
@@ -113,11 +119,23 @@ class StreamlitContentRenderer:
             self._render_table(element)
         
         elif isinstance(element, Columns):
-            cols = st.columns(element.widths)
-            for col, content in zip(cols, element.columns):
-                with col:
-                    for item in content:
-                        self._render_element(item)
+            # Streamlit columns collapse on mobile automatically.
+            # However, to ensure readability on tablets/small laptops, we limit side-by-side columns.
+            MAX_LAYOUT_COLS = 2
+            
+            num_cols = len(element.columns)
+            widths = element.widths or [1.0] * num_cols
+            
+            # Process in chunks
+            for i in range(0, num_cols, MAX_LAYOUT_COLS):
+                chunk_cols = element.columns[i:i + MAX_LAYOUT_COLS]
+                chunk_widths = widths[i:i + MAX_LAYOUT_COLS]
+                
+                cols = st.columns(chunk_widths)
+                for col_obj, content_list in zip(cols, chunk_cols):
+                    with col_obj:
+                        for item in content_list:
+                            self._render_element(item)
         
         elif isinstance(element, Expander):
             with st.expander(element.title, expanded=element.expanded):
@@ -498,7 +516,7 @@ class StreamlitContentRenderer:
         y_pred = intercept + slope * x_line
         se_fit = np.sqrt(mse * (1/n + (x_line - x_mean)**2 / ss_x))
         
-        ci_mult = st.slider("Konfidenz-Multiplikator (z)", 1.0, 3.0, 1.96, 0.1, key="se_mult")
+        ci_mult = st.slider("Confidence Multiplier (z)", 1.0, 3.0, 1.96, 0.1, key=f"se_mult_{self.data.get('dataset_id', 'default')}")
         
         fig = go.Figure()
         
@@ -599,13 +617,13 @@ class StreamlitContentRenderer:
     # ... Pasting back the niche ones ...
     
     def _render_bivariate_normal_3d(self) -> None:
-        rho = st.slider("Korrelation ρ", -0.99, 0.99, 0.0, 0.05, key="bivar_rho")
+        rho = st.slider("Correlation ρ", -0.99, 0.99, 0.0, 0.05, key="bivar_rho_widget")
         x = np.linspace(-3, 3, 50); y = np.linspace(-3, 3, 50); X, Y = np.meshgrid(x, y)
         det = 1 - rho**2; z_val = X**2 - 2*rho*X*Y + Y**2
         Z = (1 / (2 * np.pi * np.sqrt(det))) * np.exp(-z_val / (2 * det))
         fig = go.Figure(data=[go.Surface(x=X, y=Y, z=Z, colorscale='Viridis')])
         fig.update_layout(title=f"Bivariate Normalverteilung (ρ={rho})", height=500)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key="plot_bivariate_3d")
 
     def _render_covariance_3d(self) -> None:
         # Re-implement simplified
@@ -619,7 +637,7 @@ class StreamlitContentRenderer:
             fig.add_trace(go.Scatter3d(x=[x[i], x[i]], y=[y[i], y[i]], z=[0, prods[i]], mode='lines', line=dict(color=col, width=5), showlegend=False))
         fig.add_trace(go.Scatter3d(x=x[:30], y=y[:30], z=prods[:30], mode='markers', marker=dict(size=4)))
         fig.update_layout(title="Kovarianz-Beiträge (3D)", scene=dict(zaxis_title="(x-x̄)(y-ȳ)"), height=500)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key="plot_covariance_3d")
         
     def _render_correlation_examples(self) -> None:
          # Keep previous implementation but ensure scene layout is good
@@ -631,14 +649,18 @@ class StreamlitContentRenderer:
         x_nl=np.linspace(-2,2,n); y_nl=x_nl**2+np.random.normal(0,0.3,n)
         fig.add_trace(go.Scatter3d(x=x_nl, y=y_nl, z=np.zeros(n), mode='markers', marker=dict(size=3)), row=2, col=3)
         fig.update_layout(height=600, title="Korrelations-Beispiele", showlegend=False)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key="plot_correlation_examples")
 
-    def _render_assumption_violation_demo(self) -> None:
-        violation_type = st.selectbox("Verletzung:", ["Keine", "Heteroskedastizität", "Nicht-Linearität", "Ausreisser"])
+    def _render_assumption_violation_demo(self, key_suffix: str = "default") -> None:
+        violation_type = st.selectbox(
+            "Assumption Violation:", 
+            ["None", "Heteroskedasticity", "Non-Linearity", "Outliers"], 
+            key=f"assumption_violation_{key_suffix}"
+        )
         np.random.seed(42); n=100; x=np.random.uniform(0,10,n)
-        if violation_type=="Keine": y=2+3*x+np.random.normal(0,2,n)
-        elif violation_type=="Heteroskedastizität": y=2+3*x+np.random.normal(0,1,n)*x
-        elif violation_type=="Nicht-Linearität": y=2+3*x+0.5*x**2+np.random.normal(0,2,n)
+        if violation_type=="None": y=2+3*x+np.random.normal(0,2,n)
+        elif violation_type=="Heteroskedasticity": y=2+3*x+np.random.normal(0,1,n)*x
+        elif violation_type=="Non-Linearity": y=2+3*x+0.5*x**2+np.random.normal(0,2,n)
         else: y=2+3*x+np.random.normal(0,2,n); y[0]=100
         
         slope, intercept, r_value, p_value, std_err = stats.linregress(x,y)
@@ -651,13 +673,13 @@ class StreamlitContentRenderer:
             fig.add_trace(go.Scatter3d(x=x, y=np.zeros(n), z=y, mode='markers', name='Daten'))
             fig.add_trace(go.Scatter3d(x=x, y=np.zeros(n), z=y_pred, mode='lines', line=dict(color='orange', width=4), name='Fit'))
             fig.update_layout(self._get_common_3d_layout("Daten & Fit"))
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, key=f"plot_fit_{key_suffix}")
         with col2:
             fig = go.Figure()
             fig.add_trace(go.Scatter3d(x=y_pred, y=np.zeros(n), z=resid, mode='markers', marker=dict(color='red')))
             fig.add_trace(go.Scatter3d(x=[min(y_pred), max(y_pred)], y=[0,0], z=[0,0], mode='lines', line=dict(dash='dash')))
             fig.update_layout(self._get_common_3d_layout("Residuen vs Fitted", x_label="Fitted", y_label="Residuen"))
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, key=f"plot_resid_{key_suffix}")
 
     def _render_t_test_plot(self) -> None:
         df = self.stats.get('df', 10); t = self.stats.get('t_slope', 0)
@@ -666,7 +688,7 @@ class StreamlitContentRenderer:
         fig.add_trace(go.Scatter3d(x=x, y=np.zeros(100), z=y, mode='lines', line=dict(width=4)))
         fig.add_trace(go.Scatter3d(x=[t,t], y=[0,0], z=[0, stats.t.pdf(t, df)], mode='lines', line=dict(color='red', width=5), name='t-Stat'))
         fig.update_layout(self._get_common_3d_layout(f"t-Verteilung (df={df})", x_label="t", y_label="Dichte"))
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key="plot_t_test")
 
     def _render_anova_interactive(self) -> None:
         # Keep 3D scatter
@@ -683,24 +705,57 @@ class StreamlitContentRenderer:
         st.plotly_chart(fig, use_container_width=True)
 
     def _render_heteroskedasticity_demo(self) -> None:
-        # Just use assumption violation demo
-        self._render_assumption_violation_demo()
+        # Just use assumption violation demo with specific key
+        self._render_assumption_violation_demo(key_suffix="special_hetero")
 
     def _render_conditional_distribution_3d(self) -> None:
-        # Keep previous logic
-        x=self.data.get('x',[]); y=self.data.get('y',[])
-        if len(x)==0: return
-        slope=self.stats.get('slope',0); intercept=self.stats.get('intercept',0); se=np.sqrt(self.stats.get('mse',1))
-        xv=np.linspace(min(x),max(x),5)
-        fig=go.Figure()
-        for v in xv:
-            yp=intercept+slope*v; yr=np.linspace(yp-3*se,yp+3*se,30)
-            dens=stats.norm.pdf(yr,yp,se); dens=dens/max(dens)*1
-            fig.add_trace(go.Scatter3d(x=[v]*30, y=dens, z=yr, mode='lines', line=dict(width=3))) # Rotate density to Y axis?
+        """Render 3D conditional distribution f(y|x)."""
+        x = self.data.get('x', np.array([]))
+        y = self.data.get('y', np.array([]))
         
-        # Line
-        xl=np.linspace(min(x),max(x),100); yl=intercept+slope*xl
-        fig.add_trace(go.Scatter3d(x=xl, y=np.zeros(100), z=yl, mode='lines', line=dict(color='orange', width=4)))
-        fig.update_layout(self._get_common_3d_layout("Bedingte Verteilungen"))
-        st.plotly_chart(fig, use_container_width=True)
+        if len(x) == 0:
+            return
+        
+        slope = self.stats.get('slope', 0)
+        intercept = self.stats.get('intercept', 0)
+        se = np.sqrt(self.stats.get('mse', 1))
+        
+        x_vals = np.linspace(np.min(x), np.max(x), 5)
+        
+        fig = go.Figure()
+        
+        for x_val in x_vals:
+            y_pred = intercept + slope * x_val
+            y_range = np.linspace(y_pred - 3*se, y_pred + 3*se, 50)
+            density = stats.norm.pdf(y_range, y_pred, se)
+            
+            # Scaling density for visual depth (along X axis)
+            density_scaled = density / np.max(density) * (np.max(x) - np.min(x)) * 0.2
+            
+            fig.add_trace(go.Scatter3d(
+                x=[x_val] * len(y_range),
+                y=y_range,
+                z=density_scaled,
+                mode='lines',
+                line=dict(width=3, color=self.COLORS["explained"]),
+                name=f'f(y|x={x_val:.1f})'
+            ))
+        
+        # Mean line on the floor
+        xl = np.linspace(min(x), max(x), 100)
+        yl = intercept + slope * xl
+        fig.add_trace(go.Scatter3d(
+            x=xl, y=yl, z=np.zeros_like(xl),
+            mode='lines', line=dict(color=self.COLORS["model"], width=4),
+            name='E(Y|X)'
+        ))
+        
+        fig.update_layout(
+            self._get_common_3d_layout("3D Bedingte Verteilung f(y|x)", 
+                                      self.data.get('x_label', 'X'), 
+                                      self.data.get('y_label', 'Y'))
+        )
+        # Fix zaxis title for this specific case
+        fig.update_layout(scene=dict(zaxis_title="Dichte"))
+        st.plotly_chart(fig, use_container_width=True, key="cond_dist_3d")
 
