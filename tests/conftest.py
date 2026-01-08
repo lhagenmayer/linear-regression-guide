@@ -1,12 +1,11 @@
 """
-Pytest configuration and shared fixtures for Pipeline tests.
+Pytest configuration and shared fixtures for Clean Architecture tests.
 """
 
 import pytest
 import numpy as np
 
-from src.pipeline.get_data import DataFetcher, DataResult
-from src.pipeline.calculate import StatisticsCalculator
+from src.infrastructure import DataFetcher, DataResult, StatisticsCalculator
 
 
 @pytest.fixture

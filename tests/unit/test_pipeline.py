@@ -1,22 +1,22 @@
 """
-Tests for the Pipeline Module.
+Tests for the Clean Architecture Infrastructure.
 
-Tests the 4-step pipeline: GET → CALCULATE → PLOT → DISPLAY
-
-Note: Display tests require streamlit and are skipped in CI environments.
+Tests the pipeline: GET → CALCULATE → PLOT
+Updated for new architecture: src/infrastructure/*
 """
 
 import pytest
 import numpy as np
 
-# Import only non-UI components for testing
-from src.pipeline.get_data import DataFetcher, DataResult, MultipleRegressionDataResult
-from src.pipeline.calculate import StatisticsCalculator, RegressionResult, MultipleRegressionResult
-from src.pipeline.display import DisplayPreparer, DisplayData
+# Import from new infrastructure layer
+from src.infrastructure import (
+    DataFetcher, DataResult, MultipleRegressionDataResult,
+    StatisticsCalculator, RegressionResult, MultipleRegressionResult,
+)
 
 # Try to import plot components (may fail without plotly)
 try:
-    from src.pipeline.plot import PlotBuilder, PlotCollection
+    from src.infrastructure import PlotBuilder, PlotCollection
     HAS_PLOTLY = True
 except ImportError:
     HAS_PLOTLY = False
@@ -25,12 +25,20 @@ except ImportError:
 
 # Try to import full pipeline
 try:
-    from src.pipeline import RegressionPipeline, PipelineResult
+    from src.infrastructure import RegressionPipeline, PipelineResult
     HAS_PIPELINE = True
 except ImportError:
     HAS_PIPELINE = False
     RegressionPipeline = None
     PipelineResult = None
+
+# Import Use Case for Clean Architecture tests
+try:
+    from src.container import get_container
+    from src.core.application import RegressionRequestDTO
+    HAS_USE_CASE = True
+except ImportError:
+    HAS_USE_CASE = False
 
 
 class TestDataFetcher:
@@ -80,6 +88,11 @@ class TestDataFetcher:
         
         assert isinstance(data, MultipleRegressionDataResult)
         assert len(data.y) == 100
+    
+    def test_dataset_id_in_extra(self):
+        """Test that dataset ID is stored in extra dict."""
+        data = self.fetcher.get_simple("electronics", n=50, seed=42)
+        assert data.extra.get("dataset") == "electronics"
 
 
 class TestStatisticsCalculator:
@@ -195,60 +208,6 @@ class TestPlotBuilder:
         assert plots.scatter is not None  # 3D plot
 
 
-class TestDisplayPreparer:
-    """Test Step 4: DISPLAY (data preparation)"""
-    
-    def setup_method(self):
-        self.preparer = DisplayPreparer()
-        self.fetcher = DataFetcher()
-        self.calc = StatisticsCalculator()
-    
-    @pytest.mark.skipif(not HAS_PLOTLY, reason="Plotly not available")
-    def test_prepare_simple(self):
-        """Test preparing simple regression for display."""
-        data = self.fetcher.get_simple("electronics", n=50, seed=42)
-        stats = self.calc.simple_regression(data.x, data.y)
-        
-        plotter = PlotBuilder()
-        plots = plotter.simple_regression_plots(data, stats)
-        
-        display_data = self.preparer.prepare_simple(data, stats, plots)
-        
-        assert isinstance(display_data, DisplayData)
-        assert display_data.analysis_type == "simple"
-    
-    @pytest.mark.skipif(not HAS_PLOTLY, reason="Plotly not available")  
-    def test_prepare_multiple(self):
-        """Test preparing multiple regression for display."""
-        data = self.fetcher.get_multiple("cities", n=75, seed=42)
-        stats = self.calc.multiple_regression(data.x1, data.x2, data.y)
-        
-        plotter = PlotBuilder()
-        plots = plotter.multiple_regression_plots(data, stats)
-        
-        display_data = self.preparer.prepare_multiple(data, stats, plots)
-        
-        assert isinstance(display_data, DisplayData)
-        assert display_data.analysis_type == "multiple"
-    
-    @pytest.mark.skipif(not HAS_PLOTLY, reason="Plotly not available")
-    def test_serialization(self):
-        """Test that display data can be serialized."""
-        data = self.fetcher.get_simple("electronics", n=50, seed=42)
-        stats = self.calc.simple_regression(data.x, data.y)
-        
-        plotter = PlotBuilder()
-        plots = plotter.simple_regression_plots(data, stats)
-        
-        display_data = self.preparer.prepare_simple(data, stats, plots)
-        serialized = display_data.to_dict()
-        
-        assert isinstance(serialized, dict)
-        assert "analysis_type" in serialized
-        assert "stats" in serialized
-        assert serialized["stats"]["r_squared"] > 0
-
-
 @pytest.mark.skipif(not HAS_PIPELINE, reason="Pipeline components not available")
 class TestRegressionPipeline:
     """Test the complete pipeline."""
@@ -308,6 +267,49 @@ class TestRegressionPipeline:
         assert plots is not None
 
 
+@pytest.mark.skipif(not HAS_USE_CASE, reason="Use Case not available")
+class TestCleanArchitectureUseCase:
+    """Test Clean Architecture Use Cases."""
+    
+    def test_use_case_simple_regression(self):
+        """Test RunRegressionUseCase for simple regression."""
+        container = get_container()
+        use_case = container.run_regression_use_case
+        
+        request = RegressionRequestDTO(
+            dataset_id="electronics",
+            n_observations=50,
+            noise_level=0.4,
+            seed=42,
+            regression_type="simple"
+        )
+        
+        response = use_case.execute(request)
+        
+        assert response.success == True
+        assert "x" in response.coefficients
+        assert response.metrics["r_squared"] > 0.5
+        assert len(response.predictions) == 50
+    
+    def test_use_case_reproducibility(self):
+        """Test that same request gives same result."""
+        container = get_container()
+        use_case = container.run_regression_use_case
+        
+        request = RegressionRequestDTO(
+            dataset_id="electronics",
+            n_observations=50,
+            noise_level=0.4,
+            seed=42,
+            regression_type="simple"
+        )
+        
+        response1 = use_case.execute(request)
+        response2 = use_case.execute(request)
+        
+        assert response1.metrics["r_squared"] == response2.metrics["r_squared"]
+
+
 @pytest.mark.skipif(not HAS_PIPELINE, reason="Pipeline components not available")
 class TestPipelineConsistency:
     """Test pipeline consistency and reproducibility."""
@@ -361,8 +363,7 @@ class TestFrameworkDetection:
     def test_render_context(self):
         """Test RenderContext creation."""
         from src.adapters.base import RenderContext
-        from src.pipeline.get_data import DataFetcher
-        from src.pipeline.calculate import StatisticsCalculator
+        from src.infrastructure import DataFetcher, StatisticsCalculator
         
         fetcher = DataFetcher()
         calc = StatisticsCalculator()
