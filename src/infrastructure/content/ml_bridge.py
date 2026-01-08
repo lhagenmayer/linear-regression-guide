@@ -48,22 +48,25 @@ class MLBridgeContent(ContentBuilder):
         """Chapter 7.0: Introduction to ML perspective."""
         s = self.stats
         
+        # Dynamic variable names
+        dataset = s.get('dataset_title', s.get('dataset_name', 'Datensatz'))
+        y_label = s.get('y_label', 'Zielvariable')
+        
         return Chapter(
             number="7.0",
             title="The Machine Learning Perspective",
             icon="🤖",
             sections=[
-                InfoBox("""
+                InfoBox(f"""
 **Der Paradigmenwechsel**: Von Statistik zu Machine Learning
 
-Bisher haben wir Regression als **statistisches Inferenzwerkzeug** betrachtet:
-- Sind die Koeffizienten signifikant? (t-Tests)
-- Wie viel Varianz erklärt das Modell? (R²)
-- Sind die Annahmen erfüllt? (Homoskedastizität, Normalität)
+Bisher haben wir den **{dataset}** Datensatz als statistisches Inferenzproblem betrachtet:
+- Welchen Einfluss hat X auf **{y_label}**? (Signifikanz)
+- Wie viel Varianz von **{y_label}** erklären wir? (R²)
 
 In Machine Learning verschieben wir den Fokus auf **Vorhersage**:
-- Wie gut prognostiziert das Modell **neue, ungesehene Daten**?
-- Wie vermeiden wir **Überanpassung** an die Trainingsdaten?
+- Wie genau können wir **{y_label}** für neue Daten vorhersagen?
+- Wie gut generalisiert unser Modell auf unbekannte Fälle?
 """),
                 
                 Markdown("### 🎯 Zwei Perspektiven, ein Modell"),
@@ -248,6 +251,7 @@ Die **Learning Rate** kontrolliert die Schrittgröße:
         """Chapter 7.3: Train/validation/test split."""
         s = self.stats
         n = s.get('n', 100)
+        dataset = s.get('dataset_title', s.get('dataset_name', 'Datensatz'))
         
         return Chapter(
             number="7.3",
@@ -263,7 +267,7 @@ Ein Modell, das die Trainingsdaten perfekt anpasst, kann auf neuen Daten völlig
                 
                 Expander("📊 Die Drei-Wege-Aufteilung", [
                     Markdown(f"""
-**Unser Datensatz:** n = {n} Beobachtungen
+**Unser Datensatz '{dataset}':** n = {n} Beobachtungen
 
 | Split | Anteil | Zweck |
 |-------|--------|-------|

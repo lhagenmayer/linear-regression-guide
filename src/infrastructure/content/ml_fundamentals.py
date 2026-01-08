@@ -107,6 +107,8 @@ Statt Regeln manuell zu definieren, **lernt** das System aus Daten.
     # =========================================================================
     def _chapter_9_1_ml_types(self) -> Chapter:
         """Chapter 9.1: Types of machine learning."""
+        s = self.stats
+        dataset = s.get('dataset_title', s.get('dataset_name', 'Datensatz'))
         
         return Chapter(
             number="9.1",
@@ -120,10 +122,12 @@ Machine Learning wird nach **zwei Dimensionen** kategorisiert:
 """),
                 
                 Expander("🎓 Überwachtes Lernen (Supervised)", [
-                    Markdown("""
+                    Markdown(f"""
 **Definition:** Trainingsdaten haben Labels (Y-Werte).
 
 Das Modell lernt die Abbildung: X → Y
+
+**Unser aktueller Datensatz '{dataset}' fällt in diese Kategorie!**
 """),
                     Table(
                         headers=["Aufgabe", "Zielgröße", "Beispiel"],
@@ -179,14 +183,17 @@ Das Modell findet **Struktur** in den Daten selbst.
     # =========================================================================
     def _chapter_9_2_knn(self) -> Chapter:
         """Chapter 9.2: K-Nearest Neighbors algorithm."""
+        s = self.stats
+        dataset = s.get('dataset_title', s.get('dataset_name', 'Datensatz'))
         
         return Chapter(
             number="9.2",
             title="K-Nearest Neighbors (KNN)",
             icon="👥",
             sections=[
-                Markdown("""
+                Markdown(f"""
 **KNN** ist einer der einfachsten und intuitivsten ML-Algorithmen.
+Wir werden ihn verwenden, um Muster in **{dataset}** zu erkennen.
 
 **Prinzip:** "Sage mir, wer deine Nachbarn sind, und ich sage dir, wer du bist."
 """),

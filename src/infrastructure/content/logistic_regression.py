@@ -55,7 +55,7 @@ class LogisticRegressionContent(ContentBuilder):
                 InfoBox(f"""
 **Bisher:** Unsere Zielgröße Y war **kontinuierlich** (z.B. {s.get('y_label', 'Umsatz')}).
 
-**Jetzt:** Was wenn Y nur zwei Werte annehmen kann?
+**Jetzt:** Was wenn **{s.get('y_label', 'Y')}** nur zwei Werte annehmen kann?
 - Spam / Kein Spam
 - Krankheit / Keine Krankheit  
 - Kauf / Kein Kauf
@@ -156,6 +156,7 @@ Diese Wahrscheinlichkeit muss:
     def _chapter_8_2_logistic_model(self) -> Chapter:
         """Chapter 8.2: The logistic regression model."""
         s = self.stats
+        x_label = s.get('x_label', 'X')
         
         return Chapter(
             number="8.2",
@@ -181,12 +182,12 @@ Diese Wahrscheinlichkeit muss:
                     Formula(r"\text{Odds} = \frac{P(Y=1)}{P(Y=0)} = \frac{p}{1-p}"),
                     Markdown("**Log-Odds (Logit):**"),
                     Formula(r"\log\left(\frac{p}{1-p}\right) = \beta_0 + \beta_1 x"),
-                    Markdown("""
+                    Markdown(f"""
 **Interpretation von β₁:**
 
-Eine Einheit Erhöhung in X verändert die **Log-Odds** um β₁.
+Eine Einheit Erhöhung in **{x_label}** verändert die **Log-Odds** um β₁.
 
-Oder äquivalent: Die **Odds** werden mit $e^{\\beta_1}$ multipliziert.
+Oder äquivalent: Die **Odds** werden mit $e^{{\\beta_1}}$ multipliziert.
 """),
                     Table(
                         headers=["β₁", "e^β₁", "Effekt auf Odds"],
