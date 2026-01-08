@@ -1,358 +1,399 @@
-# 🏗️ Architektur
+# 🏗️ Architektur - 100% Plattform-Agnostisch
 
-## Übersicht
+Diese Anwendung ist **vollständig plattform-agnostisch** und kann mit **jedem Frontend** verwendet werden:
 
-Diese Anwendung implementiert **Option B: Content als Datenstruktur** für eine vollständig frontend-agnostische Architektur.
+- ✅ Flask (Python Server-Rendered HTML)
+- ✅ Streamlit (Python Interactive UI)
+- ✅ Next.js / React
+- ✅ Vite / Vue.js
+- ✅ Angular / Svelte
+- ✅ Mobile Apps (iOS/Android)
+- ✅ Jeder HTTP-Client
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                              run.py                                      │
-│                         (Framework Detection)                            │
-└────────────────────────────────┬────────────────────────────────────────┘
-                                 │
-                ┌────────────────┴────────────────┐
-                ↓                                 ↓
-    ┌───────────────────────┐         ┌───────────────────────┐
-    │   Streamlit Frontend  │         │    Flask Frontend     │
-    │   adapters/streamlit/ │         │  adapters/flask_app   │
-    └───────────────────────┘         └───────────────────────┘
-                │                                 │
-                └────────────────┬────────────────┘
-                                 ↓
-    ┌─────────────────────────────────────────────────────────────────────┐
-    │                         Pipeline                                     │
-    │                                                                      │
-    │   GET → CALCULATE → PLOT → DISPLAY                                  │
-    │                                                                      │
-    └────────────────────────────────┬────────────────────────────────────┘
-                                     ↓
-    ┌─────────────────────────────────────────────────────────────────────┐
-    │                    ContentBuilder (content/)                         │
-    │                                                                      │
-    │   SimpleRegressionContent        MultipleRegressionContent          │
-    │   └── build() → EducationalContent                                  │
-    │                                                                      │
-    │   Content ist DATEN, nicht UI-Code!                                 │
-    └────────────────────────────────┬────────────────────────────────────┘
-                                     │
-                    ┌────────────────┴────────────────┐
-                    ↓                                 ↓
-    ┌─────────────────────────────┐   ┌─────────────────────────────┐
-    │  StreamlitContentRenderer   │   │    HTMLContentRenderer      │
-    │                             │   │                             │
-    │  Interpretiert Content als: │   │  Interpretiert Content als: │
-    │  - st.markdown()            │   │  - HTML/Jinja2              │
-    │  - st.plotly_chart()        │   │  - Plotly.js                │
-    │  - st.expander()            │   │  - Bootstrap Accordion      │
-    └─────────────────────────────┘   └─────────────────────────────┘
-```
-
----
-
-## Module
-
-### 1. Content (`src/content/`)
-
-Framework-agnostische Definition des Educational Contents.
-
-#### `structure.py`
-Definiert alle Content-Elemente als Dataclasses:
-
-```python
-@dataclass
-class Chapter:
-    number: str
-    title: str
-    icon: str
-    sections: List[ContentElement]
-
-@dataclass
-class Markdown(ContentElement):
-    text: str
-
-@dataclass
-class Formula(ContentElement):
-    latex: str
-    inline: bool = False
-
-@dataclass
-class Plot(ContentElement):
-    plot_key: str
-    title: str = ""
-    height: int = 400
-```
-
-#### `builder.py`
-Base class für Content Builder mit Helper-Methoden:
-
-```python
-class ContentBuilder(ABC):
-    def __init__(self, stats: Dict, plots: Dict):
-        self.stats = stats
-        self.plots = plots
-    
-    @abstractmethod
-    def build(self) -> EducationalContent:
-        pass
-    
-    def fmt(self, value: float, decimals: int = 4) -> str:
-        """Format numeric value."""
-        
-    def interpret_r2(self, r2: float) -> str:
-        """Interpret R² value."""
-```
-
-#### `simple_regression.py` / `multiple_regression.py`
-Konkrete Content Builder:
-
-```python
-class SimpleRegressionContent(ContentBuilder):
-    def build(self) -> EducationalContent:
-        return EducationalContent(
-            title="📊 Einfache Lineare Regression",
-            chapters=[
-                self._chapter_1_introduction(),
-                self._chapter_2_model(),
-                # ... 11 Kapitel
-            ]
-        )
-```
-
----
-
-### 2. Pipeline (`src/pipeline/`)
-
-4-Schritt Datenverarbeitung:
+## 📐 Architektur-Übersicht
 
 ```
-┌─────────┐    ┌───────────┐    ┌──────┐    ┌─────────┐
-│   GET   │ → │ CALCULATE │ → │ PLOT │ → │ DISPLAY │
-└─────────┘    └───────────┘    └──────┘    └─────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              FRONTENDS                                       │
+│  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐ │
+│  │  Next.js  │  │   Vite    │  │   Vue     │  │ Angular   │  │  Mobile   │ │
+│  │  /React   │  │  /React   │  │           │  │           │  │ (iOS/And) │ │
+│  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘ │
+│        │              │              │              │              │        │
+│        └──────────────┴──────────────┼──────────────┴──────────────┘        │
+│                                      │ HTTP/JSON                            │
+└──────────────────────────────────────┼──────────────────────────────────────┘
+                                       ↓
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                           REST API LAYER                                      │
+│                        /src/api/ (Pure JSON)                                  │
+│  ┌────────────────────────────────────────────────────────────────────────┐  │
+│  │  /api/regression/simple      POST  → Run simple regression             │  │
+│  │  /api/regression/multiple    POST  → Run multiple regression           │  │
+│  │  /api/content/simple         POST  → Get educational content           │  │
+│  │  /api/content/multiple       POST  → Get educational content           │  │
+│  │  /api/content/schema         GET   → Get content structure schema      │  │
+│  │  /api/ai/interpret           POST  → AI interpretation                 │  │
+│  │  /api/datasets               GET   → List available datasets           │  │
+│  │  /api/openapi.json           GET   → OpenAPI specification             │  │
+│  └────────────────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────────────────┘
+                                       │
+                                       ↓
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                          CORE LAYER (Pure Python)                             │
+│                         Framework-Agnostic Logic                              │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐               │
+│  │    Pipeline     │  │    Content      │  │      AI         │               │
+│  │   /pipeline/    │  │   /content/     │  │     /ai/        │               │
+│  │                 │  │                 │  │                 │               │
+│  │  • DataFetcher  │  │  • Structure    │  │  • Perplexity   │               │
+│  │  • Calculator   │  │  • Builder      │  │    Client       │               │
+│  │  • PlotBuilder  │  │  • Simple       │  │  • Response     │               │
+│  │  • Serializers  │  │  • Multiple     │  │  • Caching      │               │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘               │
+│                                │                                              │
+│                     All outputs are JSON-serializable                         │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-#### `get_data.py`
-Datengenerierung und -laden:
+## 🔌 Integration Beispiele
 
-```python
-class DataFetcher:
-    def get_simple(self, dataset, n, noise, seed) -> DataResult
-    def get_multiple(self, dataset, n, noise, seed) -> MultipleRegressionDataResult
-```
+### Next.js / React
 
-#### `calculate.py`
-Statistische Berechnungen:
+```typescript
+// lib/api.ts
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-```python
-class StatisticsCalculator:
-    def simple_regression(self, x, y) -> RegressionResult
-    def multiple_regression(self, x1, x2, y) -> MultipleRegressionResult
-```
+export async function runSimpleRegression(params: {
+  dataset?: string;
+  n?: number;
+  noise?: number;
+  seed?: number;
+}) {
+  const response = await fetch(`${API_URL}/api/regression/simple`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  return response.json();
+}
 
-#### `plot.py`
-Plot-Generierung:
-
-```python
-class PlotBuilder:
-    def simple_regression_plots(self, data, result) -> PlotCollection
-    def multiple_regression_plots(self, data, result) -> PlotCollection
-```
-
-#### `regression_pipeline.py`
-Unified Pipeline:
-
-```python
-class RegressionPipeline:
-    def run_simple(self, dataset, n, noise, seed) -> PipelineResult
-    def run_multiple(self, dataset, n, noise, seed) -> PipelineResult
-```
-
----
-
-### 3. Adapters (`src/adapters/`)
-
-Framework-spezifische Implementierungen.
-
-#### `detector.py`
-Framework Auto-Detection:
-
-```python
-class Framework(Enum):
-    STREAMLIT = "streamlit"
-    FLASK = "flask"
-    UNKNOWN = "unknown"
-
-class FrameworkDetector:
-    @staticmethod
-    def detect() -> Framework
-```
-
-#### `renderers/streamlit_renderer.py`
-Streamlit-spezifisches Rendering:
-
-```python
-class StreamlitContentRenderer:
-    def render(self, content: EducationalContent) -> None:
-        for chapter in content.chapters:
-            st.markdown(f"## {chapter.title}")
-            for section in chapter.sections:
-                self._render_element(section)
-    
-    def _render_element(self, element: ContentElement):
-        if isinstance(element, Markdown):
-            st.markdown(element.text)
-        elif isinstance(element, Formula):
-            st.latex(element.latex)
-        elif isinstance(element, Plot):
-            st.plotly_chart(self.plots[element.plot_key])
-        # ...
-```
-
-#### `renderers/html_renderer.py`
-HTML/Flask-spezifisches Rendering:
-
-```python
-class HTMLContentRenderer:
-    def render(self, content: EducationalContent) -> str:
-        html_parts = []
-        for chapter in content.chapters:
-            html_parts.append(self._render_chapter(chapter))
-        return '\n'.join(html_parts)
-    
-    def _render_element(self, element: ContentElement) -> str:
-        if isinstance(element, Markdown):
-            return f'<div class="markdown">{element.text}</div>'
-        elif isinstance(element, Formula):
-            return f'<div class="math">\\[{element.latex}\\]</div>'
-        # ...
-```
-
----
-
-## Datenfluss
-
-### 1. Request kommt rein
-
-```
-User → /simple?dataset=Bildung&n=50
-```
-
-### 2. Pipeline wird ausgeführt
-
-```python
-pipeline = RegressionPipeline()
-result = pipeline.run_simple(dataset="electronics", n=50)
-# result.data, result.stats, result.plots
-```
-
-### 3. Stats Dictionary wird erstellt
-
-```python
-stats_dict = {
-    'context_title': 'Bildung und Einkommen',
-    'x_label': 'Bildungsjahre',
-    'y_label': 'Einkommen (CHF)',
-    'slope': 5000.0,
-    'intercept': 20000.0,
-    'r_squared': 0.72,
-    # ... alle Statistiken
+export async function getEducationalContent(params: {
+  dataset?: string;
+  n?: number;
+}) {
+  const response = await fetch(`${API_URL}/api/content/simple`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  return response.json();
 }
 ```
 
-### 4. Content wird generiert
+```tsx
+// components/RegressionChart.tsx
+import Plotly from 'react-plotly.js';
 
-```python
-builder = SimpleRegressionContent(stats_dict, {})
-content = builder.build()
-# content.chapters[0].sections[0] → InfoBox mit "Bildung und Einkommen"
+export function RegressionChart({ plotData }: { plotData: any }) {
+  return (
+    <Plotly
+      data={plotData.data}
+      layout={plotData.layout}
+    />
+  );
+}
 ```
 
-### 5. Content wird gerendert
+### Vue.js / Vite
 
-**Streamlit:**
-```python
-renderer = StreamlitContentRenderer(stats=stats_dict)
-renderer.render(content)  # → st.* Aufrufe
+```typescript
+// composables/useRegression.ts
+import { ref } from 'vue';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+export function useRegression() {
+  const loading = ref(false);
+  const result = ref(null);
+  const content = ref(null);
+
+  async function runAnalysis(params: any) {
+    loading.value = true;
+    try {
+      const response = await fetch(`${API_URL}/api/content/simple`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+      });
+      const data = await response.json();
+      result.value = data.data?.stats;
+      content.value = data.data?.content;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  return { loading, result, content, runAnalysis };
+}
 ```
 
-**Flask:**
-```python
-renderer = HTMLContentRenderer(stats=stats_dict)
-html = renderer.render(content)  # → HTML String
-return render_template('educational_content.html', content_html=html)
+### Vanilla JavaScript / Any Framework
+
+```javascript
+// Einfacher API-Aufruf mit fetch
+async function analyze(dataset = 'electronics', n = 50) {
+  const response = await fetch('http://localhost:8000/api/content/simple', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ dataset, n }),
+  });
+  
+  const { success, content, plots, stats } = await response.json();
+  
+  if (success) {
+    // content.chapters - Educational content structure
+    // plots.scatter    - Plotly figure (JSON)
+    // stats            - Statistical results
+    
+    // Render plot with Plotly.js
+    Plotly.newPlot('chart', plots.scatter.data, plots.scatter.layout);
+    
+    // Render content
+    renderContent(content);
+  }
+}
+
+function renderContent(content) {
+  // Iterate through chapters and render based on element type
+  content.chapters.forEach(chapter => {
+    chapter.sections.forEach(section => {
+      // Handle each element type: markdown, metric, formula, plot, etc.
+      renderElement(section);
+    });
+  });
+}
 ```
 
----
+## 📦 Datenstrukturen
 
-## Content-Elemente Mapping
+### Content Schema
 
-| ContentElement | Streamlit | Flask/HTML |
-|----------------|-----------|------------|
-| `Markdown` | `st.markdown()` | `<div class="markdown">` |
-| `Formula` | `st.latex()` | MathJax `\\[...\\]` |
-| `Plot` | `st.plotly_chart()` | `Plotly.newPlot()` |
-| `Table` | `st.dataframe()` | `<table class="table">` |
-| `Metric` | `st.metric()` | `<div class="metric-card">` |
-| `MetricRow` | `st.columns()` | `<div class="metrics-grid">` |
-| `Expander` | `st.expander()` | Bootstrap Accordion |
-| `Columns` | `st.columns()` | Bootstrap Grid Row |
-| `InfoBox` | `st.info()` | `<div class="alert alert-info">` |
-| `WarningBox` | `st.warning()` | `<div class="alert alert-warning">` |
-| `SuccessBox` | `st.success()` | `<div class="alert alert-success">` |
-| `CodeBlock` | `st.code()` | `<pre><code>` |
+Alle educational content Elemente folgen dieser Struktur:
 
----
+```typescript
+interface EducationalContent {
+  title: string;
+  subtitle: string;
+  chapters: Chapter[];
+}
 
-## Dynamischer Content
+interface Chapter {
+  type: 'chapter';
+  number: string;
+  title: string;
+  icon: string;
+  sections: (Section | ContentElement)[];
+}
 
-Der Content ist vollständig dynamisch basierend auf dem `stats` Dictionary:
+interface Section {
+  type: 'section';
+  title: string;
+  icon: string;
+  content: ContentElement[];
+}
 
-### Beispiel: Interpretation
-
-```python
-def _build_interpretation_section(self, s: Dict) -> Markdown:
-    return Markdown(f"""
-**Das Modell:**
-{s['y_label']} = {s['intercept']:.4f} + {s['slope']:.4f} × {s['x_label']}
-
-**Interpretation:**
-Pro Einheit {s['x_label']} ändert sich {s['y_label']} um {s['slope']:.4f}.
-""")
+// Content Element Types
+type ContentElement = 
+  | { type: 'markdown'; text: string }
+  | { type: 'metric'; label: string; value: string; help_text?: string; delta?: string }
+  | { type: 'metric_row'; metrics: Metric[] }
+  | { type: 'formula'; latex: string; inline?: boolean }
+  | { type: 'plot'; plot_key: string; title?: string; description?: string; height?: number }
+  | { type: 'table'; headers: string[]; rows: string[][]; caption?: string }
+  | { type: 'columns'; columns: ContentElement[][]; widths?: number[] }
+  | { type: 'expander'; title: string; content: ContentElement[]; expanded?: boolean }
+  | { type: 'info_box'; content: string }
+  | { type: 'warning_box'; content: string }
+  | { type: 'success_box'; content: string }
+  | { type: 'code_block'; code: string; language?: string }
+  | { type: 'divider' };
 ```
 
-### Beispiel: R-Output
+### API Response Format
 
-```python
-def _build_r_output(self, s: Dict) -> str:
-    return f"""
-Call:
-lm(formula = {s['y_label']} ~ {s['x_label']})
-
-Coefficients:
-(Intercept)  {s['intercept']:9.4f}
-{s['x_label']}  {s['slope']:9.4f}
-
-Multiple R-squared:  {s['r_squared']:.4f}
-"""
+```typescript
+interface APIResponse {
+  success: boolean;
+  data?: {
+    content: EducationalContent;
+    plots: {
+      scatter: PlotlyFigure;
+      residuals: PlotlyFigure;
+      diagnostics: PlotlyFigure;
+      extra?: Record<string, PlotlyFigure>;
+    };
+    stats: {
+      type: string;
+      coefficients: { intercept: number; slope: number };
+      model_fit: { r_squared: number; r_squared_adj: number };
+      // ... more fields
+    };
+    data: {
+      type: string;
+      x: number[];
+      y: number[];
+      n: number;
+      // ... more fields
+    };
+  };
+  error?: string;
+}
 ```
 
----
+## 🚀 Server Starten
 
-## Erweiterung
+### REST API (für externe Frontends)
 
-### Neues Frontend
+```bash
+# Startet den API-Server auf Port 8000
+python run.py --api
 
-1. Neuen Renderer in `adapters/renderers/` erstellen
-2. `_render_element()` für alle ContentElement-Typen implementieren
-3. In Adapter einbinden
+# Mit benutzerdefiniertem Port
+python run.py --api --port 3001
 
-### Neuer Content
+# Mit FastAPI (falls installiert) für automatische OpenAPI Docs
+pip install fastapi uvicorn
+python run.py --api
+# → Swagger UI: http://localhost:8000/docs
+```
 
-1. Neuen ContentBuilder in `content/` erstellen
-2. `build()` Methode implementieren
-3. Kapitel-Methoden definieren
-4. Alle Renderer zeigen es automatisch an
+### Flask Web App (HTML Rendering)
 
-### Neues Content-Element
+```bash
+# Startet Flask mit Server-Side Rendering
+python run.py --flask --port 5000
+```
 
-1. Neue Dataclass in `structure.py` definieren
-2. In allen Renderern `_render_element()` erweitern
+### Streamlit (Interactive Python UI)
+
+```bash
+# Startet Streamlit
+streamlit run run.py
+```
+
+## 🔧 Architektur-Prinzipien
+
+### 1. Strikte Trennung von Concerns
+
+```
+Core Logic (Pure Python)     →  JSON-serialisierbar
+     ↓
+API Layer (REST)             →  Framework-agnostisch
+     ↓
+Adapters (Framework-spezifisch)  →  Flask/Streamlit/etc.
+```
+
+### 2. Alle Daten sind JSON-serialisierbar
+
+- **Numpy Arrays** → Listen (`array.tolist()`)
+- **Plotly Figures** → JSON (`fig.to_json()`)
+- **Dataclasses** → Dict (`to_dict()` Methoden)
+- **Content Elements** → Strukturierte Dicts
+
+### 3. Keine Framework-Imports im Core
+
+Der gesamte `/src/pipeline/`, `/src/content/`, und `/src/ai/` Code hat **keine** Imports von:
+- `streamlit`
+- `flask`
+- `jinja2`
+- Andere UI-Frameworks
+
+### 4. Lazy Loading für Adapters
+
+```python
+# In endpoints.py
+@property
+def pipeline(self):
+    """Lazy load to avoid import issues."""
+    if self._pipeline is None:
+        from ..pipeline import RegressionPipeline
+        self._pipeline = RegressionPipeline()
+    return self._pipeline
+```
+
+## 📊 Modul-Struktur
+
+```
+src/
+├── api/                    # REST API Layer (100% agnostisch)
+│   ├── __init__.py
+│   ├── endpoints.py        # Business logic endpoints
+│   ├── serializers.py      # JSON serialization
+│   └── server.py           # Flask/FastAPI server
+│
+├── pipeline/               # Core Pipeline (100% agnostisch)
+│   ├── get_data.py         # Data fetching
+│   ├── calculate.py        # Statistics calculation
+│   ├── plot.py             # Plotly figure generation
+│   └── regression_pipeline.py
+│
+├── content/                # Content Layer (100% agnostisch)
+│   ├── structure.py        # Content element dataclasses
+│   ├── builder.py          # Abstract content builder
+│   ├── simple_regression.py    # Simple regression content
+│   └── multiple_regression.py  # Multiple regression content
+│
+├── ai/                     # AI Layer (100% agnostisch)
+│   ├── perplexity_client.py    # API client
+│   └── ui_components.py    # (optional, für Adapter)
+│
+└── adapters/               # Framework-spezifische Adapter
+    ├── flask_app.py        # Flask mit HTML templates
+    ├── streamlit/
+    │   └── app.py          # Streamlit UI
+    └── renderers/
+        ├── html_renderer.py      # Content → HTML
+        └── streamlit_renderer.py # Content → Streamlit
+```
+
+## 🌐 CORS Konfiguration
+
+Der API-Server erlaubt standardmäßig alle Origins (`*`). Für Produktion:
+
+```python
+# In run.py oder beim Server-Start
+from src.api import create_api_server
+
+app = create_api_server(cors_origins=[
+    "https://your-frontend.com",
+    "http://localhost:3000",  # Next.js dev
+    "http://localhost:5173",  # Vite dev
+])
+```
+
+## 🧪 API Testen
+
+```bash
+# Health Check
+curl http://localhost:8000/api/health
+
+# Simple Regression
+curl -X POST http://localhost:8000/api/regression/simple \
+  -H "Content-Type: application/json" \
+  -d '{"dataset": "electronics", "n": 50}'
+
+# Educational Content
+curl -X POST http://localhost:8000/api/content/simple \
+  -H "Content-Type: application/json" \
+  -d '{"dataset": "electronics", "n": 50}'
+
+# AI Interpretation
+curl -X POST http://localhost:8000/api/ai/interpret \
+  -H "Content-Type: application/json" \
+  -d '{"stats": {"intercept": 0.5, "slope": 0.3, "r_squared": 0.85}}'
+
+# Available Datasets
+curl http://localhost:8000/api/datasets
+```

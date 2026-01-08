@@ -1,17 +1,33 @@
 # 📊 Regression Analysis
 
-**Interactive Statistical Learning Platform**
+**Interactive Statistical Learning Platform - 100% Platform Agnostic**
 
-Eine moderne, interaktive Lernplattform für Regressionsanalyse mit **Frontend-Agnostischer Architektur** - läuft identisch in Streamlit und Flask.
+Eine moderne Lernplattform für Regressionsanalyse mit **vollständig plattform-agnostischer Architektur**.
+
+Funktioniert mit **JEDEM Frontend**: Next.js, Vite, Vue, Angular, Flask, Streamlit, Mobile Apps.
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
-![Flask](https://img.shields.io/badge/Flask-3.0-green.svg)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.28+-red.svg)
-![Tests](https://img.shields.io/badge/Tests-26%20passed-success.svg)
+![API](https://img.shields.io/badge/API-REST/JSON-green.svg)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 ---
 
 ## ✨ Features
+
+### 🔌 100% Plattform-Agnostisch
+
+Diese Anwendung bietet eine **reine REST API**, die von jedem Frontend konsumiert werden kann:
+
+| Frontend | Unterstützt |
+|----------|-------------|
+| Next.js / React | ✅ |
+| Vite / Vue.js | ✅ |
+| Angular | ✅ |
+| Svelte | ✅ |
+| Mobile Apps (iOS/Android) | ✅ |
+| Flask (HTML) | ✅ |
+| Streamlit | ✅ |
+| Jeder HTTP-Client | ✅ |
 
 ### 📈 Einfache Regression (11 Kapitel)
 - Mehrdimensionale Verteilungen & bivariate Normalverteilung
@@ -20,7 +36,6 @@ Eine moderne, interaktive Lernplattform für Regressionsanalyse mit **Frontend-A
 - Gauss-Markov Annahmen & Diagnostik
 - t-Tests, F-Tests, ANOVA
 - Heteroskedastizität & robuste Standardfehler
-- Interaktive 3D-Visualisierungen
 
 ### 📊 Multiple Regression (9 Kapitel)
 - OLS in Matrixnotation
@@ -29,22 +44,12 @@ Eine moderne, interaktive Lernplattform für Regressionsanalyse mit **Frontend-A
 - Dummy-Variablen
 - Residuendiagnostik
 - 3D-Regressionsebene
-- Interaktive Prognose
 
-### 🤖 Perplexity AI Integration
+### 🤖 AI Integration (Perplexity)
 - Gesamtheitliche Interpretation des R-Outputs
 - Erklärt ALLE statistischen Werte verständlich
 - Fallback-Interpretation ohne API-Key
-- Streaming-Support für Echtzeit-Anzeige
-- Response-Caching für Effizienz
-
-### 🎨 State-of-the-Art UI (Flask)
-- 🌙 Dark/Light Mode mit Tastenkürzel (D)
-- ⚡ HTMX für dynamische Updates ohne Reload
-- 📱 Responsive Design mit Mobile-Sidebar
-- 🎯 Scroll-Spy Navigation
-- 📋 Copy-to-Clipboard für Code
-- 🖨️ Print-optimierte Styles
+- Response-Caching
 
 ---
 
@@ -53,41 +58,290 @@ Eine moderne, interaktive Lernplattform für Regressionsanalyse mit **Frontend-A
 ### Installation
 
 ```bash
-# Repository klonen
 git clone <repository-url>
 cd regression-analysis
-
-# Dependencies installieren
 pip install -r requirements.txt
 ```
 
 ### Ausführung
 
 ```bash
-# Streamlit (interaktiv, empfohlen für Lernen)
+# Option 1: REST API (für externe Frontends: Next.js, Vite, etc.)
+python3 run.py --api --port 8000
+
+# Option 2: Flask Web App (Server-Rendered HTML)
+python3 run.py --flask --port 5000
+
+# Option 3: Streamlit (Interactive Python UI)
 streamlit run run.py
-
-# Flask (Web-Server, state-of-the-art UI)
-python run.py --flask
-
-# Auto-Detection
-python run.py
 ```
 
 ### URLs
 
-| Framework | URL |
-|-----------|-----|
-| Streamlit | http://localhost:8501 |
-| Flask | http://localhost:5000 |
+| Modus | URL | Beschreibung |
+|-------|-----|--------------|
+| REST API | http://localhost:8000 | JSON API für externe Frontends |
+| Flask | http://localhost:5000 | Server-Rendered HTML |
+| Streamlit | http://localhost:8501 | Interactive Python UI |
 
-### Perplexity AI konfigurieren (optional)
+---
+
+## 🔌 API Dokumentation
+
+### Endpoints
+
+| Method | Endpoint | Beschreibung |
+|--------|----------|--------------|
+| `POST` | `/api/regression/simple` | Simple Regression ausführen |
+| `POST` | `/api/regression/multiple` | Multiple Regression ausführen |
+| `POST` | `/api/content/simple` | Educational Content (Simple) |
+| `POST` | `/api/content/multiple` | Educational Content (Multiple) |
+| `GET` | `/api/content/schema` | Content-Schema |
+| `POST` | `/api/ai/interpret` | AI Interpretation |
+| `GET` | `/api/datasets` | Verfügbare Datensätze |
+| `GET` | `/api/health` | Health Check |
+| `GET` | `/api/openapi.json` | OpenAPI Spec |
+
+### Beispiel: Simple Regression
 
 ```bash
-# Option 1: Umgebungsvariable
+curl -X POST http://localhost:8000/api/regression/simple \
+  -H "Content-Type: application/json" \
+  -d '{"dataset": "electronics", "n": 50}'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "type": "simple",
+    "stats": {
+      "coefficients": { "intercept": 0.52, "slope": 0.48 },
+      "model_fit": { "r_squared": 0.89, "r_squared_adj": 0.87 },
+      "t_tests": { ... }
+    },
+    "plots": {
+      "scatter": { "data": [...], "layout": {...} },
+      "residuals": { ... }
+    }
+  }
+}
+```
+
+### Beispiel: Educational Content
+
+```bash
+curl -X POST http://localhost:8000/api/content/simple \
+  -H "Content-Type: application/json" \
+  -d '{"dataset": "electronics", "n": 50}'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "content": {
+    "title": "📊 Einfache Lineare Regression",
+    "chapters": [
+      {
+        "type": "chapter",
+        "number": "1.0",
+        "title": "Einleitung",
+        "sections": [
+          { "type": "markdown", "text": "..." },
+          { "type": "formula", "latex": "Y = β₀ + β₁X + ε" },
+          { "type": "plot", "plot_key": "scatter" }
+        ]
+      }
+    ]
+  },
+  "plots": { ... },
+  "stats": { ... }
+}
+```
+
+---
+
+## 🎨 Frontend Integration
+
+### Next.js / React
+
+```typescript
+// lib/api.ts
+const API_URL = 'http://localhost:8000';
+
+export async function getContent(params: {
+  dataset?: string;
+  n?: number;
+}) {
+  const res = await fetch(`${API_URL}/api/content/simple`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  return res.json();
+}
+```
+
+```tsx
+// components/RegressionChart.tsx
+import dynamic from 'next/dynamic';
+const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
+
+export function Chart({ plotData }) {
+  return <Plot data={plotData.data} layout={plotData.layout} />;
+}
+```
+
+### Vue.js / Vite
+
+```typescript
+// composables/useRegression.ts
+export function useRegression() {
+  const result = ref(null);
+
+  async function analyze(dataset = 'electronics', n = 50) {
+    const res = await fetch('http://localhost:8000/api/content/simple', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dataset, n }),
+    });
+    result.value = await res.json();
+  }
+
+  return { result, analyze };
+}
+```
+
+### Vanilla JavaScript
+
+```javascript
+async function analyze() {
+  const response = await fetch('http://localhost:8000/api/content/simple', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ dataset: 'electronics', n: 50 }),
+  });
+  
+  const { content, plots } = await response.json();
+  
+  // Render plot with Plotly.js
+  Plotly.newPlot('chart', plots.scatter.data, plots.scatter.layout);
+  
+  // Render content
+  content.chapters.forEach(chapter => renderChapter(chapter));
+}
+```
+
+---
+
+## 🏗️ Architektur
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              FRONTENDS                                       │
+│   Next.js │ Vite │ Vue │ Angular │ Svelte │ Flask │ Streamlit │ Mobile     │
+└────────────────────────────────────┬────────────────────────────────────────┘
+                                     │ HTTP/JSON
+                                     ↓
+┌────────────────────────────────────────────────────────────────────────────┐
+│                           REST API LAYER                                    │
+│                          /src/api/ (Pure JSON)                              │
+│   RegressionAPI │ ContentAPI │ AIInterpretationAPI │ OpenAPI                │
+└────────────────────────────────────┬────────────────────────────────────────┘
+                                     │
+                                     ↓
+┌────────────────────────────────────────────────────────────────────────────┐
+│                        CORE LAYER (Pure Python)                             │
+│                                                                             │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐                     │
+│  │  Pipeline   │    │   Content   │    │     AI      │                     │
+│  │ DataFetcher │    │  Builder    │    │  Perplexity │                     │
+│  │ Calculator  │    │  Structure  │    │   Client    │                     │
+│  │ PlotBuilder │    │  Elements   │    │             │                     │
+│  └─────────────┘    └─────────────┘    └─────────────┘                     │
+│                                                                             │
+│               Alle Outputs sind JSON-serialisierbar                         │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Schlüsselprinzipien
+
+1. **Keine Framework-Imports im Core**
+   - `/src/pipeline/` - Pure Python
+   - `/src/content/` - Pure Python
+   - `/src/ai/` - Pure Python
+
+2. **Alles JSON-serialisierbar**
+   - Numpy Arrays → Listen
+   - Plotly Figures → JSON
+   - Content → Strukturierte Dicts
+
+3. **Strikte Trennung**
+   - Core Logic → API Layer → Adapters
+
+---
+
+## 📁 Projektstruktur
+
+```
+src/
+├── api/                    # 🔌 REST API (100% agnostisch)
+│   ├── endpoints.py        #    Business logic
+│   ├── serializers.py      #    JSON serialization
+│   └── server.py           #    Flask/FastAPI server
+│
+├── pipeline/               # 🔧 Core Pipeline
+│   ├── get_data.py         #    Data fetching
+│   ├── calculate.py        #    Statistics
+│   └── plot.py             #    Visualizations
+│
+├── content/                # 📖 Educational Content
+│   ├── structure.py        #    Content elements
+│   ├── simple_regression.py    # 11 Kapitel
+│   └── multiple_regression.py  # 9 Kapitel
+│
+├── ai/                     # 🤖 AI Integration
+│   └── perplexity_client.py    # Perplexity API
+│
+└── adapters/               # 🎨 Framework Adapters
+    ├── flask_app.py        #    Flask HTML
+    └── streamlit/          #    Streamlit UI
+```
+
+---
+
+## 📊 Content Schema
+
+Alle Content-Elemente folgen dieser Struktur:
+
+```typescript
+interface ContentElement =
+  | { type: 'markdown'; text: string }
+  | { type: 'formula'; latex: string; inline?: boolean }
+  | { type: 'plot'; plot_key: string; height?: number }
+  | { type: 'metric'; label: string; value: string }
+  | { type: 'metric_row'; metrics: Metric[] }
+  | { type: 'table'; headers: string[]; rows: string[][] }
+  | { type: 'expander'; title: string; content: ContentElement[] }
+  | { type: 'columns'; columns: ContentElement[][] }
+  | { type: 'info_box' | 'warning_box' | 'success_box'; content: string }
+  | { type: 'code_block'; code: string; language?: string }
+  | { type: 'divider' };
+```
+
+Mehr Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+
+---
+
+## 🤖 AI Konfiguration
+
+```bash
+# Umgebungsvariable
 export PERPLEXITY_API_KEY="your-api-key"
 
-# Option 2: Streamlit secrets (.streamlit/secrets.toml)
+# Oder .streamlit/secrets.toml
 [perplexity]
 api_key = "your-api-key"
 ```
@@ -96,274 +350,14 @@ Ohne API-Key wird eine Fallback-Interpretation generiert.
 
 ---
 
-## 🏗️ Architektur
-
-### Option B: Content als Datenstruktur
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         run.py                                   │
-│                    (Auto-Detection)                              │
-└────────────────────────────┬────────────────────────────────────┘
-                             │
-            ┌────────────────┴────────────────┐
-            ↓                                 ↓
-┌─────────────────────┐             ┌─────────────────────┐
-│   Streamlit App     │             │     Flask App       │
-└─────────────────────┘             └─────────────────────┘
-            │                                 │
-            └────────────────┬────────────────┘
-                             ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                  ContentBuilder (content/)                       │
-│                                                                  │
-│   SimpleRegressionContent    MultipleRegressionContent          │
-│   → 11 Kapitel               → 9 Kapitel                        │
-│   → Dynamischer Content      → Dynamischer Content              │
-│   → KEINE UI-Abhängigkeiten  → KEINE UI-Abhängigkeiten         │
-└────────────────────────────────┬────────────────────────────────┘
-                                 │
-                ┌────────────────┴────────────────┐
-                ↓                                 ↓
-┌───────────────────────────┐     ┌───────────────────────────┐
-│  StreamlitContentRenderer │     │    HTMLContentRenderer    │
-│     → st.markdown()       │     │     → HTML/Jinja2         │
-│     → st.plotly_chart()   │     │     → Bootstrap           │
-│     → st.expander()       │     │     → Plotly.js           │
-└───────────────────────────┘     └───────────────────────────┘
-```
-
-### Warum Option B?
-
-| Aspekt | Option A (vorher) | Option B (jetzt) |
-|--------|-------------------|------------------|
-| Content | Dupliziert pro Framework | **Einmal definiert** |
-| Änderungen | 2x durchführen | **1x durchführen** |
-| Konsistenz | Risiko für Divergenz | **Garantiert identisch** |
-| Erweiterung | Neues Framework = Copy-Paste | **Neuer Renderer = fertig** |
-
----
-
-## 📁 Projektstruktur
-
-```
-regression-analysis/
-├── run.py                      # 🚀 Unified Entry Point
-│
-├── src/
-│   ├── ai/                     # 🤖 PERPLEXITY AI INTEGRATION
-│   │   ├── perplexity_client.py #   API Client mit Caching
-│   │   └── ui_components.py    #    UI für Streamlit & Flask
-│   │
-│   ├── content/                # 📖 EDUCATIONAL CONTENT (Framework-Agnostic)
-│   │   ├── structure.py        #    Content-Datenstrukturen
-│   │   ├── builder.py          #    Base ContentBuilder
-│   │   ├── simple_regression.py #   11 Kapitel Simple Regression
-│   │   └── multiple_regression.py # 9 Kapitel Multiple Regression
-│   │
-│   ├── pipeline/               # 🔧 4-STEP DATA PIPELINE
-│   │   ├── get_data.py         #    Step 1: GET
-│   │   ├── calculate.py        #    Step 2: CALCULATE
-│   │   ├── plot.py             #    Step 3: PLOT
-│   │   ├── display.py          #    Step 4: DISPLAY
-│   │   └── regression_pipeline.py # Unified Pipeline
-│   │
-│   ├── adapters/               # 🎨 FRONTEND ADAPTERS
-│   │   ├── detector.py         #    Framework Auto-Detection
-│   │   ├── base.py             #    BaseRenderer, RenderContext
-│   │   ├── renderers/
-│   │   │   ├── streamlit_renderer.py
-│   │   │   └── html_renderer.py
-│   │   ├── streamlit/
-│   │   │   └── app.py          #    Streamlit Application
-│   │   ├── flask_app.py        #    Flask Application
-│   │   └── templates/          #    Jinja2 Templates
-│   │       ├── base.html
-│   │       ├── index.html
-│   │       └── educational_content.html
-│   │
-│   ├── config/                 # ⚙️ Configuration
-│   │   ├── config.py
-│   │   └── logger.py
-│   │
-│   └── data/                   # 📊 Static Content
-│       └── content.py
-│
-├── tests/                      # 🧪 Tests
-│   └── unit/
-│       └── test_pipeline.py    #    26 Unit Tests
-│
-├── requirements.txt
-└── README.md
-```
-
----
-
-## 📖 Content-Elemente
-
-Der ContentBuilder verwendet diese Datenstrukturen:
-
-| Element | Beschreibung | Streamlit | Flask |
-|---------|--------------|-----------|-------|
-| `Markdown` | Text mit Formatierung | `st.markdown()` | HTML |
-| `Formula` | LaTeX Formeln | `st.latex()` | MathJax |
-| `Plot` | Visualisierungen | `st.plotly_chart()` | Plotly.js |
-| `Table` | Datentabellen | `st.dataframe()` | `<table>` |
-| `Metric` | KPI-Anzeige | `st.metric()` | Card |
-| `MetricRow` | Mehrere KPIs | `st.columns()` | Grid |
-| `Expander` | Aufklappbar | `st.expander()` | Accordion |
-| `Columns` | Spalten-Layout | `st.columns()` | Bootstrap Row |
-| `InfoBox` | Info-Hinweis | `st.info()` | Alert Info |
-| `WarningBox` | Warnung | `st.warning()` | Alert Warning |
-| `SuccessBox` | Erfolg | `st.success()` | Alert Success |
-| `CodeBlock` | Code | `st.code()` | `<pre><code>` |
-
----
-
-## 🔧 Dynamischer Content
-
-Der Content passt sich automatisch dem Datensatz an:
-
-```python
-# Datensatz wählen
-stats = {
-    'context_title': 'Bildung und Einkommen',
-    'x_label': 'Bildungsjahre',
-    'y_label': 'Jahreseinkommen (CHF)',
-    'slope': 5000.0,
-    'intercept': 20000.0,
-    # ... weitere Statistiken
-}
-
-# Content generieren
-builder = SimpleRegressionContent(stats, plots)
-content = builder.build()
-
-# Rendern (Streamlit ODER Flask)
-renderer = StreamlitContentRenderer(stats=stats)
-renderer.render(content)
-```
-
-**Ergebnis:**
-- Alle Labels, Interpretationen, Formeln sind datensatz-spezifisch
-- R-Style Output zeigt korrekte Variablennamen
-- Beispielrechnungen verwenden echte Werte
-
----
-
 ## 🧪 Tests
 
 ```bash
-# Alle Tests ausführen
+# API testen
+curl http://localhost:8000/api/health
+
+# Pytest
 pytest tests/ -v
-
-# Mit Coverage
-pytest tests/ --cov=src --cov-report=html
-```
-
-**Aktueller Status:** 26 Tests ✅
-
----
-
-## 🤖 AI-Interpretation
-
-### Funktionsweise
-
-Der User kann auf Anfrage eine **gesamtheitliche Interpretation** des R-Outputs erhalten:
-
-```python
-from src.ai import PerplexityClient
-
-client = PerplexityClient()
-
-# Interpretation anfordern
-response = client.interpret_r_output(stats_dict)
-print(response.content)
-```
-
-### Was wird interpretiert?
-
-Die AI erklärt ALLE Werte des R-Outputs:
-
-1. **Zusammenfassung** - Was sagt das Modell aus?
-2. **Koeffizienten** - Was bedeuten β₀ und β₁ praktisch?
-3. **Modellgüte** - R², F-Test Interpretation
-4. **Signifikanz** - p-Werte, t-Tests verständlich erklärt
-5. **Praktische Bedeutung** - Reale Anwendung
-6. **Einschränkungen** - Worauf achten?
-
-### Beispiel R-Output
-
-```r
-Call:
-lm(formula = Einkommen ~ Bildungsjahre)
-
-Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept)  20000.00    2500.00    8.00   0.0001 ***
-Bildungsjahre 5000.00     350.00   14.30   0.0000 ***
-
-Multiple R-squared:  0.72
-```
-
-Die AI erklärt dann z.B.:
-> "Pro zusätzlichem Bildungsjahr steigt das erwartete Einkommen um **5000 CHF**. 
-> Das Modell erklärt **72%** der Varianz, was als **gut** einzustufen ist..."
-
----
-
-## 🎨 Flask UI Features
-
-### Dark Mode
-- Toggle: Button unten rechts oder Taste **D**
-- Speicherung in localStorage
-- Plotly-Plots passen sich an
-
-### HTMX
-- Dataset-Wechsel ohne Reload
-- Slider-Updates in Echtzeit
-- Loading-Indicator
-- AI-Interpretation ohne Reload
-
-### Navigation
-- Sticky Sidebar mit Kapitel-Links
-- Scroll-Spy für aktives Kapitel
-- Mobile-optimiert mit Toggle
-
----
-
-## 🔄 Erweiterung
-
-### Neues Frontend hinzufügen
-
-```python
-# 1. Neuen Renderer erstellen
-class TerminalContentRenderer:
-    def render(self, content: EducationalContent) -> str:
-        for chapter in content.chapters:
-            print(f"\n=== {chapter.title} ===")
-            for section in chapter.sections:
-                self._render_element(section)
-
-# 2. Fertig! Derselbe Content wird angezeigt.
-```
-
-### Neuen Content hinzufügen
-
-```python
-# 1. Neuen ContentBuilder erstellen
-class TimeSeriesContent(ContentBuilder):
-    def build(self) -> EducationalContent:
-        return EducationalContent(
-            title="📈 Zeitreihenanalyse",
-            subtitle="ARIMA, Saisonalität und mehr",
-            chapters=[
-                self._chapter_1_introduction(),
-                # ...
-            ]
-        )
-
-# 2. Alle Renderer zeigen es automatisch an!
 ```
 
 ---
@@ -377,6 +371,8 @@ numpy>=1.24.0
 scipy>=1.11.0
 pandas>=2.0.0
 plotly>=5.18.0
+requests>=2.31.0
+markdown>=3.5.0
 ```
 
 ---
@@ -384,13 +380,3 @@ plotly>=5.18.0
 ## 📄 Lizenz
 
 MIT License - siehe [LICENSE](LICENSE)
-
----
-
-## 🙏 Credits
-
-- **Bootstrap 5.3** - UI Framework mit Dark Mode
-- **Plotly** - Interaktive Visualisierungen
-- **MathJax** - LaTeX Rendering
-- **HTMX** - Dynamic HTML
-- **Alpine.js** - Reaktivität
