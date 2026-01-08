@@ -1,11 +1,16 @@
 """
 AI UI Components - Framework-specific UI for Perplexity Integration.
 
+This module belongs to the ADAPTERS layer, not the AI layer,
+because it contains framework-specific code (Streamlit, Flask/HTML).
+
+The core PerplexityClient is in src/ai/ (framework-agnostic).
+
 Provides ready-to-use components for Streamlit and HTML/Flask.
 """
 
 from typing import Dict, Any, Optional
-from .perplexity_client import PerplexityClient, PerplexityConfig
+from ..ai import PerplexityClient
 
 
 class AIInterpretationStreamlit:
