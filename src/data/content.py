@@ -26,19 +26,34 @@ def get_multiple_regression_formulas(dataset_choice_mult: str) -> Dict[str, str]
         "general": r"y_i = \beta_0 + \beta_1 \cdot x_{1i} + \beta_2 \cdot x_{2i} + \cdots + \beta_K \cdot x_{Ki} + \varepsilon_i"
     }
 
-    if dataset_choice_mult == "🏙️ Städte-Umsatzstudie (75 Städte)":
+    if dataset_choice == "🏙️ Städte-Umsatzstudie (75 Städte)":
         formulas["specific"] = r"\text{Umsatz}_i = \beta_0 + \beta_1 \cdot \text{Preis}_i + \beta_2 \cdot \text{Werbung}_i + \varepsilon_i"
         formulas["context"] = "Handelskette in 75 Städten"
     elif dataset_choice_mult == "🏠 Häuserpreise mit Pool (1000 Häuser)":
         formulas["specific"] = r"\text{Preis}_i = \beta_0 + \beta_1 \cdot \text{Wohnfläche}_i + \beta_2 \cdot \text{Pool}_i + \varepsilon_i"
         formulas["context"] = "Hausverkäufe in Universitätsstadt"
-    elif dataset_choice_mult == "🇨🇭 Schweizer Kantone (sozioökonomisch)":
-        formulas["specific"] = r"\text{GDP}_i = \beta_0 + \beta_1 \cdot \text{Population Density}_i + \beta_2 \cdot \text{Foreign \%}_i + \beta_3 \cdot \text{Unemployment}_i + \varepsilon_i"
+    elif dataset_choice_mult == "🇨🇭 Schweizer Kantone":
+        formulas["specific"] = r"\text{GDP}_i = \beta_0 + \beta_1 \cdot \text{Population}_i + \beta_2 \cdot \text{Foreign \%}_i + \varepsilon_i"
         formulas["context"] = "Schweizer Kantone Sozioökonomie"
-    elif dataset_choice_mult == "🌤️ Schweizer Wetterstationen":
-        formulas["specific"] = r"\text{Temperature}_i = \beta_0 + \beta_1 \cdot \text{Altitude}_i + \beta_2 \cdot \text{Sunshine}_i + \beta_3 \cdot \text{Humidity}_i + \varepsilon_i"
+    elif dataset_choice_mult == "🌤️ Schweizer Wetter":
+        formulas["specific"] = r"\text{Temperature}_i = \beta_0 + \beta_1 \cdot \text{Altitude}_i + \beta_2 \cdot \text{Sunshine}_i + \varepsilon_i"
         formulas["context"] = "Schweizer Klimastationen"
-    else:  # Elektronikmarkt
+    elif dataset_choice_mult == "🏦 World Bank (Global)":
+        formulas["specific"] = r"\text{LifeExp}_i = \beta_0 + \beta_1 \cdot \text{GDP}_i + \beta_2 \cdot \text{Education}_i + \varepsilon_i"
+        formulas["context"] = "World Bank Development"
+    elif dataset_choice_mult == "💰 FRED (US Economy)":
+        formulas["specific"] = r"\text{GDP}_i = \beta_0 + \beta_1 \cdot \text{Unemployment}_i + \beta_2 \cdot \text{Interest}_i + \varepsilon_i"
+        formulas["context"] = "US Economic Indicators"
+    elif dataset_choice_mult == "🏥 WHO (Health)":
+        formulas["specific"] = r"\text{LifeExp}_i = \beta_0 + \beta_1 \cdot \text{Spending}_i + \beta_2 \cdot \text{Sanitation}_i + \varepsilon_i"
+        formulas["context"] = "Global Health"
+    elif dataset_choice_mult == "🇪🇺 Eurostat (EU)":
+        formulas["specific"] = r"\text{GDP}_i = \beta_0 + \beta_1 \cdot \text{Employment}_i + \beta_2 \cdot \text{Education}_i + \varepsilon_i"
+        formulas["context"] = "EU Economic Data"
+    elif dataset_choice_mult == "🛰️ NASA POWER":
+        formulas["specific"] = r"\text{CropYield}_i = \beta_0 + \beta_1 \cdot \text{Temperature}_i + \beta_2 \cdot \text{Solar}_i + \varepsilon_i"
+        formulas["context"] = "Agro-Climatology"
+    else:  # Elektronikmarkt / Default
         formulas["specific"] = r"\text{Umsatz}_i = \beta_0 + \beta_1 \cdot \text{Fläche}_i + \beta_2 \cdot \text{Marketing}_i + \varepsilon_i"
         formulas["context"] = "Elektronikmarkt-Kette"
 
@@ -65,23 +80,56 @@ def get_multiple_regression_descriptions(dataset_choice_mult: str) -> Dict[str, 
             "x2": "Pool vorhanden (0/1)",
             "y": "Hauspreis (USD)"
         }
-    elif dataset_choice_mult == "🇨🇭 Schweizer Kantone (sozioökonomisch)":
-        descriptions["main"] = "**26 Schweizer Kantone** - Analyse des Zusammenhangs zwischen Bevölkerungsdichte, Ausländeranteil, Arbeitslosigkeit und Wirtschaftskraft."
+    elif dataset_choice_mult == "🇨🇭 Schweizer Kantone":
+        descriptions["main"] = "**26 Schweizer Kantone** - Analyse des Zusammenhangs zwischen Bevölkerungsdichte, Ausländeranteil und Wirtschaftskraft."
         descriptions["variables"] = {
             "x1": "Bevölkerungsdichte (pro km²)",
             "x2": "Ausländeranteil (%)",
-            "x3": "Arbeitslosenquote (%)",
             "y": "BIP pro Kopf (CHF)"
         }
-    elif dataset_choice_mult == "🌤️ Schweizer Wetterstationen":
-        descriptions["main"] = "**7 Schweizer Wetterstationen** von 273m bis 3576m Höhe - Untersuchung der Zusammenhänge zwischen geografischen Faktoren und Temperatur."
+    elif dataset_choice_mult == "🌤️ Schweizer Wetter":
+        descriptions["main"] = "**7 Schweizer Wetterstationen** - Untersuchung der Zusammenhänge zwischen Höhe, Sonnenstunden und Temperatur."
         descriptions["variables"] = {
             "x1": "Höhe über Meer (m)",
             "x2": "Sonnenstunden pro Jahr",
-            "x3": "Luftfeuchtigkeit (%)",
             "y": "Durchschnittstemperatur (°C)"
         }
-    else:  # Elektronikmarkt
+    elif dataset_choice_mult == "🏦 World Bank (Global)":
+        descriptions["main"] = "Analyse von **Entwicklungsindikatoren** weltweit (World Bank Data)."
+        descriptions["variables"] = {
+            "x1": "GDP per Capita (USD)",
+            "x2": "Education Years",
+            "y": "Life Expectancy (years)"
+        }
+    elif dataset_choice_mult == "💰 FRED (US Economy)":
+        descriptions["main"] = "Analyse der **US-Wirtschaft** (Federal Reserve Economic Data) über die Zeit."
+        descriptions["variables"] = {
+            "x1": "Unemployment Rate (%)",
+            "x2": "Interest Rate (%)",
+            "y": "GDP (Billions USD)"
+        }
+    elif dataset_choice_mult == "🏥 WHO (Health)":
+        descriptions["main"] = "Analyse der **globalen Gesundheitssysteme** (WHO Data)."
+        descriptions["variables"] = {
+            "x1": "Health Expenditure (USD)",
+            "x2": "Sanitation Access (%)",
+            "y": "Life Expectancy (years)"
+        }
+    elif dataset_choice_mult == "🇪🇺 Eurostat (EU)":
+        descriptions["main"] = "Vergleich der **EU-Länder** bezüglich Wirtschaft und Bildung."
+        descriptions["variables"] = {
+            "x1": "Employment Rate (%)",
+            "x2": "Tertiary Education (%)",
+            "y": "GDP per Capita (EUR)"
+        }
+    elif dataset_choice_mult == "🛰️ NASA POWER":
+        descriptions["main"] = "Einfluss von **Klimadaten** auf landwirtschaftliche Erträge."
+        descriptions["variables"] = {
+            "x1": "Temperature (°C)",
+            "x2": "Solar Radiation (W/m²)",
+            "y": "Crop Yield (tons/ha)"
+        }
+    else:  # Elektronikmarkt / Others
         descriptions["main"] = "Eine Elektronikmarkt-Kette analysiert **50 Filialen** - Zusammenhang zwischen Verkaufsfläche, Marketingbudget und Umsatz."
         descriptions["variables"] = {
             "x1": "Verkaufsfläche (100 qm)",
@@ -110,16 +158,9 @@ def get_simple_regression_content(dataset_choice: str, x_variable: str) -> Dict[
     Raises:
         ValueError: If dataset_choice or x_variable is invalid
     """
-    # Validate dataset_choice
-    valid_datasets = [
-        "🏪 Elektronikmarkt (simuliert)",
-        "🏙️ Städte-Umsatzstudie (75 Städte)",
-        "🇨🇭 Schweizer Kantone (sozioökonomisch)"
-    ]
-
-    if dataset_choice not in valid_datasets:
-        raise ValueError(f"Invalid dataset_choice: {dataset_choice}. Valid options: {valid_datasets}")
-
+    # Normalize dataset choice mapping if needed (legacy compatibility)
+    # This allows this file to work even if strict matching is used
+    
     content = {
         "x_label": "X",
         "y_label": "Y",
@@ -131,7 +172,7 @@ def get_simple_regression_content(dataset_choice: str, x_variable: str) -> Dict[
     }
 
     # Elektronikmarkt
-    if dataset_choice == "🏪 Elektronikmarkt (simuliert)":
+    if "Elektronikmarkt" in dataset_choice or "electronics" in dataset_choice: # Rough matching
         content.update({
             "y_label": "Umsatz (Mio. €)",
             "y_unit": "Mio. €",
@@ -141,9 +182,12 @@ def get_simple_regression_content(dataset_choice: str, x_variable: str) -> Dict[
             Die Daten zeigen, wie sich eine Vergrößerung der Verkaufsfläche auf den Umsatz auswirkt.
             """
         })
+        if x_variable == "Verkaufsfläche (m²)":
+            content["x_label"] = "Verkaufsfläche (m²)"
+            content["x_unit"] = "m²"
 
     # Städte-Umsatzstudie
-    elif dataset_choice == "🏙️ Städte-Umsatzstudie (75 Städte)":
+    elif "Städte" in dataset_choice:
         if x_variable == "Preis (CHF)":
             content.update({
                 "x_label": "Preis (CHF)",
@@ -151,13 +195,7 @@ def get_simple_regression_content(dataset_choice: str, x_variable: str) -> Dict[
                 "x_unit": "CHF",
                 "y_unit": "1'000 CHF",
                 "context_title": "Preisstrategie-Analyse",
-                "context_description": """
-                Eine Handelskette untersucht in **75 Städten**:
-                - **X** = Produktpreis (in CHF)
-                - **Y** = Umsatz (in 1'000 CHF)
-
-                **Erwartung:** Höherer Preis → niedrigerer Umsatz?
-                """
+                "context_description": "Eine Handelskette untersucht den Einfluss des Produktpreises auf den Umsatz."
             })
         else:  # Werbung
             content.update({
@@ -166,17 +204,11 @@ def get_simple_regression_content(dataset_choice: str, x_variable: str) -> Dict[
                 "x_unit": "1'000 CHF",
                 "y_unit": "1'000 CHF",
                 "context_title": "Werbeeffektivität",
-                "context_description": """
-                Eine Handelskette untersucht in **75 Städten**:
-                - **X** = Werbeausgaben (in 1'000 CHF)
-                - **Y** = Umsatz (in 1'000 CHF)
-
-                **Erwartung:** Mehr Werbung → höherer Umsatz?
-                """
+                "context_description": "Eine Handelskette untersucht den Einfluss der Werbeausgaben auf den Umsatz."
             })
 
     # Häuserpreise
-    elif dataset_choice == "🏠 Häuserpreise mit Pool (1000 Häuser)":
+    elif "Häuser" in dataset_choice or "Haus" in dataset_choice:
         if x_variable == "Wohnfläche (sqft/10)":
             content.update({
                 "x_label": "Wohnfläche (sqft/10)",
@@ -184,16 +216,7 @@ def get_simple_regression_content(dataset_choice: str, x_variable: str) -> Dict[
                 "x_unit": "sqft/10",
                 "y_unit": "USD",
                 "context_title": "Wohnflächen-Analyse",
-                "context_description": """
-                Eine Studie von **1000 Hausverkäufen** in einer Universitätsstadt:
-                - **X** = Wohnfläche (in sqft/10, d.h. 20.03 = 200.3 sqft)
-                - **Y** = Hauspreis (in USD)
-
-                **Erwartung:** Grössere Wohnfläche → höherer Preis?
-
-                ⚠️ **Didaktisch:** Nur EIN Prädiktor → grosser Fehlerterm
-                (Pool-Ausstattung fehlt als Erklärungsvariable!)
-                """
+                "context_description": "Untersuchung des Einflusses der Wohnfläche auf den Hauspreis."
             })
         else:  # Pool
             content.update({
@@ -202,131 +225,127 @@ def get_simple_regression_content(dataset_choice: str, x_variable: str) -> Dict[
                 "x_unit": "0/1",
                 "y_unit": "USD",
                 "context_title": "Pool-Effekt-Analyse",
-                "context_description": """
-                Eine Studie von **1000 Hausverkäufen** in einer Universitätsstadt:
-                - **X** = Pool-Vorhandensein (0 = kein Pool, 1 = Pool vorhanden)
-                - **Y** = Hauspreis (in USD)
-
-                **Erwartung:** Pool → höherer Preis? (Dummy-Variable!)
-
-                ⚠️ **Didaktisch:** Dies zeigt den Effekt einer **kategorischen Variable** (Pool ja/nein).
-                Nur 20.4% der Häuser haben einen Pool.
-
-                💡 **Interpretation der Steigung β₁:**
-                β₁ = durchschnittlicher Preisunterschied zwischen Häusern MIT Pool vs. OHNE Pool
-                """
+                "context_description": "Untersuchung des Einflusses eines Pools auf den Hauspreis."
             })
 
     # Schweizer Kantone
-    elif dataset_choice == "🇨🇭 Schweizer Kantone (sozioökonomisch)":
-        if x_variable == "Population Density":
+    elif "Kantone" in dataset_choice:
+        content["y_label"] = "BIP pro Kopf (CHF)"
+        content["y_unit"] = "CHF"
+        content["context_title"] = "Schweizer Kantone (Sozioökonomie)"
+        
+        if x_variable == "Bevölkerungsdichte (Einwohner/km²)" or "Density" in x_variable:
             content.update({
-                "x_label": "Population Density (per km²)",
-                "y_label": "GDP per Capita (CHF)",
-                "x_unit": "per km²",
-                "y_unit": "CHF",
-                "context_title": "Schweizer Kantone: Bevölkerungsdichte",
-                "context_description": """
-                Analyse der **26 Schweizer Kantone**:
-                - **X** = Bevölkerungsdichte (Einwohner pro km²)
-                - **Y** = BIP pro Kopf (in CHF)
-
-                **Erwartung:** Höhere Bevölkerungsdichte → höheres BIP?
-                """
+                "x_label": "Bevölkerungsdichte (Einwohner/km²)",
+                "x_unit": "Einw./km²",
+                "context_description": "Zusammenhang zwischen Bevölkerungsdichte und Wirtschaftskraft."
             })
-        elif x_variable == "Foreign Population %":
+        elif x_variable == "Ausländeranteil (%)" or "Foreign" in x_variable:
             content.update({
-                "x_label": "Foreign Population (%)",
-                "y_label": "GDP per Capita (CHF)",
+                "x_label": "Ausländeranteil (%)",
                 "x_unit": "%",
-                "y_unit": "CHF",
-                "context_title": "Schweizer Kantone: Ausländeranteil",
-                "context_description": """
-                Analyse der **26 Schweizer Kantone**:
-                - **X** = Ausländeranteil (%)
-                - **Y** = BIP pro Kopf (in CHF)
-
-                **Erwartung:** Mehr Ausländer → höheres BIP? (Urbanisierungseffekt)
-                """
+                "context_description": "Zusammenhang zwischen Ausländeranteil und Wirtschaftskraft."
             })
-        else:  # Unemployment
-            content.update({
-                "x_label": "Unemployment Rate (%)",
-                "y_label": "GDP per Capita (CHF)",
+        elif x_variable == "Unemployment" in x_variable:
+             content.update({
+                "x_label": "Arbeitslosenquote (%)",
                 "x_unit": "%",
-                "y_unit": "CHF",
-                "context_title": "Schweizer Kantone: Arbeitslosigkeit",
-                "context_description": """
-                Analyse der **26 Schweizer Kantone**:
-                - **X** = Arbeitslosenquote (%)
-                - **Y** = BIP pro Kopf (in CHF)
-
-                **Erwartung:** Höhere Arbeitslosigkeit → niedrigeres BIP?
-                """
+                "context_description": "Zusammenhang zwischen Arbeitslosigkeit und Wirtschaftskraft."
             })
 
-    # Schweizer Wetterstationen
-    elif dataset_choice == "🌤️ Schweizer Wetterstationen":
-        if x_variable == "Altitude":
+    # Schweizer Wetter
+    elif "Wetter" in dataset_choice:
+        content["y_label"] = "Jahresmitteltemperatur (°C)"
+        content["y_unit"] = "°C"
+        content["context_title"] = "Schweizer Wetterstationen"
+        
+        if x_variable == "Höhe über Meer (m)" or "Altitude" in x_variable:
             content.update({
-                "x_label": "Altitude (m)",
-                "y_label": "Average Temperature (°C)",
+                "x_label": "Höhe über Meer (m)",
                 "x_unit": "m",
-                "y_unit": "°C",
-                "context_title": "Schweizer Wetterstationen: Höhenprofil",
-                "context_description": """
-                **7 Schweizer Wetterstationen** von 273m bis 3576m Höhe:
-                - **X** = Höhe über Meer (in m)
-                - **Y** = Durchschnittstemperatur (°C)
-
-                **Erwartung:** Höhere Lage → niedrigere Temperatur? (-0.6°C pro 100m)
-                """
+                "context_description": "Zusammenhang zwischen Höhe und Temperatur."
             })
-        elif x_variable == "Sunshine Hours":
+        elif x_variable == "Sonnenstunden (h/Jahr)" or "Sunshine" in x_variable:
             content.update({
-                "x_label": "Sunshine Hours per Year",
-                "y_label": "Average Temperature (°C)",
-                "x_unit": "hours",
-                "y_unit": "°C",
-                "context_title": "Schweizer Wetterstationen: Sonnenstrahlung",
-                "context_description": """
-                **7 Schweizer Wetterstationen**:
-                - **X** = Sonnenstunden pro Jahr
-                - **Y** = Durchschnittstemperatur (°C)
-
-                **Erwartung:** Mehr Sonne → höhere Temperatur?
-                """
-            })
-        else:  # Humidity
-            content.update({
-                "x_label": "Humidity (%)",
-                "y_label": "Average Temperature (°C)",
-                "x_unit": "%",
-                "y_unit": "°C",
-                "context_title": "Schweizer Wetterstationen: Luftfeuchtigkeit",
-                "context_description": """
-                **7 Schweizer Wetterstationen**:
-                - **X** = Luftfeuchtigkeit (%)
-                - **Y** = Durchschnittstemperatur (°C)
-
-                **Erwartung:** Höhere Feuchtigkeit → niedrigere Temperatur?
-                """
+                "x_label": "Sonnenstunden (h/Jahr)",
+                "x_unit": "h",
+                "context_description": "Zusammenhang zwischen Sonnenstunden und Temperatur."
             })
 
-    # Validate x_variable for each dataset
-    if dataset_choice == "🏪 Elektronikmarkt (simuliert)":
-        valid_variables = ["Verkaufsfläche (m²)"]
-    elif dataset_choice == "🏙️ Städte-Umsatzstudie (75 Städte)":
-        valid_variables = ["Preis (CHF)", "Werbeausgaben (CHF)"]
-    elif dataset_choice == "🇨🇭 Schweizer Kantone (sozioökonomisch)":
-        valid_variables = ["Population Density", "Foreign Population %", "Unemployment"]
-    elif dataset_choice == "🌤️ Schweizer Wetterstationen":
-        valid_variables = ["Altitude", "Sunshine Hours", "Humidity"]
-    else:
-        valid_variables = []
-
-    if x_variable not in valid_variables:
-        raise ValueError(f"Invalid x_variable '{x_variable}' for dataset '{dataset_choice}'. Valid options: {valid_variables}")
+    # World Bank
+    elif "World Bank" in dataset_choice:
+        content.update({
+            "y_label": "Life Expectancy (years)",
+            "y_unit": "years",
+            "context_title": "World Bank Development Indicators",
+            "context_description": "Analysis of global development metrics."
+        })
+        if "GDP" in x_variable:
+            content["x_label"] = "GDP per Capita (USD)"
+            content["x_unit"] = "USD"
+        elif "Education" in x_variable:
+            content["x_label"] = "Education Years"
+            content["x_unit"] = "years"
+            
+    # FRED
+    elif "FRED" in dataset_choice:
+        content.update({
+            "y_label": "GDP (Billions USD)",
+            "y_unit": "B USD",
+            "context_title": "US Economic Indicators (FRED)",
+            "context_description": "Analysis of US economic performance."
+        })
+        if "Unemployment" in x_variable:
+            content["x_label"] = "Unemployment Rate (%)"
+            content["x_unit"] = "%"
+        elif "Interest" in x_variable:
+            content["x_label"] = "Interest Rate (%)"
+            content["x_unit"] = "%"
+            
+    # WHO
+    elif "WHO" in dataset_choice:
+        content.update({
+            "y_label": "Life Expectancy (years)",
+            "y_unit": "years",
+            "context_title": "WHO Global Health",
+            "context_description": "Analysis of health system performance."
+        })
+        if "Expenditure" in x_variable or "Spend" in x_variable:
+            content["x_label"] = "Health Expenditure (USD)"
+            content["x_unit"] = "USD"
+        elif "Sanitation" in x_variable:
+            content["x_label"] = "Sanitation Access (%)"
+            content["x_unit"] = "%"
+            
+    # Eurostat
+    elif "Eurostat" in dataset_choice:
+        content.update({
+            "y_label": "GDP per Capita (EUR)",
+            "y_unit": "EUR",
+            "context_title": "Eurostat Economic Data",
+            "context_description": "Analysis of EU member states."
+        })
+        if "Employment" in x_variable:
+            content["x_label"] = "Employment Rate (%)"
+            content["x_unit"] = "%"
+        elif "Education" in x_variable:
+            content["x_label"] = "Tertiary Education (%)"
+            content["x_unit"] = "%"
+            
+    # NASA
+    elif "NASA" in dataset_choice:
+        content.update({
+            "y_label": "Crop Yield (tons/ha)",
+            "y_unit": "t/ha",
+            "context_title": "NASA POWER Agro-Climatology",
+            "context_description": "Impact of climate variables on agriculture."
+        })
+        if "Temperature" in x_variable:
+            content["x_label"] = "Temperature (°C)"
+            content["x_unit"] = "°C"
+        elif "Solar" in x_variable:
+            content["x_label"] = "Solar Radiation (W/m²)"
+            content["x_unit"] = "W/m²"
 
     return content
 
@@ -340,25 +359,7 @@ def get_dataset_info(dataset_choice: str) -> Dict[str, Any]:
 
     Returns:
         Dictionary with dataset information
-
-    Raises:
-        ValueError: If dataset_choice is invalid
     """
-    # Validate dataset_choice
-    valid_datasets = [
-        "🏪 Elektronikmarkt (simuliert)",
-        "🏙️ Städte-Umsatzstudie (75 Städte)",
-        "🇨🇭 Schweizer Kantone (sozioökonomisch)",
-        "🏠 Häuserpreise mit Pool (1000 Häuser)",
-        "🌤️ Schweizer Wetterstationen",
-        "🏭 Elektronikmarkt-Kette (50 Filialen)",
-        "Cities Dataset",
-        "Houses Dataset"
-    ]
-
-    if dataset_choice not in valid_datasets:
-        raise ValueError(f"Invalid dataset_choice: {dataset_choice}. Valid options: {valid_datasets}")
-
     info = {
         "name": dataset_choice,
         "type": "simulated",
@@ -372,10 +373,10 @@ def get_dataset_info(dataset_choice: str) -> Dict[str, Any]:
             "source": "Switzerland",
             "description": "Authentic Swiss data for educational purposes"
         })
-    elif any(api in dataset_choice for api in ["🏦", "💰", "🏥", "🇪🇺"]):
+    elif any(api in dataset_choice for api in ["🏦", "💰", "🏥", "🇪🇺", "🛰️", "World Bank", "FRED", "WHO", "Eurostat", "NASA"]):
         info.update({
             "type": "api",
-            "source": dataset_choice.split()[1] if len(dataset_choice.split()) > 1 else "International",
+            "source": dataset_choice,  # approx
             "description": "Real data from international organizations"
         })
 

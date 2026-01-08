@@ -252,6 +252,60 @@ async function analyze() {
 
 ## 🏗️ Architektur
 
+### 📦 Dataflow Architecture
+
+```mermaid
+graph LR
+    subgraph "Data Sources"
+        DS_Gen[Internal Generator]
+        
+        subgraph "External APIs"
+            WB[World Bank]
+            FRED[FRED]
+            WHO[WHO]
+            EU[Eurostat]
+            NASA[NASA]
+        end
+        
+        WB & FRED & WHO & EU & NASA --> |Fetch/Mock| DS_Adapt[Adapter]
+    end
+
+    subgraph "Core Pipeline"
+        DS_Gen --> |DataFrame| P_Data[DataFetcher]
+        DS_Adapt --> |DataFrame| P_Data
+        
+        P_Data --> |Raw Data| P_Calc[StatisticsCalculator]
+        P_Calc --> |Stats| P_Plot[PlotBuilder]
+        P_Calc --> |Stats| P_Content[ContentBuilder]
+    end
+
+    subgraph "API Layer"
+        P_Plot --> |JSON| API[Unified API]
+        P_Content --> |JSON| API
+        AI[AI Service] --> |Interpretation| API
+    end
+
+    subgraph "Presentation"
+        API --> |JSON| FE_Streamlit[Streamlit]
+        API --> |JSON| FE_Flask[Flask]
+        API --> |JSON| FE_Next[Next.js/React]
+        
+        FE_Streamlit --> |UI| User((User))
+        FE_Flask --> |HTML| User
+        FE_Next --> |App| User
+    end
+
+    classDef source fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+    classDef pipeline fill:#fff3e0,stroke:#e65100,stroke-width:2px;
+    classDef api fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px;
+    classDef frontend fill:#f3e5f5,stroke:#4a148c,stroke-width:2px;
+
+    class DS_Gen,DS_Adapt,WB,FRED,WHO,EU,NASA source;
+    class P_Data,P_Calc,P_Plot,P_Content pipeline;
+    class API,AI api;
+    class FE_Streamlit,FE_Flask,FE_Next frontend;
+```
+
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                              FRONTENDS                                       │
